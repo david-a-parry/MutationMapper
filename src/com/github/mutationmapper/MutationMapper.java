@@ -34,7 +34,10 @@ import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.Pane;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import net.minidev.json.parser.ParseException;
@@ -73,6 +76,13 @@ public class MutationMapper extends Application implements Initializable{
     @FXML
     Button runButton;
     
+    //Result display window
+    FXMLLoader tableLoader;
+    Pane tablePane;
+    Scene tableScene;
+    Stage tableStage;
+    MutationMapperResultViewController resultView;
+    
     final static EnsemblRest rest = new EnsemblRest();
     
     @Override
@@ -102,6 +112,7 @@ public class MutationMapper extends Application implements Initializable{
                   System.exit(0);
                }
             });
+            
         } catch (Exception ex) {
             Logger.getLogger(MutationMapper.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -109,7 +120,8 @@ public class MutationMapper extends Application implements Initializable{
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        
+        tableLoader = new FXMLLoader(getClass().
+                                       getResource("MutationMapperResultView.fxml"));
         Platform.runLater(new Runnable() {
                 @Override
                 public void run() {
@@ -184,7 +196,7 @@ public class MutationMapper extends Application implements Initializable{
     }
     
     private void mapMutation() {
-        final Task<MutationMapperResult> mapperTask;
+        final Task<List<MutationMapperResult>> mapperTask;
         final String gene = geneTextField.getText();
         if (gene.isEmpty()){
             return;
@@ -198,13 +210,13 @@ public class MutationMapper extends Application implements Initializable{
         if (!cdsCoordinate.isEmpty()){
             if (mutationTextField.getText().isEmpty()){
                 mapperTask = 
-                        new Task<MutationMapperResult>(){
+                        new Task<List<MutationMapperResult>>(){
                     @Override
-                    protected MutationMapperResult call() throws ParseException, MalformedURLException, IOException, InterruptedException {
+                    protected List<MutationMapperResult> call() throws ParseException, MalformedURLException, IOException, InterruptedException {
                         /*returns arraylist of comma separated strings for gene symbol, gene ID,
                           transcript ID, chromosome, genomic coordinate, genome
                         */
-                        MutationMapperResult result = new MutationMapperResult();
+                        List<MutationMapperResult> results = new ArrayList<>();
                         ArrayList<HashMap<String, String>> gCoords = rest.codingToGenomic(species, 
                                 gene, Integer.parseInt(cdsCoordinate));
                         if (gCoords == null){
@@ -213,35 +225,39 @@ public class MutationMapper extends Application implements Initializable{
                         if (gCoords.isEmpty()){
                             return null;
                         }
-                        result.setGeneSymbol(gCoords.get(0).get("symbol"));
-                        result.setGeneId(gCoords.get(0).get("gene"));
-                        result.setGenome(gCoords.get(0).get("assembly"));
                         for (HashMap<String, String> g: gCoords){
-                            result.getTranscripts().add(g.get("transcript"));
-                            result.getCdsCoordinates().put(g.get("transcript"), 
-                                    Integer.parseInt(cdsCoordinate));
-                            
+                            MutationMapperResult result = new MutationMapperResult();
+                            result.setGeneSymbol(g.get("symbol"));
+                            result.setGeneId(g.get("gene"));
+                            result.setGenome(g.get("assembly"));
+                            result.setTranscript(g.get("transcript"));
+                            result.setCdsCoordinate(Integer.parseInt(cdsCoordinate));
+                            result.setChromosome(g.get("chromosome"));
+                            result.setCoordinate(Integer.parseInt(g.get("coordinate")));
+                            results.add(result);
                         }
-                        return result;
+                        return results;
                     }
                 };
             }else{
-                mapperTask = new Task<MutationMapperResult>(){
+                mapperTask = new Task<List<MutationMapperResult>>(){
                     @Override
-                    protected MutationMapperResult call(){
+                    protected List<MutationMapperResult> call(){
+                        List<MutationMapperResult> results = new ArrayList<>();
                         MutationMapperResult result = new MutationMapperResult();
                         //TO DO!
-                        return result;
+                        return results;
                     }
                 };
             }
         }else{
-            mapperTask = new Task<MutationMapperResult>(){
+            mapperTask = new Task<List<MutationMapperResult>>(){
                     @Override
-                    protected MutationMapperResult call(){
+                    protected List<MutationMapperResult> call(){
+                        List<MutationMapperResult> results = new ArrayList<>();
                         MutationMapperResult result = new MutationMapperResult();
                         //TO DO!
-                        return result;
+                        return results;
                     }
                 };
         }
@@ -249,15 +265,53 @@ public class MutationMapper extends Application implements Initializable{
             @Override
             public void handle (WorkerStateEvent e){
                 setRunning(false);
-                MutationMapperResult result = (MutationMapperResult) e.getSource().getValue();
-                System.out.println(result.toString());
                 progressLabel.textProperty().unbind();
                 progressBar.progressProperty().unbind();
                 progressBar.progressProperty().set(0);
+                runButton.setText("Run");
+                runButton.setDefaultButton(true);
+                ArrayList<MutationMapperResult> results = 
+                        (ArrayList<MutationMapperResult>) e.getSource().getValue();
+                if (results == null){
+                    return;
+                }
+                try{
+                    if (tablePane == null){
+                        tablePane = (Pane) tableLoader.load();
+                    }
+                    if (resultView == null){
+                        resultView = 
+                            (MutationMapperResultViewController) tableLoader.getController();
+                    }
+                    if (tableScene == null){
+                        tableScene = new Scene(tablePane);
+                        tableStage = new Stage();
+                        tableStage.setScene(tableScene);
+                        tableStage.initModality(Modality.NONE);
+                    }
+                    resultView.displayData(results);
+                    tableStage.setTitle("MutationMapper Results");
+                    //tableStage.getIcons().add(new Image(this.getClass()
+                    //        .getResourceAsStream("icon.png")));
+                    if (!tableStage.isShowing()){
+                        tableStage.show();
+                    }else{
+                        Platform.runLater(new Runnable() {
+                            @Override
+                            public void run() {
+                                tableStage.requestFocus();
+                            }
+                        });
+                    }
+                }catch(IOException ex){
+                    //TO DO - show error dialog
+                    ex.printStackTrace();
+                }
+
+                
             }
 
         });
-        
         
         new Thread(mapperTask).start();
         
@@ -268,8 +322,7 @@ public class MutationMapper extends Application implements Initializable{
         
         
         
-        runButton.setText("Run");
-        runButton.setDefaultButton(true);
+        
     }
     
     
