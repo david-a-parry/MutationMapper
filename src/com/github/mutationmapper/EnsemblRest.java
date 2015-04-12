@@ -5,6 +5,7 @@
  */
 package com.github.mutationmapper;
 
+import com.github.mutationmapper.GeneDetails.Exon;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -53,6 +54,51 @@ public class EnsemblRest {
         Collections.sort(species, comp);
         return species;
     }
+    
+    public ArrayList<TranscriptDetails> getGeneDetails(String id) throws ParseException, MalformedURLException, IOException, InterruptedException {
+        ArrayList<TranscriptDetails> transcripts = new ArrayList<>();
+        String endpoint = "/lookup/id/"+id+"?expand=1";
+        JSONObject info = (JSONObject) getJSON(endpoint);
+        if(info.isEmpty()) {
+          throw new RuntimeException("Got nothing for endpoint "+endpoint);
+        }
+        if (info.containsKey("Transcript")){
+            TranscriptDetails trans = new TranscriptDetails();
+            JSONArray trs = (JSONArray) info.get("Transcript");
+            for (Object t: trs){
+               JSONObject j = (JSONObject) t;
+               trans.setTranscriptId((String) j.get("id"));
+               String biotype = (String)j.get("biotype");
+               if (j.containsKey("strand")){
+                   if ((Integer) j.get("strand") > 0){
+                       trans.setStrand("+");
+                   }else{
+                       trans.setStrand("-");
+                   }
+               }
+               if (j.containsKey("Exon")){
+                   JSONArray exons = (JSONArray) j.get("Exon");
+                   for (Object e: exons){
+                       JSONObject jxon = (JSONObject) e;
+                       TranscriptDetails.Exon exon = trans.new Exon();
+                       exon.setStart((Integer) jxon.get("start"));
+                       exon.setEnd((Integer) jxon.get("end"));
+                       trans.getExons().add(exon);
+                   }
+                   Collections.sort(trans.getExons());
+                   //TO DO - number exons
+                   
+
+               }
+              //TO DO -get transcription start and end
+               if (biotype.equals("protein_coding")){
+                   //TO DO - get translation start and end if coding                   
+               }
+            }
+        }
+        return transcripts;
+    }
+    
     
     public List<String> getGeneAndSymbolFromTranscript(String id)throws ParseException, MalformedURLException, IOException, InterruptedException {
         String endpoint = "/overlap/id/" + id + "?feature=gene";
