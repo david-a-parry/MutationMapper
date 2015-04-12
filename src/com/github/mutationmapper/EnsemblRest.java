@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
@@ -61,23 +62,32 @@ public class EnsemblRest {
         String name = (String) gene.get("external_name");
         return Arrays.asList(ensid, name);
     }
-  
-    public void codingToGenomicTranscript(String species, String id, int c) throws ParseException, MalformedURLException, IOException, InterruptedException {
+    
+    /*returns arraylist of hashmaps of gene symbol, gene ID,
+      transcript ID, chromosome, genomic coordinate, genome assembly
+    */
+    public HashMap<String, String> codingToGenomicTranscript
+            (String species, String id, int c) throws ParseException, MalformedURLException, IOException, InterruptedException {
+        HashMap<String, String> mapping = new HashMap<>();
         String endpoint = "/lookup/id/"+id+"?expand=1";
         JSONObject tr = (JSONObject) getJSON(endpoint);
         if (tr.isEmpty()){
             System.out.println("No protein coding transcripts found for " + id);
-            return;
+            return null;
         }
         List<String> geneAndSymbol = getGeneAndSymbolFromTranscript(id);  
       
         String seq = getTranscriptSequence(id, "cds");
         if (seq != null){
             if (seq.length() >= c ){
-                String gCoord = cdsToGenomicCoordinate(id, c);
+                HashMap<String, String> gCoord = cdsToGenomicCoordinate(id, c);
                 if (gCoord != null){
-                    System.out.println(geneAndSymbol.get(1) +" " + geneAndSymbol.get(0) 
-                            + " " + id + " c." + c + " => " + gCoord);
+                    mapping.put("gene", geneAndSymbol.get(0));
+                    mapping.put("symbol", geneAndSymbol.get(1));
+                    mapping.put("transcript", id);
+                    mapping.put("chromosome", gCoord.get("chromosome"));
+                    mapping.put("coordinate", gCoord.get("coordinate"));
+                    mapping.put("assembly", gCoord.get("assembly"));
                 }
             }else{
                 System.out.println("CDS coordinate " + c + " is greater than "
@@ -86,15 +96,20 @@ public class EnsemblRest {
         }else{
             System.out.println("ERROR: No CDS sequence found for " + tr);
         }
+        return mapping;
     }
-  
-    public void codingToGenomic(String species, String symbol, int c) throws ParseException, MalformedURLException, IOException, InterruptedException {
+    
+    /*returns arraylist of hashmaps of gene symbol, gene ID,
+      transcript ID, chromosome, genomic coordinate, genome assembly
+    */
+    public ArrayList<HashMap<String, String>> codingToGenomic(String species, String symbol, int c) throws ParseException, MalformedURLException, IOException, InterruptedException {
         String id = getGeneID(species, symbol);
+        ArrayList<HashMap<String, String>> coordinates = new ArrayList<>();
         ArrayList<String> tr = getTranscriptIds(id);
         if (tr.isEmpty()){
             System.out.println("No protein coding transcripts found for " + symbol
                     + " (" + id + ")");
-            return;
+            return null;
         }
         StringBuilder transcriptList = new StringBuilder(tr.get(0));
         for (int i = 1; i < tr.size(); i++){
@@ -105,10 +120,16 @@ public class EnsemblRest {
             String seq = getTranscriptSequence(t, "cds");
             if (seq != null){
                 if (seq.length() >= c ){
-                    String gCoord = cdsToGenomicCoordinate(t, c);
+                    HashMap<String, String> gCoord = cdsToGenomicCoordinate(t, c);
                     if (gCoord != null){
-                        System.out.println(symbol + " " + id + " " + t + 
-                                " c." + c + " => " + gCoord);
+                        HashMap<String, String> mapping = new HashMap<>();
+                        mapping.put("symbol", symbol);
+                        mapping.put("gene", id);
+                        mapping.put("transcript", t);
+                        mapping.put("chromosome", gCoord.get("chromosome"));
+                        mapping.put("coordinate", gCoord.get("coordinate"));
+                        mapping.put("assembly", gCoord.get("assembly"));
+                        coordinates.add(mapping);
                     }
                 }else{
                     System.out.println("CDS coordinate " + c + " is greater than "
@@ -118,6 +139,7 @@ public class EnsemblRest {
                 System.out.println("ERROR: No CDS sequence found for " + t);
             }
         }
+        return coordinates;
     }
   
   
@@ -129,11 +151,11 @@ public class EnsemblRest {
         }
         return null;
     }
-  
-    public String cdsToGenomicCoordinate(String id, int coord) throws ParseException, MalformedURLException, IOException, InterruptedException {
+    //returns hashmap of chromosome, coordinate and assembly
+    public HashMap<String, String> cdsToGenomicCoordinate(String id, int coord) throws ParseException, MalformedURLException, IOException, InterruptedException {
         String endpoint = "/map/cds/" + id +"/"+ coord + ".." + coord;
         JSONObject info = (JSONObject) getJSON(endpoint);
-        StringBuilder mapStrings = new StringBuilder();
+        HashMap mapStrings = new HashMap<>();
         if(info.isEmpty()) {
             throw new RuntimeException("Got nothing for endpoint "+endpoint);
         }
@@ -145,10 +167,12 @@ public class EnsemblRest {
                     String assembly = (String) m.get("assembly_name");
                     String chr = (String) m.get("seq_region_name");
                     Long start = (Long) m.get("start");
-                    mapStrings.append(chr + ":" + start + " (" + assembly + ")\n");
+                    mapStrings.put("chromosome", chr);
+                    mapStrings.put("coordinate", start);
+                    mapStrings.put("assembly", assembly);
                 }
             }
-            return mapStrings.toString();
+            return mapStrings;
         }
         return null;
     }
