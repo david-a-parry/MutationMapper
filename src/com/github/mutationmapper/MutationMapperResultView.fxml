@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+
+<AnchorPane id="AnchorPane" fx:id="resultPane" prefHeight="461.0" prefWidth="806.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8" fx:controller="com.github.mutationmapper.MutationMapperResultViewController">
+   <children>
+      <MenuBar prefHeight="29.0" prefWidth="600.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+        <menus>
+          <Menu mnemonicParsing="false" text="File">
+            <items>
+              <MenuItem mnemonicParsing="false" text="Close" />
+            </items>
+          </Menu>
+          <Menu mnemonicParsing="false" text="Edit">
+            <items>
+              <MenuItem mnemonicParsing="false" text="Delete" />
+            </items>
+          </Menu>
+          <Menu mnemonicParsing="false" text="Help">
+            <items>
+              <MenuItem mnemonicParsing="false" text="About" />
+            </items>
+          </Menu>
+        </menus>
+      </MenuBar>
+      <TabPane layoutY="29.0" prefHeight="370.0" prefWidth="600.0" tabClosingPolicy="UNAVAILABLE" AnchorPane.bottomAnchor="1.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="29.0">
+        <tabs>
+          <Tab text="Table">
+            <content>
+              <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                     <children>
+                        <TableView fx:id="resultTable" layoutX="27.0" layoutY="34.0" prefHeight="337.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                          <columns>
+                            <TableColumn fx:id="indexCol" prefWidth="36.0" text="#" />
+                            <TableColumn fx:id="symbolCol" prefWidth="73.0" text="Symbol" />
+                              <TableColumn fx:id="geneCol" prefWidth="84.0" text="Gene" />
+                              <TableColumn fx:id="transcriptCol" prefWidth="120.0" text="Transcript" />
+                              <TableColumn fx:id="cdsCol" prefWidth="63.0" text="CDS" />
+                              <TableColumn fx:id="genomicCol" prefWidth="163.0" text="Genomic Coordinate" />
+                              <TableColumn minWidth="0.0" prefWidth="0.0" text="Column X" />
+                              <TableColumn fx:id="refCol" prefWidth="49.0" text="Ref" />
+                              <TableColumn fx:id="varCol" prefWidth="48.0" text="Var" />
+                              <TableColumn fx:id="consequenceCol" prefWidth="98.0" text="Consequence" />
+                              <TableColumn fx:id="knownVarCol" prefWidth="69.0" text="Known Variation" />
+                          </columns>
+                        </TableView>
+                     </children>
+                  </AnchorPane>
+            </content>
+          </Tab>
+          <Tab text="Text">
+            <content>
+              <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" />
+            </content>
+          </Tab>
+        </tabs>
+      </TabPane>
+   </children>
+</AnchorPane>
