@@ -5,9 +5,6 @@
  */
 package com.github.mutationmapper;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-
 /**
  *
  * @author david
@@ -19,69 +16,54 @@ public class MutationMapperResult {
     private String genome;
     private String geneSymbol;
     private String geneId;
-    private ArrayList<String> transcripts;
-    private HashMap<String, Integer> cdsCoordinates;
+    private String transcript;
+    private Integer cdsCoordinate;
     private String matchingSequence;
     private String mutation;
     private String refAllele;
     private String varAllele;
-    private HashMap<String, String> cdsConsequences;
-    private HashMap<String, String> proteinConsequences;
+    private String cdsConsequence;
+    private String proteinConsequence;
     private String knownId;
     private Double knownFreq;
     
+    
     MutationMapperResult(){
-        this (null, null, null, null, null, null, null, null, 
+        this (null, null, null, null, null, null, null, null,
               null, null, null, null, null, null, null);
     }
     
     MutationMapperResult(String chrom, Integer coord, String build, String symbol,
-            String id, ArrayList<String> transIds, HashMap<String, Integer> cdsCoords){
-        this (chrom, coord, build, symbol, id, transIds, cdsCoords, null, null, 
+            String id, String transId, Integer cdsCoord){
+        this (chrom, coord, build, symbol, id, transId, cdsCoord, null, null, 
                 null, null, null, null, null, null);
     }
     
     MutationMapperResult(String chrom, Integer coord, String build, String symbol,
-            String id, ArrayList<String> transIds, HashMap<String, Integer> cdsCoords, String seq, String mut,
+            String id, String transId, Integer cdsCoord, String seq, String mut,
             String ref, String var ){
-        this (chrom, coord, build, symbol, id, transIds, cdsCoords, seq, mut, ref, 
+        this (chrom, coord, build, symbol, id, transId, cdsCoord, seq, mut, ref, 
                 var, null, null, null, null);
     }
     
     
     MutationMapperResult(String chrom, Integer coord, String build, String symbol,
-            String id, ArrayList<String> transIds, HashMap<String, Integer> cdsCoords, String seq, String mut, 
-            String ref, String var, HashMap<String, String> cCons, HashMap<String, String> pCons, String snpId, Double freq){
+            String id, String transId, Integer cdsCoord, String seq, String mut, 
+            String ref, String var, String cCons, String pCons, String snpId, Double freq){
         
         chromosome = chrom;
         coordinate = coord;
         genome = build;
         geneSymbol = symbol;
         geneId = id;
-        if (transIds == null){
-            transcripts = new ArrayList<>();
-        }else{
-            transcripts = transIds;            
-        }
-        if (cdsCoords == null){
-            cdsCoordinates = new HashMap<>();
-        }else{
-            cdsCoordinates = cdsCoords;
-        }
+        transcript = transId;
+        cdsCoordinate = cdsCoord;
         matchingSequence = seq;
         mutation = mut;
         refAllele = ref;
         varAllele = var;
-        if (cCons == null){
-            cdsConsequences = new HashMap<>();
-        }else{
-            cdsConsequences = cCons;
-        }
-        if (cCons == null){
-            proteinConsequences = new HashMap<>();
-        }else{
-            proteinConsequences = pCons;
-        }            
+        cdsConsequence = cCons;
+        proteinConsequence = pCons;
         knownId = snpId;
         knownFreq = freq;
     }
@@ -110,12 +92,12 @@ public class MutationMapperResult {
         geneId = id;
     }
     
-    public void setTranscripts(ArrayList<String> ids){
-        transcripts = ids;
+    public void setTranscript(String id){
+        transcript = id;
     }
     
-    public void setCdsCoordinates(HashMap<String, Integer> c){
-        cdsCoordinates = c;
+    public void setCdsCoordinate(Integer c){
+        cdsCoordinate = c;
     }
     
     public void setMatchingSequence(String seq){
@@ -134,12 +116,12 @@ public class MutationMapperResult {
         varAllele = var;
     }
     
-    public void setCdsConsequences(HashMap<String, String> cons){
-        cdsConsequences = cons;
+    public void setCdsConsequence(String pcons){
+        proteinConsequence = pcons;
     }
     
-    public void setProteinConsequences(HashMap<String, String> pcons){
-        proteinConsequences = pcons;
+    public void setProteinConsequence(String pcons){
+        proteinConsequence = pcons;
     }
     
     public void setKnownId(String id){
@@ -174,15 +156,15 @@ public class MutationMapperResult {
         return geneId;
     }
     
-    public ArrayList<String> getTranscripts(){
-        return transcripts;
+    public String getTranscript(){
+        return transcript;
     }
     
-    public HashMap<String, Integer> getCdsCoordinates(){
-        return cdsCoordinates;
+    public Integer getCdsCoordinate(){
+        return cdsCoordinate;
     }
     
-    public String getMatchingSequences(){
+    public String getMatchingSequence(){
         return matchingSequence;
     }
     
@@ -198,12 +180,12 @@ public class MutationMapperResult {
         return varAllele;
     }
     
-    public HashMap<String, String> getCdsConsequences(){
-        return cdsConsequences;
+    public String getCdsConsequence(){
+        return cdsConsequence;
     }
-
-    public HashMap<String, String> getProteinConsequences(){
-        return proteinConsequences;
+    
+    public String getProteinConsequence(){
+        return proteinConsequence;
     }
     
     public String getKnownId(){
@@ -214,4 +196,33 @@ public class MutationMapperResult {
         return knownFreq;
     }
     
+    public String getGenomicCoordinate(){
+        if (chromosome == null || coordinate == null){
+            return "";
+        }
+        if (genome == null){
+            return chromosome + ":" + coordinate;
+        }
+        return chromosome + ":" + coordinate + " (" + genome + ")";
+    }
+    
+    public String getKnownVar(){
+        if (knownId == null){
+            return "";
+        }
+        if (knownFreq == null){
+            return knownId;
+        }
+        return knownId + " (" + knownFreq + ")";
+    }
+    
+    public String getConsequences(){
+        if (cdsConsequence == null){
+            return null;
+        }
+        if (proteinConsequence == null){
+            return cdsConsequence;
+        }
+        return cdsConsequence + ";" + proteinConsequence;
+    }
 }
