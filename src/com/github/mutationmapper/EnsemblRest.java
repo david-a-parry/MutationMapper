@@ -168,7 +168,7 @@ public class EnsemblRest {
                     String chr = (String) m.get("seq_region_name");
                     Long start = (Long) m.get("start");
                     mapStrings.put("chromosome", chr);
-                    mapStrings.put("coordinate", start);
+                    mapStrings.put("coordinate", Long.toString(start));
                     mapStrings.put("assembly", assembly);
                 }
             }
