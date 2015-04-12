@@ -5,6 +5,9 @@
  */
 package com.github.mutationmapper;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+
 /**
  *
  * @author david
@@ -16,52 +19,69 @@ public class MutationMapperResult {
     private String genome;
     private String geneSymbol;
     private String geneId;
-    private String transcript;
-    private Integer cdsCoordinate;
+    private ArrayList<String> transcripts;
+    private HashMap<String, Integer> cdsCoordinates;
     private String matchingSequence;
     private String mutation;
     private String refAllele;
     private String varAllele;
-    private String cdsConsequence;
-    private String proteinConsequence;
+    private HashMap<String, String> cdsConsequences;
+    private HashMap<String, String> proteinConsequences;
     private String knownId;
     private Double knownFreq;
     
     MutationMapperResult(){
-        this (null, null, null, null, null, null, null, 
+        this (null, null, null, null, null, null, null, null, 
               null, null, null, null, null, null, null);
     }
     
     MutationMapperResult(String chrom, Integer coord, String build, String symbol,
-            String id, String transId, Integer cdsCoord){
-        this (chrom, coord, build, symbol, id, transId, cdsCoord, null, null, 
-                null, null, null, null, null);
+            String id, ArrayList<String> transIds, HashMap<String, Integer> cdsCoords){
+        this (chrom, coord, build, symbol, id, transIds, cdsCoords, null, null, 
+                null, null, null, null, null, null);
     }
     
     MutationMapperResult(String chrom, Integer coord, String build, String symbol,
-            String id, String transId, Integer cdsCoord, String seq, String mut,
+            String id, ArrayList<String> transIds, HashMap<String, Integer> cdsCoords, String seq, String mut,
             String ref, String var ){
-        this (chrom, coord, build, symbol, id, transId, cdsCoord, seq, mut, ref, 
-                var, null, null, null);
+        this (chrom, coord, build, symbol, id, transIds, cdsCoords, seq, mut, ref, 
+                var, null, null, null, null);
     }
     
     
     MutationMapperResult(String chrom, Integer coord, String build, String symbol,
-            String id, String transId, Integer cdsCoord, String seq, String mut, 
-            String ref, String var, String pCons, String snpId, Double freq){
+            String id, ArrayList<String> transIds, HashMap<String, Integer> cdsCoords, String seq, String mut, 
+            String ref, String var, HashMap<String, String> cCons, HashMap<String, String> pCons, String snpId, Double freq){
         
         chromosome = chrom;
         coordinate = coord;
         genome = build;
         geneSymbol = symbol;
         geneId = id;
-        transcript = transId;
-        cdsCoordinate = cdsCoord;
+        if (transIds == null){
+            transcripts = new ArrayList<>();
+        }else{
+            transcripts = transIds;            
+        }
+        if (cdsCoords == null){
+            cdsCoordinates = new HashMap<>();
+        }else{
+            cdsCoordinates = cdsCoords;
+        }
         matchingSequence = seq;
         mutation = mut;
         refAllele = ref;
         varAllele = var;
-        proteinConsequence = pCons;
+        if (cCons == null){
+            cdsConsequences = new HashMap<>();
+        }else{
+            cdsConsequences = cCons;
+        }
+        if (cCons == null){
+            proteinConsequences = new HashMap<>();
+        }else{
+            proteinConsequences = pCons;
+        }            
         knownId = snpId;
         knownFreq = freq;
     }
@@ -90,12 +110,12 @@ public class MutationMapperResult {
         geneId = id;
     }
     
-    public void setTranscript(String id){
-        transcript = id;
+    public void setTranscripts(ArrayList<String> ids){
+        transcripts = ids;
     }
     
-    public void setCdsCoordinate(Integer c){
-        cdsCoordinate = c;
+    public void setCdsCoordinates(HashMap<String, Integer> c){
+        cdsCoordinates = c;
     }
     
     public void setMatchingSequence(String seq){
@@ -114,8 +134,12 @@ public class MutationMapperResult {
         varAllele = var;
     }
     
-    public void setProteinConsequence(String pcons){
-        proteinConsequence = pcons;
+    public void setCdsConsequences(HashMap<String, String> cons){
+        cdsConsequences = cons;
+    }
+    
+    public void setProteinConsequences(HashMap<String, String> pcons){
+        proteinConsequences = pcons;
     }
     
     public void setKnownId(String id){
@@ -150,15 +174,15 @@ public class MutationMapperResult {
         return geneId;
     }
     
-    public String getTranscript(){
-        return transcript;
+    public ArrayList<String> getTranscripts(){
+        return transcripts;
     }
     
-    public Integer getCdsCoordinate(){
-        return cdsCoordinate;
+    public HashMap<String, Integer> getCdsCoordinates(){
+        return cdsCoordinates;
     }
     
-    public String getMatchingSequence(){
+    public String getMatchingSequences(){
         return matchingSequence;
     }
     
@@ -174,8 +198,12 @@ public class MutationMapperResult {
         return varAllele;
     }
     
-    public String getProteinConsequence(){
-        return proteinConsequence;
+    public HashMap<String, String> getCdsConsequences(){
+        return cdsConsequences;
+    }
+
+    public HashMap<String, String> getProteinConsequences(){
+        return proteinConsequences;
     }
     
     public String getKnownId(){
