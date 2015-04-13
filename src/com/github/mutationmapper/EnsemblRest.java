@@ -63,62 +63,76 @@ public class EnsemblRest {
           throw new RuntimeException("Got nothing for endpoint "+ endpoint);
         }
         if (info.containsKey("Transcript")){
-            TranscriptDetails trans = new TranscriptDetails();
             JSONArray trs = (JSONArray) info.get("Transcript");
             for (Object t: trs){
                JSONObject j = (JSONObject) t;
-               trans.setTranscriptId((String) j.get("id"));
-               String biotype = (String)j.get("biotype");
-               if (j.containsKey("strand")){
-                   if ((Integer) j.get("strand") > 0){
-                       trans.setStrand("+");
-                   }else{
-                       trans.setStrand("-");
-                   }
-               }
-               //get exons
-               if (j.containsKey("Exon")){
-                   JSONArray exons = (JSONArray) j.get("Exon");
-                   for (Object e: exons){
-                       JSONObject jxon = (JSONObject) e;
-                       TranscriptDetails.Exon exon = trans.new Exon();
-                       exon.setStart((Integer) jxon.get("start"));
-                       exon.setEnd((Integer) jxon.get("end"));
-                       trans.getExons().add(exon);
-                   }
-                   //sort and number exons
-                   Collections.sort(trans.getExons());
-                   for (int i = 0; i < trans.getExons().size(); i++){
-                       if (trans.getStrand().equals("-")){
-                           trans.getExons().get(i).setOrder(
-                                   trans.getExons().size() - i);
-                       }else{
-                           trans.getExons().get(i).setOrder(i+1);
-                       }
-                   }
-               }
-               
-              //get transcription start and end
-               if (j.containsKey("start")){
-                   trans.setTxStart((Integer)j.get("start"));
-               }
-               if (j.containsKey("end")){
-                   trans.setTxEnd((Integer)j.get("end"));
-               }
-               
-               //get translation start and end if coding                   
-               if (biotype.equals("protein_coding") && j.containsKey("Translation")){
-                   JSONObject p = (JSONObject) j.get("Translation");
-                   trans.setProteinId((String) p.get("id"));
-                   trans.setCdsStart((Integer) p.get("start"));
-                   trans.setCdsEnd((Integer) p.get("end"));
-                   trans.setProteinLength((Integer) p.get("length"));
-               }
+               TranscriptDetails trans = getTranscriptDetailsFromJson(j);
+               transcripts.add(trans);
             }
         }
         return transcripts;
     }
     
+    public TranscriptDetails getTranscriptDetails(String id) throws ParseException, MalformedURLException, IOException, InterruptedException {
+        String endpoint = "/lookup/id/"+id+"?expand=1";
+        JSONObject j = (JSONObject) getJSON(endpoint);
+        if(j.isEmpty()) {
+          throw new RuntimeException("Got nothing for endpoint "+ endpoint);
+        }
+        return getTranscriptDetailsFromJson(j);
+    }
+    
+    private TranscriptDetails getTranscriptDetailsFromJson(JSONObject j){
+        TranscriptDetails trans = new TranscriptDetails();        
+        trans.setTranscriptId((String) j.get("id"));
+        String biotype = (String)j.get("biotype");
+        if (j.containsKey("strand")){
+           if ((Integer) j.get("strand") > 0){
+               trans.setStrand("+");
+           }else{
+               trans.setStrand("-");
+           }
+       }
+       //get exons
+       if (j.containsKey("Exon")){
+           JSONArray exons = (JSONArray) j.get("Exon");
+           for (Object e: exons){
+               JSONObject jxon = (JSONObject) e;
+               TranscriptDetails.Exon exon = trans.new Exon();
+               exon.setStart((Integer) jxon.get("start"));
+               exon.setEnd((Integer) jxon.get("end"));
+               trans.getExons().add(exon);
+           }
+           //sort and number exons
+           Collections.sort(trans.getExons());
+           for (int i = 0; i < trans.getExons().size(); i++){
+               if (trans.getStrand().equals("-")){
+                   trans.getExons().get(i).setOrder(
+                           trans.getExons().size() - i);
+               }else{
+                   trans.getExons().get(i).setOrder(i+1);
+               }
+           }
+       }
+
+      //get transcription start and end
+       if (j.containsKey("start")){
+           trans.setTxStart((Integer)j.get("start"));
+       }
+       if (j.containsKey("end")){
+           trans.setTxEnd((Integer)j.get("end"));
+       }
+
+       //get translation start and end if coding                   
+       if (biotype.equals("protein_coding") && j.containsKey("Translation")){
+           JSONObject p = (JSONObject) j.get("Translation");
+           trans.setProteinId((String) p.get("id"));
+           trans.setCdsStart((Integer) p.get("start"));
+           trans.setCdsEnd((Integer) p.get("end"));
+           trans.setProteinLength((Integer) p.get("length"));
+       }
+        return trans;
+    }
     
     public List<String> getGeneAndSymbolFromTranscript(String id)throws ParseException, MalformedURLException, IOException, InterruptedException {
         String endpoint = "/overlap/id/" + id + "?feature=gene";
@@ -141,15 +155,12 @@ public class EnsemblRest {
             System.out.println("No protein coding transcripts found for " + id);
             return null;
         }
-        List<String> geneAndSymbol = getGeneAndSymbolFromTranscript(id);  
       
         String seq = getTranscriptSequence(id, "cds");
         if (seq != null){
             if (seq.length() >= c ){
                 HashMap<String, String> gCoord = cdsToGenomicCoordinate(id, c);
                 if (gCoord != null){
-                    mapping.put("gene", geneAndSymbol.get(0));
-                    mapping.put("symbol", geneAndSymbol.get(1));
                     mapping.put("transcript", id);
                     mapping.put("chromosome", gCoord.get("chromosome"));
                     mapping.put("coordinate", gCoord.get("coordinate"));
@@ -189,7 +200,6 @@ public class EnsemblRest {
                     HashMap<String, String> gCoord = cdsToGenomicCoordinate(t, c);
                     if (gCoord != null){
                         HashMap<String, String> mapping = new HashMap<>();
-                        mapping.put("symbol", symbol);
                         mapping.put("gene", id);
                         mapping.put("transcript", t);
                         mapping.put("chromosome", gCoord.get("chromosome"));
