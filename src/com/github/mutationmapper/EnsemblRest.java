@@ -60,7 +60,7 @@ public class EnsemblRest {
         String endpoint = "/lookup/id/"+id+"?expand=1";
         JSONObject info = (JSONObject) getJSON(endpoint);
         if(info.isEmpty()) {
-          throw new RuntimeException("Got nothing for endpoint "+endpoint);
+          throw new RuntimeException("Got nothing for endpoint "+ endpoint);
         }
         if (info.containsKey("Transcript")){
             TranscriptDetails trans = new TranscriptDetails();
@@ -76,6 +76,7 @@ public class EnsemblRest {
                        trans.setStrand("-");
                    }
                }
+               //get exons
                if (j.containsKey("Exon")){
                    JSONArray exons = (JSONArray) j.get("Exon");
                    for (Object e: exons){
@@ -85,14 +86,33 @@ public class EnsemblRest {
                        exon.setEnd((Integer) jxon.get("end"));
                        trans.getExons().add(exon);
                    }
+                   //sort and number exons
                    Collections.sort(trans.getExons());
-                   //TO DO - number exons
-                   
-
+                   for (int i = 0; i < trans.getExons().size(); i++){
+                       if (trans.getStrand().equals("-")){
+                           trans.getExons().get(i).setOrder(
+                                   trans.getExons().size() - i);
+                       }else{
+                           trans.getExons().get(i).setOrder(i+1);
+                       }
+                   }
                }
-              //TO DO -get transcription start and end
-               if (biotype.equals("protein_coding")){
-                   //TO DO - get translation start and end if coding                   
+               
+              //get transcription start and end
+               if (j.containsKey("start")){
+                   trans.setTxStart((Integer)j.get("start"));
+               }
+               if (j.containsKey("end")){
+                   trans.setTxEnd((Integer)j.get("end"));
+               }
+               
+               //get translation start and end if coding                   
+               if (biotype.equals("protein_coding") && j.containsKey("Translation")){
+                   JSONObject p = (JSONObject) j.get("Translation");
+                   trans.setProteinId((String) p.get("id"));
+                   trans.setCdsStart((Integer) p.get("start"));
+                   trans.setCdsEnd((Integer) p.get("end"));
+                   trans.setProteinLength((Integer) p.get("length"));
                }
             }
         }
