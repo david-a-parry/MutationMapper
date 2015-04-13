@@ -213,30 +213,8 @@ public class MutationMapper extends Application implements Initializable{
                         new Task<List<MutationMapperResult>>(){
                     @Override
                     protected List<MutationMapperResult> call() throws ParseException, MalformedURLException, IOException, InterruptedException {
-                        /*returns arraylist of comma separated strings for gene symbol, gene ID,
-                          transcript ID, chromosome, genomic coordinate, genome
-                        */
-                        List<MutationMapperResult> results = new ArrayList<>();
-                        ArrayList<HashMap<String, String>> gCoords = rest.codingToGenomic(species, 
-                                gene, Integer.parseInt(cdsCoordinate));
-                        if (gCoords == null){
-                            return null;
-                        }
-                        if (gCoords.isEmpty()){
-                            return null;
-                        }
-                        for (HashMap<String, String> g: gCoords){
-                            MutationMapperResult result = new MutationMapperResult();
-                            result.setGeneSymbol(g.get("symbol"));
-                            result.setGeneId(g.get("gene"));
-                            result.setGenome(g.get("assembly"));
-                            result.setTranscript(g.get("transcript"));
-                            result.setCdsCoordinate(Integer.parseInt(cdsCoordinate));
-                            result.setChromosome(g.get("chromosome"));
-                            result.setCoordinate(Integer.parseInt(g.get("coordinate")));
-                            results.add(result);
-                        }
-                        return results;
+                        
+                        return codingToGenomic(gene, species, cdsCoordinate);
                     }
                 };
             }else{
@@ -325,6 +303,42 @@ public class MutationMapper extends Application implements Initializable{
         
     }
     
+    /* returns arraylist of comma separated strings for gene symbol, gene ID,
+       transcript ID, chromosome, genomic coordinate, genome
+    */
+    private List<MutationMapperResult> codingToGenomic(String gene, String species, 
+            String cdsCoordinate) throws ParseException, MalformedURLException, IOException, InterruptedException{
+        List<MutationMapperResult> results = new ArrayList<>();
+        ArrayList<TranscriptDetails> transcripts = new ArrayList<>();
+        String id;
+        if(gene.matches("ENS\\w*T\\d{11}.*\\d*")){//is transcript id
+            transcripts.add(rest.getTranscriptDetails(gene));
+        }else{
+            if(gene.matches("ENS\\w*G\\d{11}.*\\d*")){//is gene id
+                id = gene;
+            }else{
+                id = rest.getGeneID(species, gene);
+            }
+            transcripts = rest.getGeneDetails(id);
+        }
+        if (transcripts.isEmpty()){
+            return null;
+        }
+        for (TranscriptDetails t: transcripts){
+            HashMap<String, String> g = rest.codingToGenomicTranscript(
+                    species, t.getTranscriptId(), Integer.parseInt(cdsCoordinate));
+            MutationMapperResult result = new MutationMapperResult();
+            result.setGeneSymbol(t.getSymbol());
+            result.setGeneId(t.getId());
+            result.setTranscript(t.getTranscriptId());
+            result.setCdsCoordinate(Integer.parseInt(cdsCoordinate));
+            result.setChromosome(g.get("chromosome"));
+            result.setCoordinate(Integer.parseInt(g.get("coordinate")));
+            result.setGenome(g.get("assembly"));
+            results.add(result);
+        }
+        return results;
+    }
     
     private void getAvailableSpecies(){
         final Task<List<String>> getSpeciesTask = new Task<List<String>>(){
