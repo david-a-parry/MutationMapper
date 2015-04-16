@@ -7,6 +7,7 @@ package com.github.mutationmapper;
 
 import com.github.mutationmapper.GeneDetails.Exon;
 import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -87,7 +88,7 @@ public class EnsemblRest {
         trans.setTranscriptId((String) j.get("id"));
         String biotype = (String)j.get("biotype");
         if (j.containsKey("strand")){
-           if ((Integer) j.get("strand") > 0){
+           if ((Long) j.get("strand") > 0){
                trans.setStrand("+");
            }else{
                trans.setStrand("-");
@@ -99,8 +100,10 @@ public class EnsemblRest {
            for (Object e: exons){
                JSONObject jxon = (JSONObject) e;
                TranscriptDetails.Exon exon = trans.new Exon();
-               exon.setStart((Integer) jxon.get("start"));
-               exon.setEnd((Integer) jxon.get("end"));
+               Long start = (Long) jxon.get("start");
+               Long end = (Long) jxon.get("end");
+               exon.setStart(start.intValue());
+               exon.setEnd(end.intValue());
                trans.getExons().add(exon);
            }
            //sort and number exons
@@ -117,19 +120,24 @@ public class EnsemblRest {
 
       //get transcription start and end
        if (j.containsKey("start")){
-           trans.setTxStart((Integer)j.get("start"));
+           Long start = (Long)j.get("start");
+           trans.setTxStart(start.intValue());
        }
        if (j.containsKey("end")){
-           trans.setTxEnd((Integer)j.get("end"));
+           Long end = (Long)j.get("end");
+           trans.setTxEnd(end.intValue());
        }
 
        //get translation start and end if coding                   
        if (biotype.equals("protein_coding") && j.containsKey("Translation")){
            JSONObject p = (JSONObject) j.get("Translation");
            trans.setProteinId((String) p.get("id"));
-           trans.setCdsStart((Integer) p.get("start"));
-           trans.setCdsEnd((Integer) p.get("end"));
-           trans.setProteinLength((Integer) p.get("length"));
+           Long start = (Long) p.get("start");
+           Long end = (Long) p.get("end");
+           trans.setCdsStart(start.intValue());
+           trans.setCdsEnd(end.intValue());
+           Long length = (Long) p.get("length");
+           trans.setProteinLength(length.intValue());
        }
         return trans;
     }
@@ -227,6 +235,21 @@ public class EnsemblRest {
         }
         return null;
     }
+    
+    public String getTranscriptSequences(ArrayList<String> ids, String type)
+            throws ParseException, MalformedURLException, IOException, InterruptedException {
+        String endpoint = "/sequence/id/";
+        ArrayList<String> quoted = new ArrayList<>();
+        for (String i: ids){
+            quoted.add("\"" + i + "\"");
+        }
+        String s = String.join(", ", quoted);
+        String postBody = "{ \"ids\" : [ " + s + " ] }";
+        JSONArray seqs = (JSONArray) getPostJSON(endpoint, postBody);
+        return seqs.toString();
+    }
+  
+    
     //returns hashmap of chromosome, coordinate and assembly
     public HashMap<String, String> cdsToGenomicCoordinate(String id, int coord) throws ParseException, MalformedURLException, IOException, InterruptedException {
         String endpoint = "/map/cds/" + id +"/"+ coord + ".." + coord;
@@ -273,7 +296,7 @@ public class EnsemblRest {
         return transcriptIds;
     }
 
-  
+    
     public JSONArray getVariants(String species, String symbol) throws ParseException, MalformedURLException, IOException, InterruptedException {
         String id = getGeneID(species, symbol);
         return (JSONArray) getJSON("/overlap/id/"+id+"?feature=variation");
@@ -294,27 +317,32 @@ public class EnsemblRest {
         return PARSER.parse(jsonString);
     }
 
+    public Object getPostJSON(String endpoint, String postBody) 
+            throws ParseException, MalformedURLException, IOException, InterruptedException {
+        String jsonString = getPostContent(endpoint, postBody);
+        return PARSER.parse(jsonString);
+    }
     
     public String getContent(String endpoint) throws MalformedURLException, IOException, InterruptedException {
 
-    if(requestCount == 15) { // check every 15
-      long currentTime = System.currentTimeMillis();
-      long diff = currentTime - lastRequestTime;
-      //if less than a second then sleep for the remainder of the second
-      if(diff < 1000) {
-        Thread.sleep(1000 - diff);
-      }
-      //reset
-      lastRequestTime = System.currentTimeMillis();
-      requestCount = 0;
-    }
+        if(requestCount == 15) { // check every 15
+          long currentTime = System.currentTimeMillis();
+          long diff = currentTime - lastRequestTime;
+          //if less than a second then sleep for the remainder of the second
+          if(diff < 1000) {
+            Thread.sleep(1000 - diff);
+          }
+          //reset
+          lastRequestTime = System.currentTimeMillis();
+          requestCount = 0;
+        }
 
-    URL url = new URL(SERVER+endpoint);
-    URLConnection connection = url.openConnection();
-    HttpURLConnection httpConnection = (HttpURLConnection)connection;
-    httpConnection.setRequestProperty("Content-Type", "application/json");
+        URL url = new URL(SERVER+endpoint);
+        URLConnection connection = url.openConnection();
+        HttpURLConnection httpConnection = (HttpURLConnection)connection;
+        httpConnection.setRequestProperty("Content-Type", "application/json");
 
-    InputStream response = httpConnection.getInputStream();
+        InputStream response = httpConnection.getInputStream();
         int responseCode = httpConnection.getResponseCode();
 
         if(responseCode != 200) {
@@ -352,6 +380,75 @@ public class EnsemblRest {
 
         return output;
     }
+    
+    public String getPostContent(String endpoint, String postBody) throws MalformedURLException, IOException, InterruptedException {
+
+        if(requestCount == 15) { // check every 15
+          long currentTime = System.currentTimeMillis();
+          long diff = currentTime - lastRequestTime;
+          //if less than a second then sleep for the remainder of the second
+          if(diff < 1000) {
+            Thread.sleep(1000 - diff);
+          }
+          //reset
+          lastRequestTime = System.currentTimeMillis();
+          requestCount = 0;
+        }
+
+        URL url = new URL(SERVER+endpoint);
+        URLConnection connection = url.openConnection();
+        HttpURLConnection httpConnection = (HttpURLConnection)connection;
+        httpConnection.setRequestMethod("POST");
+        httpConnection.setRequestProperty("Content-Type", "application/json");
+        httpConnection.setRequestProperty("Accept", "application/json");
+        httpConnection.setRequestProperty("Content-Length", Integer.toString(postBody.getBytes().length));
+        httpConnection.setUseCaches(false);
+        httpConnection.setDoInput(true);
+        httpConnection.setDoOutput(true);
+        
+        DataOutputStream wr = new DataOutputStream(httpConnection.getOutputStream());
+        wr.writeBytes(postBody);
+        wr.flush();
+        wr.close();
+
+        InputStream response = connection.getInputStream();
+        int responseCode = httpConnection.getResponseCode();
+
+        if(responseCode != 200) {
+            if(responseCode == 429 && httpConnection.getHeaderField("Retry-After") != null) {
+                double sleepFloatingPoint = Double.valueOf(httpConnection.getHeaderField("Retry-After"));
+                double sleepMillis = 1000 * sleepFloatingPoint;
+                Thread.sleep((long)sleepMillis);
+                return getContent(endpoint);
+            }
+            throw new RuntimeException("Response code was not 200. Detected response was "+responseCode);
+        }
+
+        String output;
+        Reader reader = null;
+        try {
+            reader = new BufferedReader(new InputStreamReader(response, "UTF-8"));
+            StringBuilder builder = new StringBuilder();
+            char[] buffer = new char[8192];
+            int read;
+            while ((read = reader.read(buffer, 0, buffer.length)) > 0) {
+                builder.append(buffer, 0, read);
+            }
+            output = builder.toString();
+        } 
+        finally {
+            if (reader != null) {
+                try {
+                    reader.close(); 
+                } 
+                    catch (IOException logOrIgnore) {
+                    logOrIgnore.printStackTrace();
+                }
+            }
+        }
+        return output;
+    }
+    
     
     static class SpeciesComparator<T extends String> implements Comparator<T> {
         
