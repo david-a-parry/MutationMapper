@@ -66,8 +66,6 @@ public class MutationMapper extends Application implements Initializable{
     @FXML
     TextField sequenceTextField;
     @FXML
-    TextField positionTextField;
-    @FXML
     TextField mutationTextField;
     @FXML
     Label progressLabel;
@@ -139,26 +137,7 @@ public class MutationMapper extends Application implements Initializable{
                     @Override
                     public void run() {
                         sequenceTextField.setDisable(!newValue.isEmpty());
-                        positionTextField.setDisable(!newValue.isEmpty());
-                    }
-                });
-                
-            }
-        });
-        positionTextField.textProperty().addListener(new ChangeListener<String>(){
-            @Override
-            public void changed(ObservableValue<? extends String> observable,
-                    final String oldValue, final String newValue ){
-                //newValue = newValue.trim();
-                Platform.runLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (! newValue.isEmpty()){ 
-                            cdsTextField.setDisable(true);
-                        }else{
-                            cdsTextField.setDisable(!sequenceTextField.getText().isEmpty());
-                        }
-                    }
+                    }                
                 });
                 
             }
@@ -173,9 +152,7 @@ public class MutationMapper extends Application implements Initializable{
                     @Override
                     public void run() {
                         if (! newValue.isEmpty()){ 
-                            cdsTextField.setDisable(true);
-                        }else{
-                            cdsTextField.setDisable(!positionTextField.getText().isEmpty());
+                            cdsTextField.setDisable(newValue.isEmpty());
                         }
                     }
                 });
@@ -229,7 +206,8 @@ public class MutationMapper extends Application implements Initializable{
                 };
             }
         }else{
-            mapperTask = new Task<List<MutationMapperResult>>(){
+            if (mutationTextField.getText().isEmpty()){
+                mapperTask = new Task<List<MutationMapperResult>>(){
                     @Override
                     protected List<MutationMapperResult> call(){
                         List<MutationMapperResult> results = new ArrayList<>();
@@ -238,6 +216,18 @@ public class MutationMapper extends Application implements Initializable{
                         return results;
                     }
                 };
+            }else{
+                mapperTask = new Task<List<MutationMapperResult>>(){
+                    @Override
+                    protected List<MutationMapperResult> call(){
+                        List<MutationMapperResult> results = new ArrayList<>();
+                        MutationMapperResult result = new MutationMapperResult();
+                        //TO DO!
+                        return results;
+                
+                    }
+                };
+            }
         }
         mapperTask.setOnSucceeded(new EventHandler<WorkerStateEvent>(){
             @Override
