@@ -176,14 +176,20 @@ public class MutationMapper extends Application implements Initializable{
         final Task<List<MutationMapperResult>> mapperTask;
         final String gene = geneTextField.getText();
         if (gene.isEmpty()){
+            //TO DO please enter gene dialog
+            return;
+        }
+        if (cdsTextField.getText().isEmpty() && sequenceTextField.getText().isEmpty()){
+            //TO DO please ender coordinate or matching sequence dialog
             return;
         }
         final String species = (String) speciesChoiceBox.getSelectionModel().getSelectedItem();
         if (species.isEmpty()){
+            //TO DO you must select a species dialog
             return;
         }
         final String cdsCoordinate = cdsTextField.getText();
-        
+        final String sequence = sequenceTextField.getText();
         if (!cdsCoordinate.isEmpty()){
             if (mutationTextField.getText().isEmpty()){
                 mapperTask = 
@@ -206,16 +212,24 @@ public class MutationMapper extends Application implements Initializable{
                 };
             }
         }else{
+            final String seq = sequence.replaceAll("[\\W]", "");//remove non-word chars
+            if (! sequenceIsDna(seq)){
+                System.out.println("Non-DNA characters in sequence field");
+            } 
             if (mutationTextField.getText().isEmpty()){
-                mapperTask = new Task<List<MutationMapperResult>>(){
+                try{
+                    sequenceToCoordinates(gene, species, seq);
+                }catch(Exception ex){
+                    ex.printStackTrace();
+                }
+               mapperTask = new Task<List<MutationMapperResult>>() {
                     @Override
-                    protected List<MutationMapperResult> call(){
-                        List<MutationMapperResult> results = new ArrayList<>();
-                        MutationMapperResult result = new MutationMapperResult();
-                        //TO DO!
-                        return results;
+                    protected List<MutationMapperResult> call()
+                            throws ParseException, MalformedURLException, IOException, InterruptedException{
+                        return sequenceToCoordinates(gene, species, seq);
                     }
                 };
+                
             }else{
                 mapperTask = new Task<List<MutationMapperResult>>(){
                     @Override
@@ -293,12 +307,55 @@ public class MutationMapper extends Application implements Initializable{
         
     }
     
-    /* returns arraylist of comma separated strings for gene symbol, gene ID,
-       transcript ID, chromosome, genomic coordinate, genome
-    */
+    private List<MutationMapperResult> sequenceToCoordinates(String gene, String species, String seq)
+            throws ParseException, MalformedURLException, IOException, InterruptedException{
+        List<MutationMapperResult> results = new ArrayList<>();
+        List<TranscriptDetails> transcripts = getTranscriptsForGene(gene, species);
+        if (transcripts.isEmpty()){
+            return null;
+        }
+        ArrayList<String> t_ids = new ArrayList<>();
+        for (TranscriptDetails t: transcripts){
+            MutationMapperResult result = putBasicTranscriptInfo(t);
+            results.add(result);
+            t_ids.add(t.getTranscriptId());
+        }
+        rest.getTranscriptSequences(t_ids, "cds");
+        return results;
+    }
+    
+    
     private List<MutationMapperResult> codingToGenomic(String gene, String species, 
             String cdsCoordinate) throws ParseException, MalformedURLException, IOException, InterruptedException{
         List<MutationMapperResult> results = new ArrayList<>();
+        List<TranscriptDetails> transcripts = getTranscriptsForGene(gene, species);
+        
+        if (transcripts.isEmpty()){
+            return null;
+        }
+        for (TranscriptDetails t: transcripts){
+            HashMap<String, String> g = rest.codingToGenomicTranscript(
+                    species, t.getTranscriptId(), Integer.parseInt(cdsCoordinate));
+            MutationMapperResult result = putBasicTranscriptInfo(t);
+            result.setCdsCoordinate(Integer.parseInt(cdsCoordinate));
+            result.setChromosome(g.get("chromosome"));
+            result.setCoordinate(Integer.parseInt(g.get("coordinate")));
+            result.setGenome(g.get("assembly"));
+            results.add(result);
+        }
+        return results;
+    }
+    
+    private MutationMapperResult putBasicTranscriptInfo(TranscriptDetails t){
+        MutationMapperResult result = new MutationMapperResult();
+        result.setGeneSymbol(t.getSymbol());
+        result.setGeneId(t.getId());
+        result.setTranscript(t.getTranscriptId());
+        return result;
+    }
+    
+    private List<TranscriptDetails>  getTranscriptsForGene(String gene, String species) 
+            throws ParseException, MalformedURLException, IOException, InterruptedException{
         ArrayList<TranscriptDetails> transcripts = new ArrayList<>();
         String id;
         if(gene.matches("ENS\\w*T\\d{11}.*\\d*")){//is transcript id
@@ -311,23 +368,11 @@ public class MutationMapper extends Application implements Initializable{
             }
             transcripts = rest.getGeneDetails(id);
         }
-        if (transcripts.isEmpty()){
-            return null;
-        }
-        for (TranscriptDetails t: transcripts){
-            HashMap<String, String> g = rest.codingToGenomicTranscript(
-                    species, t.getTranscriptId(), Integer.parseInt(cdsCoordinate));
-            MutationMapperResult result = new MutationMapperResult();
-            result.setGeneSymbol(t.getSymbol());
-            result.setGeneId(t.getId());
-            result.setTranscript(t.getTranscriptId());
-            result.setCdsCoordinate(Integer.parseInt(cdsCoordinate));
-            result.setChromosome(g.get("chromosome"));
-            result.setCoordinate(Integer.parseInt(g.get("coordinate")));
-            result.setGenome(g.get("assembly"));
-            results.add(result);
-        }
-        return results;
+        return transcripts;
+    }
+    
+    private boolean sequenceIsDna(String seq){
+        return !seq.matches("(?i)[^ACTG]");
     }
     
     private void getAvailableSpecies(){
@@ -375,9 +420,12 @@ public class MutationMapper extends Application implements Initializable{
         geneTextField.setDisable(running);
         sequenceTextField.setDisable(running);
         cdsTextField.setDisable(running);
-        positionTextField.setDisable(running);
         mutationTextField.setDisable(running);
         speciesChoiceBox.setDisable(running);
+        if (!running){
+            sequenceTextField.setDisable(!cdsTextField.getText().isEmpty());
+            cdsTextField.setDisable(sequenceTextField.getText().isEmpty());
+        }
     }
                 
     
