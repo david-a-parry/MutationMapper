@@ -5,11 +5,11 @@
  */
 package com.github.mutationmapper;
 
+import com.github.mutationmapper.TranscriptDetails.Exon;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -34,7 +34,6 @@ import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TextField;
-import javafx.scene.image.Image;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
 import javafx.stage.Modality;
@@ -386,13 +385,25 @@ public class MutationMapper extends Application implements Initializable{
             return null;
         }
         //Calculate start and end coordinates of input sequence
-        int matchPos = indices.get(0) + start;
-        int matchEnd = matchPos + seq.length() - 1;
+        int matchPos;
+        int matchEnd;
+        
+        if(revCompMatches){
+            matchEnd = indices.get(0) + start;
+            matchPos = matchEnd + seq.length() - 1;
+        }else{
+            matchPos = indices.get(0) + start;
+            matchEnd = matchPos + seq.length() - 1;
+        
+        }
         
         ArrayList<String> t_ids = new ArrayList<>();
         for (TranscriptDetails t: transcripts){
             MutationMapperResult result = putBasicTranscriptInfo(t);
-            // TO DO - calculate CDS position from genomic position for each transcript
+            // calculate CDS position from genomic position for each transcript
+            String cds_pos_match = getCdsPosition(chrom, matchPos, t);
+            String cds_pos_end = getCdsPosition(chrom, matchEnd, t);
+            result.setCdsCoordinate(String.format("%s-%s", cds_pos_match, cds_pos_end));
             result.setGenome(t.getGenomeBuild());
             result.setChromosome(chrom);
             result.setCoordinate(matchPos);
@@ -416,7 +427,7 @@ public class MutationMapper extends Application implements Initializable{
             HashMap<String, String> g = rest.codingToGenomicTranscript(
                     species, t.getTranscriptId(), Integer.parseInt(cdsCoordinate));
             MutationMapperResult result = putBasicTranscriptInfo(t);
-            result.setCdsCoordinate(Integer.parseInt(cdsCoordinate));
+            result.setCdsCoordinate(cdsCoordinate);
             if (g != null){
                 result.setChromosome(g.get("chromosome"));
                 result.setCoordinate(Integer.parseInt(g.get("coordinate")));
@@ -425,6 +436,204 @@ public class MutationMapper extends Application implements Initializable{
             results.add(result);
         }
         return results;
+    }
+    
+    private String getCdsPosition(String chrom, int pos, TranscriptDetails t){
+        if (! t.isCoding()){
+            return "";
+        }
+        if (pos < t.getTxStart() || pos > t.getTxEnd()){
+            return "";
+        }
+        if (pos < t.getCdsStart() || pos  > t.getCdsEnd()){
+            return getUtrPosition(chrom, pos, t);
+        }
+        ArrayList<Exon> cds = t.getCodingRegions();
+        if (!t.getChromosome().equals(chrom)){
+            return "";
+        }
+        
+        int cds_pos = 0;
+        int intron_pos = 0;
+        StringBuilder cds_string = new StringBuilder();
+
+        boolean isExonic = false;
+        
+        for (int i = 0; i < cds.size(); i++){
+            if ( pos < cds.get(i).getStart()){//pos is before this exons start
+                break;
+            }
+            if (pos > cds.get(i).getEnd()){//pos is after this exon
+                cds_pos += cds.get(i).getLength();
+            }else{//pos is within exon
+                cds_pos += pos - cds.get(i).getStart() + 1;
+                isExonic = true; 
+                break;
+            }
+        }
+        
+        if (!isExonic){
+            for (int i = 0; i < cds.size() -1; i++){
+                if (pos >= cds.get(i).getEnd() && pos < cds.get(i+1).getStart()){
+                    Integer donor_pos = pos - cds.get(i).getEnd();
+                    Integer acceptor_pos = pos - cds.get(i+1).getStart();
+                    if (Math.abs(donor_pos) <= Math.abs(acceptor_pos)){
+                        intron_pos = donor_pos;
+                    }else{
+                        intron_pos = acceptor_pos;
+                        if (cds_pos < t.getCodingLength()){
+                            cds_pos++;
+                        }else{
+                            /*
+                            intronic position is actually after STOP codon
+                            but pre the first UTR exon
+                            */
+                            if (t.getStrand() < 0){// on - strand so actually 5'UTR
+                                intron_pos *= -1;
+                                cds_string.append("c.-1");
+                            }else{//if on + strand is 3' UTR
+                                cds_string.append("c.*1");
+                            }
+                            if (intron_pos > 0){
+                                cds_string.append("+");
+                            }
+                            cds_string.append(intron_pos);
+                            return cds_string.toString();
+                        }
+                    }
+                }
+            }
+        }
+        
+        if (t.getStrand() < 0){
+            intron_pos *= -1;
+            cds_pos = t.getCodingLength() - cds_pos + 1;
+        }
+        cds_string.append("c.").append(cds_pos);
+        if (intron_pos != 0){
+            if (intron_pos > 0){
+                cds_string.append("+");
+            }
+            cds_string.append(intron_pos);
+        }
+        return cds_string.toString();
+    }
+    
+    private String getUtrPosition(String chrom, int pos, TranscriptDetails t){
+        if (! t.isCoding()){
+            return "";
+        }
+        if (pos > t.getCdsStart() && pos  <= t.getCdsEnd()){
+            //Should we throw an exepction here?
+            return "";
+        }
+        if (!t.getChromosome().equals(chrom)){
+            return "";
+        }
+        StringBuilder utr_string = new StringBuilder();
+        int utr_pos = 0;
+        int intron_pos = 0;
+        
+        ArrayList<Exon> exons = t.getExons();
+        boolean isExonic = false;
+        if (pos < t.getCdsStart()){
+            int utr_length = 0;
+            for (int i = 0; i < exons.size(); i++){
+                if (exons.get(i).getStart() > t.getCdsStart()){//exon is in CDS
+                    break;
+                }
+                if (exons.get(i).getEnd() < t.getCdsStart()){//whole exon is pre-CDS
+                    utr_length += exons.get(i).getLength();
+                    if (pos > exons.get(i).getEnd()){
+                        utr_pos += exons.get(i).getLength();
+                    }else if(pos >= exons.get(i).getStart()){
+                        utr_pos += pos - exons.get(i).getStart() ;
+                        isExonic = true;
+                    }
+                }else{//cds start is within exon
+                    utr_length += t.getCdsStart() - exons.get(i).getStart() ;
+                    if (pos >= exons.get(i).getStart()){
+                        utr_pos += pos - exons.get(i).getStart() ;
+                        isExonic = true;
+                    }
+                    break;
+                }
+            }
+            utr_pos = utr_length - utr_pos;
+            utr_pos *= -1;
+        }else{
+            for (int i = 0; i < exons.size(); i++){
+                if (exons.get(i).getEnd() < t.getCdsEnd()){//exon is before or within CDS
+                    continue;
+                }
+                if (exons.get(i).getStart() > t.getCdsEnd()){//whole exon is post CDS
+                    if (pos > exons.get(i).getEnd()){
+                        utr_pos += exons.get(i).getLength();
+                    }else if (pos >= exons.get(i).getStart() ){
+                        utr_pos += pos - exons.get(i).getStart();
+                        isExonic = true;
+                        break;
+                    }
+                }else{//cds end is in exon
+                    if (pos >= t.getCdsEnd() && pos <= exons.get(i).getEnd()){
+                        utr_pos += pos - t.getCdsEnd();
+                        isExonic = true;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        if (!isExonic){
+            for (int i = 0; i < exons.size() -1; i++){
+                if (pos >= exons.get(i).getEnd() && pos < exons.get(i+1).getStart()){
+                    Integer donor_pos = pos - exons.get(i).getEnd();
+                    Integer acceptor_pos = pos - exons.get(i+1).getStart();
+                    if (Math.abs(donor_pos) <= Math.abs(acceptor_pos)){
+                        intron_pos = donor_pos;
+                    }else{
+                        intron_pos = acceptor_pos;
+                        if (utr_pos != -1){
+                            utr_pos++;
+                        }else{
+                            /*
+                            intronic position is actually before first coding base
+                            */
+                            if (t.getStrand() < 0){// on - strand so actually just after last coding base
+                                intron_pos *= -1;
+                                utr_string.append("c.").append(t.getCodingLength());
+                            }else{//if on + strand is 3' UTR
+                                utr_string.append("c.1");
+                            }
+                            if (intron_pos > 0){
+                                utr_string.append("+");
+                            }
+                            utr_string.append(intron_pos);
+                            return utr_string.toString();
+                        }
+                    }
+                }
+            }
+        }
+        
+        if (t.getStrand() < 0){
+            intron_pos *= -1;
+            utr_pos = t.getCodingLength() - utr_pos + 1;
+        }
+        if (utr_pos > 0){
+            utr_string.append("c.*").append(utr_pos);
+        }else{
+            utr_string.append("c.").append(utr_pos);
+        }
+        if (intron_pos != 0){
+            if (intron_pos > 0){
+                utr_string.append("+");
+            }
+            utr_string.append(intron_pos);
+        }
+        return utr_string.toString();
+        
+        
     }
     
     private MutationMapperResult putBasicTranscriptInfo(TranscriptDetails t){
