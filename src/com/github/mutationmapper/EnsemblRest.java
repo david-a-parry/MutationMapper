@@ -159,6 +159,10 @@ public class EnsemblRest {
                }
            }
        }
+       
+       if (j.containsKey("seq_region_name")){
+            trans.setChromosome((String) j.get("seq_region_name"));
+        }
 
       //get transcription start and end
        if (j.containsKey("start")){
