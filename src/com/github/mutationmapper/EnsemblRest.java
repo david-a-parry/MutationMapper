@@ -5,7 +5,7 @@
  */
 package com.github.mutationmapper;
 
-import com.github.mutationmapper.GeneDetails.Exon;
+import com.github.mutationmapper.TranscriptDetails.Exon;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -56,22 +56,64 @@ public class EnsemblRest {
         return species;
     }
     
-    public ArrayList<TranscriptDetails> getGeneDetails(String id) throws ParseException, MalformedURLException, IOException, InterruptedException {
+    public String getDna(String chrom, int start, int end, String species)throws ParseException, MalformedURLException, IOException, InterruptedException {
+        String endpoint = String.format("/sequence/region/%s/%s:%d..%d:1?", 
+                species, chrom, start, end);
+        JSONObject info = (JSONObject) getJSON(endpoint);
+        if(info.isEmpty()) {
+          throw new RuntimeException("Got nothing for endpoint "+ endpoint);
+        }
+        if (info.containsKey("seq")){
+            return (String) info.get("seq");
+        }
+        return null;
+    }
+    
+    public GeneDetails getGeneDetails(String id) throws ParseException, MalformedURLException, IOException, InterruptedException {
+        GeneDetails gene = new GeneDetails();
         ArrayList<TranscriptDetails> transcripts = new ArrayList<>();
         String endpoint = "/lookup/id/"+id+"?expand=1";
         JSONObject info = (JSONObject) getJSON(endpoint);
         if(info.isEmpty()) {
           throw new RuntimeException("Got nothing for endpoint "+ endpoint);
         }
+        if (info.containsKey("display_name")){
+            gene.setSymbol((String) info.get("display_name"));
+        }
+        if (info.containsKey("id")){
+            gene.setId((String) info.get("id"));
+        }
+        if (info.containsKey("seq_region_name")){
+            gene.setChromosome((String) info.get("seq_region_name"));
+        }
+        if (info.containsKey("strand")){
+            Long strand = (Long) info.get("strand");
+            gene.setStrand(strand.intValue());
+        }
+        if (info.containsKey("start")){
+            Long start = (Long) info.get("start");
+            gene.setStart(start.intValue());
+        }
+        if (info.containsKey("end")){
+            Long end = (Long) info.get("end");
+            gene.setEnd(end.intValue());
+        }
+        if (info.containsKey("assembly_name")){
+            gene.setGenomeBuild((String) info.get("assembly_name"));
+        }
         if (info.containsKey("Transcript")){
             JSONArray trs = (JSONArray) info.get("Transcript");
             for (Object t: trs){
                JSONObject j = (JSONObject) t;
                TranscriptDetails trans = getTranscriptDetailsFromJson(j);
+               trans.setSymbol(gene.getSymbol());
+               trans.setId(gene.getId());
+               trans.setGenomeBuild(gene.getGenomeBuild());
                transcripts.add(trans);
             }
         }
-        return transcripts;
+        gene.setTranscripts(transcripts);
+        return gene;
     }
     
     public TranscriptDetails getTranscriptDetails(String id) throws ParseException, MalformedURLException, IOException, InterruptedException {
@@ -89,9 +131,9 @@ public class EnsemblRest {
         String biotype = (String)j.get("biotype");
         if (j.containsKey("strand")){
            if ((Long) j.get("strand") > 0){
-               trans.setStrand("+");
+               trans.setStrand(1);
            }else{
-               trans.setStrand("-");
+               trans.setStrand(-1);
            }
        }
        //get exons
@@ -162,6 +204,11 @@ public class EnsemblRest {
         if (tr.isEmpty()){
             System.out.println("No protein coding transcripts found for " + id);
             return null;
+        }else{
+            String biotype = (String)tr.get("biotype");
+           if (! biotype.equals("protein_coding")){
+              return null;
+           }
         }
       
         String seq = getTranscriptSequence(id, "cds");
@@ -192,7 +239,7 @@ public class EnsemblRest {
         ArrayList<HashMap<String, String>> coordinates = new ArrayList<>();
         ArrayList<String> tr = getTranscriptIds(id);
         if (tr.isEmpty()){
-            System.out.println("No protein coding transcripts found for " + symbol
+            System.out.println("No transcripts found for " + symbol
                     + " (" + id + ")");
             return null;
         }
@@ -220,7 +267,7 @@ public class EnsemblRest {
                             + "length of CDS (" + seq.length() + ") for " + t);
                 }
             }else{
-                System.out.println("ERROR: No CDS sequence found for " + t);
+                System.out.println("WARNING: No CDS sequence found for " + t);
             }
         }
         return coordinates;
@@ -229,9 +276,13 @@ public class EnsemblRest {
   
     public String getTranscriptSequence(String id, String type) throws ParseException, MalformedURLException, IOException, InterruptedException {
         String endpoint = "/sequence/id/" + id + "?type=" + type;
-        JSONObject sequence = (JSONObject) getJSON(endpoint);
-        if (sequence.containsKey("seq")){
-            return (String) sequence.get("seq");
+        try{
+            JSONObject sequence = (JSONObject) getJSON(endpoint);
+            if (sequence.containsKey("seq")){
+                return (String) sequence.get("seq");
+            }
+        }catch(ParseException | IOException | InterruptedException ex){
+            ex.printStackTrace();
         }
         return null;
     }
@@ -287,10 +338,7 @@ public class EnsemblRest {
             JSONArray trs = (JSONArray) info.get("Transcript");
             for (Object t: trs){
                JSONObject j = (JSONObject) t;
-               String biotype = (String)j.get("biotype");
-               if (biotype.equals("protein_coding")){
-                   transcriptIds.add((String) j.get("id"));
-               }
+               transcriptIds.add((String) j.get("id"));
             }
         }
         return transcriptIds;
