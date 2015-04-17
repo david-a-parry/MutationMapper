@@ -200,10 +200,17 @@ public class MutationMapperResult {
         if (chromosome == null || coordinate == null){
             return "";
         }
-        if (genome == null){
-            return chromosome + ":" + coordinate;
+        String c;
+        if (matchingSequence != null && !matchingSequence.isEmpty()){
+            int endPos = coordinate + matchingSequence.length() - 1;
+            c = String.format("%d-%d", coordinate, endPos);
+        }else{
+            c = coordinate.toString();
         }
-        return chromosome + ":" + coordinate + " (" + genome + ")";
+        if (genome == null){
+            return chromosome + ":" + c;
+        }
+        return chromosome + ":" + c + " (" + genome + ")";
     }
     
     public String getKnownVar(){
