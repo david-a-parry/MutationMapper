@@ -17,7 +17,7 @@ public class MutationMapperResult {
     private String geneSymbol;
     private String geneId;
     private String transcript;
-    private Integer cdsCoordinate;
+    private String cdsCoordinate;
     private String matchingSequence;
     private String mutation;
     private String refAllele;
@@ -34,13 +34,13 @@ public class MutationMapperResult {
     }
     
     MutationMapperResult(String chrom, Integer coord, String build, String symbol,
-            String id, String transId, Integer cdsCoord){
+            String id, String transId, String cdsCoord){
         this (chrom, coord, build, symbol, id, transId, cdsCoord, null, null, 
                 null, null, null, null, null, null);
     }
     
     MutationMapperResult(String chrom, Integer coord, String build, String symbol,
-            String id, String transId, Integer cdsCoord, String seq, String mut,
+            String id, String transId, String cdsCoord, String seq, String mut,
             String ref, String var ){
         this (chrom, coord, build, symbol, id, transId, cdsCoord, seq, mut, ref, 
                 var, null, null, null, null);
@@ -48,7 +48,7 @@ public class MutationMapperResult {
     
     
     MutationMapperResult(String chrom, Integer coord, String build, String symbol,
-            String id, String transId, Integer cdsCoord, String seq, String mut, 
+            String id, String transId, String cdsCoord, String seq, String mut, 
             String ref, String var, String cCons, String pCons, String snpId, Double freq){
         
         chromosome = chrom;
@@ -96,7 +96,7 @@ public class MutationMapperResult {
         transcript = id;
     }
     
-    public void setCdsCoordinate(Integer c){
+    public void setCdsCoordinate(String c){
         cdsCoordinate = c;
     }
     
@@ -160,7 +160,7 @@ public class MutationMapperResult {
         return transcript;
     }
     
-    public Integer getCdsCoordinate(){
+    public String getCdsCoordinate(){
         return cdsCoordinate;
     }
     
