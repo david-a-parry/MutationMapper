@@ -256,7 +256,7 @@ public class TranscriptDetails {
         }
         public Integer getLength(){
             if (start != null && end != null){
-                return start - end;
+                return end - start + 1;
             }else{
                 return null;
             }
