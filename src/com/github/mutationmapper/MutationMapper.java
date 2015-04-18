@@ -103,12 +103,9 @@ public class MutationMapper extends Application implements Initializable{
             //primaryStage.getIcons().add(new Image(this.getClass().
             //        getResourceAsStream("icon.png")));
             scene.getStylesheets().add(com.github.mutationmapper.MutationMapper.class.getResource("mmapper.css").toExternalForm());
-            primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
-               @Override
-               public void handle(WindowEvent e) {
-                  Platform.exit();
-                  System.exit(0);
-               }
+            primaryStage.setOnCloseRequest((WindowEvent e) -> {
+                Platform.exit();
+                System.exit(0);
             });
             
         } catch (Exception ex) {
@@ -120,51 +117,30 @@ public class MutationMapper extends Application implements Initializable{
     public void initialize(URL url, ResourceBundle rb) {
         tableLoader = new FXMLLoader(getClass().
                                        getResource("MutationMapperResultView.fxml"));
-        Platform.runLater(new Runnable() {
-                @Override
-                public void run() {
-                    geneTextField.requestFocus();
-                }
-            }
-        );
-        
-        cdsTextField.textProperty().addListener(new ChangeListener<String>(){
-            @Override
-            public void changed(ObservableValue<? extends String> observable,
-                    final String oldValue, final String newValue ){
-                //newValue = newValue.trim();
-                Platform.runLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        sequenceTextField.setDisable(!newValue.isEmpty());
-                    }                
-                });
-                
-            }
+        Platform.runLater(() -> {
+            geneTextField.requestFocus();
         });
         
-        sequenceTextField.textProperty().addListener(new ChangeListener<String>(){
-            @Override
-            public void changed(ObservableValue<? extends String> observable,
-                    final String oldValue, final String newValue ){
-                //newValue = newValue.trim();
-                Platform.runLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        cdsTextField.setDisable(!newValue.isEmpty());
-                    }
-                });
-                
-            }
+        cdsTextField.textProperty().addListener(
+                (ObservableValue<? extends String> observable, final String oldValue, final String newValue) -> {
+            //newValue = newValue.trim();
+            Platform.runLater(() -> {
+                sequenceTextField.setDisable(!newValue.isEmpty());
+            });
+        });
+        
+        sequenceTextField.textProperty().addListener(
+                (ObservableValue<? extends String> observable, final String oldValue, final String newValue) -> {
+            //newValue = newValue.trim();
+            Platform.runLater(() -> {
+                cdsTextField.setDisable(!newValue.isEmpty());
+            });
         });
         
         runButton.setDefaultButton(true);
-        runButton.setOnAction(new EventHandler<ActionEvent>(){
-           @Override
-           public void handle(ActionEvent actionEvent){
-                mapMutation();
-            }
-       });
+        runButton.setOnAction((ActionEvent actionEvent) -> {
+            mapMutation();
+        });
         
         getAvailableSpecies();
         
@@ -211,94 +187,17 @@ public class MutationMapper extends Application implements Initializable{
             }
         }else{
             final String seq = sequence.replaceAll("[\\W]", "");//remove non-word chars
+            if (! sequenceIsDna(seq)){
+                System.out.println("Non-DNA characters in sequence field");
+                return;
+            } 
             if (mutationTextField.getText().isEmpty()){
                 mapperTask = new Task<List<MutationMapperResult>>() {
                     @Override
                     protected List<MutationMapperResult> call()
-                            throws ParseException, MalformedURLException, IOException, InterruptedException{
-                        if (! sequenceIsDna(seq)){
-                            System.out.println("Non-DNA characters in sequence field");
-                            return null;
-                        } 
+                            throws ParseException, MalformedURLException, IOException, InterruptedException{                        
                         updateProgress(-1, -1);
-                        List<MutationMapperResult> results = new ArrayList<>();
-                        List<TranscriptDetails> transcripts = new ArrayList<>();
-                        String chrom;
-                        int start;
-                        int end; 
-                        updateMessage("Searching Genes");
-                        if (isTranscriptId(gene)){
-                            TranscriptDetails t = rest.getTranscriptDetails(gene);
-                            chrom = t.getChromosome();
-                            start = t.getTxStart();
-                            end = t.getTxEnd();
-                            transcripts.add(t);
-                        }else{
-                            GeneDetails g = new GeneDetails();
-                            if (isGeneId(gene)){
-                                g = rest.getGeneDetails(gene);
-                            }else{
-                                String id = rest.getGeneID(species, gene);
-                                g = rest.getGeneDetails(id);
-                            }
-                            chrom = g.getChromosome();
-                            start = g.getStart();
-                            end = g.getEnd();
-                            transcripts = g.getTranscripts();   
-                        }
-                        if (transcripts.isEmpty()){
-                            return null;
-                        }
-                        updateMessage("Found transcripts - getting DNA");
-                        String dna = getDna(chrom, start, end, species);
-                        updateMessage("Searching DNA for input sequence...");
-                        boolean revCompMatches = false;
-                        List<Integer> indices = searchDna(dna, seq);
-                        List<Integer> rcIndices = searchDna(
-                                dna, ReverseComplementDNA.reverseComplement(seq));
-                        if (!rcIndices.isEmpty()){
-                            revCompMatches = true;
-                            indices.addAll(rcIndices);
-                        }
-                        if (indices.isEmpty()){
-                            //TO DO - throw an error
-                            System.out.println("ERROR: No matches for seq");
-                            return null;
-                        }
-                        if (indices.size() > 1){
-                            //TO DO - throw an error
-                            System.out.println("ERROR: Seq matches multiple (" + indices.size() + ") times.");
-                            return null;
-                        }
-                        //Calculate start and end coordinates of input sequence
-                        int matchPos;
-                        int matchEnd;
-
-                        if(revCompMatches){
-                            matchEnd = indices.get(0) + start;
-                            matchPos = matchEnd + seq.length() - 1;
-                        }else{
-                            matchPos = indices.get(0) + start;
-                            matchEnd = matchPos + seq.length() - 1;
-
-                        }
-
-                        updateMessage("Formatting results.");
-                        ArrayList<String> t_ids = new ArrayList<>();
-                        for (TranscriptDetails t: transcripts){
-                            MutationMapperResult result = putBasicTranscriptInfo(t);
-                            // calculate CDS position from genomic position for each transcript
-                            String cds_pos_match = getCdsPosition(chrom, matchPos, t);
-                            String cds_pos_end = getCdsPosition(chrom, matchEnd, t);
-                            result.setCdsCoordinate(String.format("%s-%s", cds_pos_match, cds_pos_end));
-                            result.setGenome(t.getGenomeBuild());
-                            result.setChromosome(chrom);
-                            result.setCoordinate(matchPos);
-                            result.setMatchingSequence(seq);
-                            results.add(result);
-                            t_ids.add(t.getTranscriptId());
-                        }
-                        return results;
+                        return sequenceToGenomic(gene, species, seq);
                     }
                 };
                 
@@ -315,101 +214,159 @@ public class MutationMapper extends Application implements Initializable{
                 };
             }
         }
-        mapperTask.setOnSucceeded(new EventHandler<WorkerStateEvent>(){
-            @Override
-            public void handle (WorkerStateEvent e){
-                 Platform.runLater(new Runnable() {
-                            @Override
-                            public void run() {
-                                setRunning(false);
-                                progressLabel.textProperty().unbind();
-                                progressLabel.setText("");
-                                progressIndicator.progressProperty().unbind();
-                                progressIndicator.progressProperty().set(0);
-                                
-                            }
-                 });
-                ArrayList<MutationMapperResult> results = 
-                        (ArrayList<MutationMapperResult>) e.getSource().getValue();
-                if (results == null){
-                    return;
+        mapperTask.setOnSucceeded((WorkerStateEvent e) -> {
+            Platform.runLater(() -> {
+                setRunning(false);
+                progressLabel.textProperty().unbind();
+                progressLabel.setText("");
+                progressIndicator.progressProperty().unbind();
+                progressIndicator.progressProperty().set(0);
+            });
+            ArrayList<MutationMapperResult> results =
+                    (ArrayList<MutationMapperResult>) e.getSource().getValue();
+            if (results == null){
+                return;
+            } 
+            try{
+                if (tablePane == null){
+                    tablePane = (Pane) tableLoader.load();
                 }
-                try{
-                    if (tablePane == null){
-                        tablePane = (Pane) tableLoader.load();
-                    }
-                    if (resultView == null){
-                        resultView = 
+                if (resultView == null){
+                    resultView =
                             (MutationMapperResultViewController) tableLoader.getController();
-                    }
-                    if (tableScene == null){
-                        tableScene = new Scene(tablePane);
-                        tableStage = new Stage();
-                        tableStage.setScene(tableScene);
-                        tableStage.initModality(Modality.NONE);
-                    }Platform.runLater(new Runnable() {
-                            @Override
-                            public void run() {
-                            resultView.displayData(results);
-                            tableStage.setTitle("MutationMapper Results");
-                            //tableStage.getIcons().add(new Image(this.getClass()
-                            //        .getResourceAsStream("icon.png")));
-                            if (!tableStage.isShowing()){
-                                    tableStage.show();
-                            }else{
-                                tableStage.requestFocus();
-                            }
-                            }
-                    });
-                }catch(Exception ex){
-                    //TO DO - show error dialog
-                    ex.printStackTrace();
                 }
-
-                
+                if (tableScene == null){
+                    tableScene = new Scene(tablePane);
+                    tableStage = new Stage();
+                    tableStage.setScene(tableScene);
+                    tableStage.initModality(Modality.NONE);
+                }Platform.runLater(() -> {
+                    resultView.displayData(results);
+                    tableStage.setTitle("MutationMapper Results");
+                    //tableStage.getIcons().add(new Image(this.getClass()
+                    //        .getResourceAsStream("icon.png")));
+                    if (!tableStage.isShowing()){
+                        tableStage.show();
+                    }else{
+                        tableStage.requestFocus();
+                    }
+                });
+            }catch(Exception ex){
+                //TO DO - show error dialog
+                ex.printStackTrace();
             }
-
         });
         
-        mapperTask.setOnCancelled(new EventHandler<WorkerStateEvent>(){
-                @Override
-                public void handle (WorkerStateEvent e){
-                     Platform.runLater(new Runnable() {
-                            @Override
-                            public void run() {
-                            setRunning(false);
-                            progressLabel.textProperty().unbind();
-                            progressLabel.setText("Cancelled");
-                            progressIndicator.progressProperty().unbind();
-                            progressIndicator.progressProperty().set(0);
-
-                        }
-                     });
-                }
+        mapperTask.setOnCancelled((WorkerStateEvent e) -> {
+            Platform.runLater(() -> {
+                setRunning(false);
+                progressLabel.textProperty().unbind();
+                progressLabel.setText("Cancelled");
+                progressIndicator.progressProperty().unbind();
+                progressIndicator.progressProperty().set(0);
+            });
         });
                  
-         mapperTask.setOnFailed(new EventHandler<WorkerStateEvent>(){
-            @Override
-                public void handle (WorkerStateEvent e){
-                     Platform.runLater(new Runnable() {
-                            @Override
-                            public void run() {
-                            setRunning(false);
-                            progressLabel.textProperty().unbind();
-                            progressLabel.setText("Failed!");
-                            progressIndicator.progressProperty().unbind();
-                            progressIndicator.progressProperty().set(0);
-
-                        }
-                     });
-                }
+         mapperTask.setOnFailed((WorkerStateEvent e) -> {
+             Platform.runLater(() -> {
+                 setRunning(false);
+                 progressLabel.textProperty().unbind();
+                 progressLabel.setText("Failed!");
+                 progressIndicator.progressProperty().unbind();
+                 progressIndicator.progressProperty().set(0);
+             });
         });
         progressIndicator.progressProperty().bind(mapperTask.progressProperty());
         progressLabel.textProperty().bind(mapperTask.messageProperty());
+        runButton.setOnAction((ActionEvent actionEvent) -> {
+            mapperTask.cancel();
+        });
         new Thread(mapperTask).start();
         setRunning(true);
         
         
+    }
+    
+    private List<MutationMapperResult> sequenceToGenomic(String gene, String species, String seq)
+            throws ParseException, MalformedURLException, IOException, InterruptedException{
+        List<MutationMapperResult> results = new ArrayList<>();
+        List<TranscriptDetails> transcripts = new ArrayList<>();
+        String chrom;
+        int start;
+        int end; 
+        //updateMessage("Searching Genes");
+        if (isTranscriptId(gene)){
+            TranscriptDetails t = rest.getTranscriptDetails(gene);
+            chrom = t.getChromosome();
+            start = t.getTxStart();
+            end = t.getTxEnd();
+            transcripts.add(t);
+        }else{
+            GeneDetails g;
+            if (isGeneId(gene)){
+                g = rest.getGeneDetails(gene);
+            }else{
+                String id = rest.getGeneID(species, gene);
+                g = rest.getGeneDetails(id);
+            }
+            chrom = g.getChromosome();
+            start = g.getStart();
+            end = g.getEnd();
+            transcripts = g.getTranscripts();   
+        }
+        if (transcripts.isEmpty()){
+            return null;
+        }
+        //updateMessage("Found transcripts - getting DNA");
+        String dna = getDna(chrom, start, end, species);
+        //updateMessage("Searching DNA for input sequence...");
+        boolean revCompMatches = false;
+        List<Integer> indices = searchDna(dna, seq);
+        List<Integer> rcIndices = searchDna(
+                dna, ReverseComplementDNA.reverseComplement(seq));
+        if (!rcIndices.isEmpty()){
+            revCompMatches = true;
+            indices.addAll(rcIndices);
+        }
+        if (indices.isEmpty()){
+            //TO DO - throw an error
+            System.out.println("ERROR: No matches for seq");
+            return null;
+        }
+        if (indices.size() > 1){
+            //TO DO - throw an error
+            System.out.println("ERROR: Seq matches multiple (" + indices.size() + ") times.");
+            return null;
+        }
+        //Calculate start and end coordinates of input sequence
+        int matchPos;
+        int matchEnd;
+
+        if(revCompMatches){
+            matchEnd = indices.get(0) + start;
+            matchPos = matchEnd + seq.length() - 1;
+        }else{
+            matchPos = indices.get(0) + start;
+            matchEnd = matchPos + seq.length() - 1;
+
+        }
+
+        //updateMessage("Formatting results.");
+        //ArrayList<String> t_ids = new ArrayList<>();
+        for (TranscriptDetails t: transcripts){
+            MutationMapperResult result = putBasicTranscriptInfo(t);
+            // calculate CDS position from genomic position for each transcript
+            String cds_pos_match = getCdsPosition(chrom, matchPos, t);
+            String cds_pos_end = getCdsPosition(chrom, matchEnd, t);
+            result.setCdsCoordinate(String.format("%s-%s", cds_pos_match, cds_pos_end));
+            result.setGenome(t.getGenomeBuild());
+            result.setChromosome(chrom);
+            result.setCoordinate(matchPos);
+            result.setMatchingSequence(seq);
+            results.add(result);
+            //t_ids.add(t.getTranscriptId());
+        }
+        return results;
     }
     
     private String getDna(String chrom, int start, int end, String species)
@@ -422,7 +379,7 @@ public class MutationMapper extends Application implements Initializable{
         String lcSeq = seq.toLowerCase();
         int index = lcDna.indexOf(lcSeq);
         List<Integer> indices = new ArrayList<>();
-                while (index >= 0){
+        while (index >= 0){
             indices.add(index);
             index = lcDna.indexOf(lcSeq, index + 1);
         }
@@ -698,27 +655,18 @@ public class MutationMapper extends Application implements Initializable{
             }
         };
         
-        getSpeciesTask.setOnSucceeded(new EventHandler<WorkerStateEvent>(){
-            @Override
-            public void handle (WorkerStateEvent e){
-                List<String> species = (List<String>) e.getSource().getValue();
-                Platform.runLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        speciesChoiceBox.getItems().clear();
-                        speciesChoiceBox.getItems().addAll(species);
-                        speciesChoiceBox.getSelectionModel().selectFirst();
-                    }
-                });
-            }
+        getSpeciesTask.setOnSucceeded((WorkerStateEvent e) -> {
+            List<String> species = (List<String>) e.getSource().getValue();
+            Platform.runLater(() -> {
+                speciesChoiceBox.getItems().clear();
+                speciesChoiceBox.getItems().addAll(species);
+                speciesChoiceBox.getSelectionModel().selectFirst();
+            });
         });
         getSpeciesTask.setOnCancelled(null);
-        getSpeciesTask.setOnFailed(new EventHandler<WorkerStateEvent>(){
-            @Override
-            public void handle (WorkerStateEvent e){
-                //TO DO - ERROR DIALOG
-                e.getSource().getException().printStackTrace();
-            }
+        getSpeciesTask.setOnFailed((WorkerStateEvent e) -> {
+            //TO DO - ERROR DIALOG
+            e.getSource().getException().printStackTrace();
         });
         new Thread(getSpeciesTask).start();
     }
@@ -740,10 +688,13 @@ public class MutationMapper extends Application implements Initializable{
         }
         if (running){
             runButton.setText("Cancel");
-            runButton.setDefaultButton(true);
+            runButton.setCancelButton(true);
         }else{
             runButton.setText("Run");
             runButton.setDefaultButton(true);
+            runButton.setOnAction((ActionEvent actionEvent) -> {
+                mapMutation();
+            });
         }
     }
                 
