@@ -43,6 +43,7 @@ public class TranscriptDetails {
     private Integer proteinLength;
     private Boolean isCanonical;
     private String genomeBuild;
+    private String biotype;
     private ArrayList<Exon> exons = new ArrayList<>();
     
     public void setSymbol(String geneSymbol){
@@ -116,6 +117,10 @@ public class TranscriptDetails {
     
     public void setIsCanonical(boolean canonical){
         isCanonical = canonical;
+    }
+    
+    public void setBiotype(String b){
+        biotype = b;
     }
     
     public void setGenomeBuild(String genome){
@@ -212,6 +217,10 @@ public class TranscriptDetails {
             return false;
         }
         return cdsStart < cdsEnd;
+    }
+    
+    public String getBiotype(){
+        return biotype;
     }
     
     public String getGenomeBuild(){
