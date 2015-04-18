@@ -32,7 +32,7 @@ import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
-import javafx.scene.control.ProgressBar;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
@@ -69,7 +69,7 @@ public class MutationMapper extends Application implements Initializable{
     @FXML
     Label progressLabel;
     @FXML
-    ProgressBar progressBar;
+    ProgressIndicator progressIndicator;
     @FXML
     Button runButton;
     
@@ -102,6 +102,7 @@ public class MutationMapper extends Application implements Initializable{
             primaryStage.show();
             //primaryStage.getIcons().add(new Image(this.getClass().
             //        getResourceAsStream("icon.png")));
+            scene.getStylesheets().add(com.github.mutationmapper.MutationMapper.class.getResource("mmapper.css").toExternalForm());
             primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
                @Override
                public void handle(WindowEvent e) {
@@ -193,7 +194,7 @@ public class MutationMapper extends Application implements Initializable{
                         new Task<List<MutationMapperResult>>(){
                     @Override
                     protected List<MutationMapperResult> call() throws ParseException, MalformedURLException, IOException, InterruptedException {
-                        
+                        updateProgress(-1, -1);
                         return codingToGenomic(gene, species, cdsCoordinate);
                     }
                 };
@@ -210,15 +211,94 @@ public class MutationMapper extends Application implements Initializable{
             }
         }else{
             final String seq = sequence.replaceAll("[\\W]", "");//remove non-word chars
-            if (! sequenceIsDna(seq)){
-                System.out.println("Non-DNA characters in sequence field");
-            } 
             if (mutationTextField.getText().isEmpty()){
                 mapperTask = new Task<List<MutationMapperResult>>() {
                     @Override
                     protected List<MutationMapperResult> call()
                             throws ParseException, MalformedURLException, IOException, InterruptedException{
-                        return sequenceToCoordinates(gene, species, seq);
+                        if (! sequenceIsDna(seq)){
+                            System.out.println("Non-DNA characters in sequence field");
+                            return null;
+                        } 
+                        updateProgress(-1, -1);
+                        List<MutationMapperResult> results = new ArrayList<>();
+                        List<TranscriptDetails> transcripts = new ArrayList<>();
+                        String chrom;
+                        int start;
+                        int end; 
+                        updateMessage("Searching Genes");
+                        if (isTranscriptId(gene)){
+                            TranscriptDetails t = rest.getTranscriptDetails(gene);
+                            chrom = t.getChromosome();
+                            start = t.getTxStart();
+                            end = t.getTxEnd();
+                            transcripts.add(t);
+                        }else{
+                            GeneDetails g = new GeneDetails();
+                            if (isGeneId(gene)){
+                                g = rest.getGeneDetails(gene);
+                            }else{
+                                String id = rest.getGeneID(species, gene);
+                                g = rest.getGeneDetails(id);
+                            }
+                            chrom = g.getChromosome();
+                            start = g.getStart();
+                            end = g.getEnd();
+                            transcripts = g.getTranscripts();   
+                        }
+                        if (transcripts.isEmpty()){
+                            return null;
+                        }
+                        updateMessage("Found transcripts - getting DNA");
+                        String dna = getDna(chrom, start, end, species);
+                        updateMessage("Searching DNA for input sequence...");
+                        boolean revCompMatches = false;
+                        List<Integer> indices = searchDna(dna, seq);
+                        List<Integer> rcIndices = searchDna(
+                                dna, ReverseComplementDNA.reverseComplement(seq));
+                        if (!rcIndices.isEmpty()){
+                            revCompMatches = true;
+                            indices.addAll(rcIndices);
+                        }
+                        if (indices.isEmpty()){
+                            //TO DO - throw an error
+                            System.out.println("ERROR: No matches for seq");
+                            return null;
+                        }
+                        if (indices.size() > 1){
+                            //TO DO - throw an error
+                            System.out.println("ERROR: Seq matches multiple (" + indices.size() + ") times.");
+                            return null;
+                        }
+                        //Calculate start and end coordinates of input sequence
+                        int matchPos;
+                        int matchEnd;
+
+                        if(revCompMatches){
+                            matchEnd = indices.get(0) + start;
+                            matchPos = matchEnd + seq.length() - 1;
+                        }else{
+                            matchPos = indices.get(0) + start;
+                            matchEnd = matchPos + seq.length() - 1;
+
+                        }
+
+                        updateMessage("Formatting results.");
+                        ArrayList<String> t_ids = new ArrayList<>();
+                        for (TranscriptDetails t: transcripts){
+                            MutationMapperResult result = putBasicTranscriptInfo(t);
+                            // calculate CDS position from genomic position for each transcript
+                            String cds_pos_match = getCdsPosition(chrom, matchPos, t);
+                            String cds_pos_end = getCdsPosition(chrom, matchEnd, t);
+                            result.setCdsCoordinate(String.format("%s-%s", cds_pos_match, cds_pos_end));
+                            result.setGenome(t.getGenomeBuild());
+                            result.setChromosome(chrom);
+                            result.setCoordinate(matchPos);
+                            result.setMatchingSequence(seq);
+                            results.add(result);
+                            t_ids.add(t.getTranscriptId());
+                        }
+                        return results;
                     }
                 };
                 
@@ -243,8 +323,9 @@ public class MutationMapper extends Application implements Initializable{
                             public void run() {
                                 setRunning(false);
                                 progressLabel.textProperty().unbind();
-                                progressBar.progressProperty().unbind();
-                                progressBar.progressProperty().set(0);
+                                progressLabel.setText("");
+                                progressIndicator.progressProperty().unbind();
+                                progressIndicator.progressProperty().set(0);
                                 
                             }
                  });
@@ -298,8 +379,9 @@ public class MutationMapper extends Application implements Initializable{
                             public void run() {
                             setRunning(false);
                             progressLabel.textProperty().unbind();
-                            progressBar.progressProperty().unbind();
-                            progressBar.progressProperty().set(0);
+                            progressLabel.setText("Cancelled");
+                            progressIndicator.progressProperty().unbind();
+                            progressIndicator.progressProperty().set(0);
 
                         }
                      });
@@ -314,104 +396,37 @@ public class MutationMapper extends Application implements Initializable{
                             public void run() {
                             setRunning(false);
                             progressLabel.textProperty().unbind();
-                            progressBar.progressProperty().unbind();
-                            progressBar.progressProperty().set(0);
+                            progressLabel.setText("Failed!");
+                            progressIndicator.progressProperty().unbind();
+                            progressIndicator.progressProperty().set(0);
 
                         }
                      });
                 }
         });
-         
+        progressIndicator.progressProperty().bind(mapperTask.progressProperty());
+        progressLabel.textProperty().bind(mapperTask.messageProperty());
         new Thread(mapperTask).start();
         setRunning(true);
         
         
     }
     
-    private List<MutationMapperResult> sequenceToCoordinates(String gene, String species, String seq)
+    private String getDna(String chrom, int start, int end, String species)
             throws ParseException, MalformedURLException, IOException, InterruptedException{
-        List<MutationMapperResult> results = new ArrayList<>();
-        List<TranscriptDetails> transcripts = new ArrayList<>();
-        String chrom;
-        int start;
-        int end; 
-        int strand;
-        if (isTranscriptId(gene)){
-            TranscriptDetails t = rest.getTranscriptDetails(gene);
-            chrom = t.getChromosome();
-            start = t.getTxStart();
-            end = t.getTxEnd();
-            strand = t.getStrand();
-            transcripts.add(t);
-        }else{
-            GeneDetails g = new GeneDetails();
-            if (isGeneId(gene)){
-                g = rest.getGeneDetails(gene);
-            }else{
-                String id = rest.getGeneID(species, gene);
-                g = rest.getGeneDetails(id);
-            }
-            chrom = g.getChromosome();
-            start = g.getStart();
-            end = g.getEnd();
-            strand = g.getStrand();
-            transcripts = g.getTranscripts();   
-        }
-        if (transcripts.isEmpty()){
-            return null;
-        }
-        String dna = rest.getDna(chrom, start, end, species);
-        int index = dna.indexOf(seq);
+        return rest.getDna(chrom, start, end, species);
+    }
+    
+    private List<Integer> searchDna(String dna, String seq){
+        String lcDna = dna.toLowerCase();
+        String lcSeq = seq.toLowerCase();
+        int index = lcDna.indexOf(lcSeq);
         List<Integer> indices = new ArrayList<>();
-        boolean revCompMatches = false;
-        while (index >= 0){
+                while (index >= 0){
             indices.add(index);
-            index = dna.indexOf(seq, index + 1);
+            index = lcDna.indexOf(lcSeq, index + 1);
         }
-        index = dna.indexOf(ReverseComplementDNA.reverseComplement(seq));
-        while (index >= 0){
-            revCompMatches = true;
-            indices.add(index);
-            index = dna.indexOf(ReverseComplementDNA.reverseComplement(seq), index + 1);
-        }
-        if (indices.isEmpty()){
-            //TO DO - throw an error
-            System.out.println("ERROR: No matches for seq");
-            return null;
-        }
-        if (indices.size() > 1){
-            //TO DO - throw an error
-            System.out.println("ERROR: Seq matches multiple (" + indices.size() + ") times.");
-            return null;
-        }
-        //Calculate start and end coordinates of input sequence
-        int matchPos;
-        int matchEnd;
-        
-        if(revCompMatches){
-            matchEnd = indices.get(0) + start;
-            matchPos = matchEnd + seq.length() - 1;
-        }else{
-            matchPos = indices.get(0) + start;
-            matchEnd = matchPos + seq.length() - 1;
-        
-        }
-        
-        ArrayList<String> t_ids = new ArrayList<>();
-        for (TranscriptDetails t: transcripts){
-            MutationMapperResult result = putBasicTranscriptInfo(t);
-            // calculate CDS position from genomic position for each transcript
-            String cds_pos_match = getCdsPosition(chrom, matchPos, t);
-            String cds_pos_end = getCdsPosition(chrom, matchEnd, t);
-            result.setCdsCoordinate(String.format("%s-%s", cds_pos_match, cds_pos_end));
-            result.setGenome(t.getGenomeBuild());
-            result.setChromosome(chrom);
-            result.setCoordinate(matchPos);
-            result.setMatchingSequence(seq);
-            results.add(result);
-            t_ids.add(t.getTranscriptId());
-        }
-        return results;
+        return indices;
     }
     
     
