@@ -61,12 +61,17 @@ public class EnsemblRest {
                 species, chrom, start, end);
         JSONObject info = (JSONObject) getJSON(endpoint);
         if(info.isEmpty()) {
-          throw new RuntimeException("Got nothing for endpoint "+ endpoint);
+          throw new RuntimeException(String.format("Could not retrieve DNA for "
+                  + "%s/%s$d-%d.\nRetrieval from URL %s%s returned nothing.", 
+                  species, chrom, start, end, SERVER, endpoint));
         }
         if (info.containsKey("seq")){
             return (String) info.get("seq");
         }
-        return null;
+        throw new RuntimeException(String.format("Could not retrieve DNA for "
+                  + "%s/%s$d-%d.\nRetrieval from URL %s%s did not provide "
+                + "sequence information.", 
+                  species, chrom, start, end, SERVER, endpoint));
     }
     
     public GeneDetails getGeneDetails(String id) throws ParseException, MalformedURLException, IOException, InterruptedException {
@@ -75,7 +80,9 @@ public class EnsemblRest {
         String endpoint = "/lookup/id/"+id+"?expand=1";
         JSONObject info = (JSONObject) getJSON(endpoint);
         if(info.isEmpty()) {
-          throw new RuntimeException("Got nothing for endpoint "+ endpoint);
+          throw new RuntimeException(String.format("Could not retrieve gene details "
+                  + " for %s.\nRetrieval from URL %s%s returned nothing.", 
+                  id, SERVER, endpoint));
         }
         if (info.containsKey("display_name")){
             gene.setSymbol((String) info.get("display_name"));
@@ -120,7 +127,9 @@ public class EnsemblRest {
         String endpoint = "/lookup/id/"+id+"?expand=1";
         JSONObject j = (JSONObject) getJSON(endpoint);
         if(j.isEmpty()) {
-          throw new RuntimeException("Got nothing for endpoint "+ endpoint);
+          throw new RuntimeException(String.format("Could not get transcript details "
+                  + "for %s.\nRetrieval from URL %s%s returned nothing.", 
+                  id, SERVER, endpoint));
         }
         return getTranscriptDetailsFromJson(j);
     }
@@ -191,6 +200,11 @@ public class EnsemblRest {
     public List<String> getGeneAndSymbolFromTranscript(String id)throws ParseException, MalformedURLException, IOException, InterruptedException {
         String endpoint = "/overlap/id/" + id + "?feature=gene";
         JSONArray genes = (JSONArray) getJSON(endpoint);
+        if (genes.isEmpty()){
+            throw new RuntimeException(String.format("Could not get gene details "
+                  + "for transcript %s.\nRetrieval from URL %s%s returned nothing.", 
+                  id, SERVER, endpoint));
+        }
         JSONObject gene = (JSONObject)genes.get(0);
         String ensid = (String) gene.get("id");
         String name = (String) gene.get("external_name");
@@ -206,31 +220,40 @@ public class EnsemblRest {
         String endpoint = "/lookup/id/"+id+"?expand=1";
         JSONObject tr = (JSONObject) getJSON(endpoint);
         if (tr.isEmpty()){
-            System.out.println("No protein coding transcripts found for " + id);
-            return null;
-        }else{
-            String biotype = (String)tr.get("biotype");
-           if (! biotype.equals("protein_coding")){
-              return null;
-           }
+            throw new RuntimeException(String.format("Could not get transcript details "
+                  + "for %s.\nRetrieval from URL %s%s returned nothing.", 
+                  id, SERVER, endpoint));
         }
-      
-        String seq = getTranscriptSequence(id, "cds");
-        if (seq != null){
-            if (seq.length() >= c ){
-                HashMap<String, String> gCoord = cdsToGenomicCoordinate(id, c);
-                if (gCoord != null){
-                    mapping.put("transcript", id);
-                    mapping.put("chromosome", gCoord.get("chromosome"));
-                    mapping.put("coordinate", gCoord.get("coordinate"));
-                    mapping.put("assembly", gCoord.get("assembly"));
+        String biotype = (String)tr.get("biotype");
+        mapping.put("transcript", id);
+        if (! biotype.equals("protein_coding")){
+           mapping.put("chromosome", "non-coding transcript");
+           mapping.put("coordinate", "");
+           mapping.put("assembly", biotype);
+        }else{
+            String seq = getTranscriptSequence(id, "cds");
+            if (seq != null){
+                if (seq.length() >= c ){
+                    HashMap<String, String> gCoord = cdsToGenomicCoordinate(id, c);
+                    if (gCoord != null){
+                        mapping.put("transcript", id);
+                        mapping.put("chromosome", gCoord.get("chromosome"));
+                        mapping.put("coordinate", gCoord.get("coordinate"));
+                        mapping.put("assembly", gCoord.get("assembly"));
+                    }
+                }else{
+                    //System.out.println("CDS coordinate " + c + " is greater than "
+                    //        + "length of CDS (" + seq.length() + ") for " + id);
+                    mapping.put("chromosome", "coordinate greater than length "
+                            + "of CDS");
+                    mapping.put("coordinate", "");
+                    mapping.put("assembly", String.format("%d", seq.length()));
                 }
             }else{
-                System.out.println("CDS coordinate " + c + " is greater than "
-                        + "length of CDS (" + seq.length() + ") for " + tr);
+                mapping.put("chromosome", "No CDS sequence found(?)");
+                mapping.put("coordinate", "");
+                mapping.put("assembly", "");
             }
-        }else{
-            System.out.println("ERROR: No CDS sequence found for " + tr);
         }
         return mapping;
     }
@@ -311,7 +334,9 @@ public class EnsemblRest {
         JSONObject info = (JSONObject) getJSON(endpoint);
         HashMap mapStrings = new HashMap<>();
         if(info.isEmpty()) {
-            throw new RuntimeException("Got nothing for endpoint "+endpoint);
+            throw new RuntimeException(String.format("Mapping of CDS coordinate "
+                  + "%d for %s failed.\nURL %s%s returned nothing.", 
+                  coord, id, SERVER, endpoint));
         }
         if (info.containsKey("mappings")){
             JSONArray mappings = (JSONArray) info.get("mappings");
@@ -336,7 +361,9 @@ public class EnsemblRest {
         String endpoint = "/lookup/id/"+id+"?expand=1";
         JSONObject info = (JSONObject) getJSON(endpoint);
         if(info.isEmpty()) {
-          throw new RuntimeException("Got nothing for endpoint "+endpoint);
+            throw new RuntimeException(String.format("Could not retrieve transcript"
+                  + " IDs for %s.\nURL %s%s returned nothing.", 
+                  id, SERVER, endpoint));
         }
         if (info.containsKey("Transcript")){
             JSONArray trs = (JSONArray) info.get("Transcript");
@@ -358,7 +385,9 @@ public class EnsemblRest {
         String endpoint = "/xrefs/symbol/"+species+"/"+symbol+"?object_type=gene";
         JSONArray genes = (JSONArray) getJSON(endpoint);
         if(genes.isEmpty()) {
-          throw new RuntimeException("Got nothing for endpoint "+endpoint);
+            throw new RuntimeException(String.format("Could not retrieve gene ID"
+                  + " for %s (%s).\nRetrieval from URL %s%s returned nothing.", 
+                  symbol, species, SERVER, endpoint));
         }
         JSONObject gene = (JSONObject)genes.get(0);
         return (String)gene.get("id");
@@ -404,7 +433,8 @@ public class EnsemblRest {
                 Thread.sleep((long)sleepMillis);
                 return getContent(endpoint);
             }
-            throw new RuntimeException("Response code was not 200. Detected response was "+responseCode);
+            throw new RuntimeException(String.format("Error retrieving content from %s%s. "
+                    + "Detected response was %s", SERVER, endpoint, responseCode));
         }
 
         String output;
@@ -473,7 +503,8 @@ public class EnsemblRest {
                 Thread.sleep((long)sleepMillis);
                 return getContent(endpoint);
             }
-            throw new RuntimeException("Response code was not 200. Detected response was "+responseCode);
+            throw new RuntimeException(String.format("Error retrieving content from %s%s. "
+                    + "Detected response was %s", SERVER, endpoint, responseCode));
         }
 
         String output;
