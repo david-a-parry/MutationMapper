@@ -138,6 +138,7 @@ public class EnsemblRest {
         TranscriptDetails trans = new TranscriptDetails();        
         trans.setTranscriptId((String) j.get("id"));
         String biotype = (String)j.get("biotype");
+        trans.setBiotype(biotype);
         if (j.containsKey("strand")){
            if ((Long) j.get("strand") > 0){
                trans.setStrand(1);
@@ -169,6 +170,7 @@ public class EnsemblRest {
            }
        }
        
+       //get chromosome
        if (j.containsKey("seq_region_name")){
             trans.setChromosome((String) j.get("seq_region_name"));
         }
@@ -374,7 +376,56 @@ public class EnsemblRest {
         }
         return transcriptIds;
     }
-
+    
+    public HashMap<String, HashMap<String, String>> getVepConsequence(String chrom, int coord, 
+            String species, String ref, String alt) throws ParseException, 
+            MalformedURLException, IOException, InterruptedException {
+        HashMap<String, HashMap<String, String>> results = new HashMap<>();
+        String endpoint = "/vep/" + species +"/region?hgvs=1";
+        String post = String.format("{ \"variants\" : [\"%s  %d  . %s %s . . .\" ] }", 
+                chrom, coord, ref, alt);
+        JSONArray info = (JSONArray) getPostJSON(endpoint, post);
+        if (info.isEmpty()){
+            throw new RuntimeException(String.format("Could not retrieve variant "
+                  + " consequences for %s:%d %s/%s.\nURL %s%s with POST %s returned nothing.", 
+                  chrom, coord, ref, alt, SERVER, endpoint, post));
+        }
+        for (Object j: (JSONArray) info){
+            JSONObject result = (JSONObject) j;
+            if (result.containsKey("transcript_consequences")){
+                for (Object k: (JSONArray) result.get("transcript_consequences")){
+                    JSONObject cons = (JSONObject) k;
+                    HashMap<String, String> consMap = new HashMap<>();
+                    for (String key: cons.keySet()){
+                        //results.put(key, cons.get(key).toString());
+                        consMap.put(key, cons.get(key).toString());
+                    }
+                    consMap.put("ref", ref);
+                    consMap.put("alt", alt);
+                    results.put(cons.get("transcript_id").toString(), consMap);
+                }
+            }
+            if (result.containsKey("colocated_variants")){
+                HashMap<String, String> snpMap = new HashMap<>();
+                for (Object k: (JSONArray) result.get("colocated_variants")){
+                    JSONObject snp = (JSONObject) k;
+                    for (String key: snp.keySet()){
+                        //results.put(key, cons.get(key).toString());
+                        snpMap.put(key, snp.get(key).toString());
+                    }
+                }
+                results.put("snps_" + snpMap.get("id"), snpMap);
+            }
+            if (result.containsKey("most_severe_consequence")){
+                //complicated by the fact that we are just returning a single HashMap of HashMaps.
+                HashMap<String, String> msc = new HashMap<>();
+                String csq = (String) result.get("most_severe_consequence");
+                msc.put("most_severe_consequence", csq);
+                results.put("Consequence", msc);
+            }
+        }
+        return results;
+    }
     
     public JSONArray getVariants(String species, String symbol) throws ParseException, MalformedURLException, IOException, InterruptedException {
         String id = getGeneID(species, symbol);

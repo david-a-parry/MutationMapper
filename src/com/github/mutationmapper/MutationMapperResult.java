@@ -5,6 +5,8 @@
  */
 package com.github.mutationmapper;
 
+import java.util.HashMap;
+
 /**
  *
  * @author david
@@ -26,30 +28,33 @@ public class MutationMapperResult {
     private String proteinConsequence;
     private String knownId;
     private Double knownFreq;
+    private String biotype;
+    private HashMap<String, String> vepResults;
     
     
     MutationMapperResult(){
         this (null, null, null, null, null, null, null, null,
-              null, null, null, null, null, null, null);
+              null, null, null, null, null, null, null, null);
     }
     
     MutationMapperResult(String chrom, Integer coord, String build, String symbol,
             String id, String transId, String cdsCoord){
         this (chrom, coord, build, symbol, id, transId, cdsCoord, null, null, 
-                null, null, null, null, null, null);
+                null, null, null, null, null, null, null);
     }
     
     MutationMapperResult(String chrom, Integer coord, String build, String symbol,
             String id, String transId, String cdsCoord, String seq, String mut,
-            String ref, String var ){
+            String ref, String var){
         this (chrom, coord, build, symbol, id, transId, cdsCoord, seq, mut, ref, 
-                var, null, null, null, null);
+                var, null, null, null, null, null);
     }
     
     
     MutationMapperResult(String chrom, Integer coord, String build, String symbol,
             String id, String transId, String cdsCoord, String seq, String mut, 
-            String ref, String var, String cCons, String pCons, String snpId, Double freq){
+            String ref, String var, String cCons, String pCons, String snpId, 
+            Double freq, String type){
         
         chromosome = chrom;
         coordinate = coord;
@@ -66,6 +71,7 @@ public class MutationMapperResult {
         proteinConsequence = pCons;
         knownId = snpId;
         knownFreq = freq;
+        biotype = type;
     }
     
     public void setIndex(Integer i){
@@ -116,8 +122,8 @@ public class MutationMapperResult {
         varAllele = var;
     }
     
-    public void setCdsConsequence(String pcons){
-        proteinConsequence = pcons;
+    public void setCdsConsequence(String ccons){
+        cdsConsequence = ccons;
     }
     
     public void setProteinConsequence(String pcons){
@@ -128,8 +134,16 @@ public class MutationMapperResult {
         knownId = id;
     }
     
-    public void setKnownFreq(Double f){
-        knownFreq = f;
+    public void setKnownFreq(Double freq){
+        knownFreq = freq;
+    }
+    
+    public void setBiotype(String type){
+        biotype = type;
+    }
+    
+    public void setVepResults(HashMap<String, String> results){
+        vepResults = results;
     }
     
     public Integer getIndex(){
@@ -196,6 +210,10 @@ public class MutationMapperResult {
         return knownFreq;
     }
     
+    public String getBiotype(){
+        return biotype;
+    }
+    
     public String getGenomicCoordinate(){
         if (chromosome == null ){
             return "";
@@ -234,5 +252,9 @@ public class MutationMapperResult {
             return cdsConsequence;
         }
         return cdsConsequence + ";" + proteinConsequence;
+    }
+    
+    public HashMap<String, String> getVepResults(){
+        return vepResults;
     }
 }

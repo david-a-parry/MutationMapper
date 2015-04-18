@@ -3,6 +3,17 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
+/*
+TO DO
+give option to only output protein coding transcript results
+give option to translate ensembl IDs to RefSeq where possible
+maybe give option to automatically remove non-DNA characters from input boxes
+check CDS field is numeric
+
+CDS -> mutation 
+sequence -> mutation
+*/ 
 package com.github.mutationmapper;
 
 import com.github.mutationmapper.TranscriptDetails.Exon;
@@ -17,7 +28,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Task;
 import javafx.concurrent.WorkerStateEvent;
@@ -27,6 +37,8 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
@@ -34,6 +46,7 @@ import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TextField;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
 import javafx.stage.Modality;
@@ -121,6 +134,9 @@ public class MutationMapper extends Application implements Initializable{
             geneTextField.requestFocus();
         });
         
+        cdsTextField.addEventFilter(KeyEvent.KEY_TYPED, checkNumeric());
+        
+        
         cdsTextField.textProperty().addListener(
                 (ObservableValue<? extends String> observable, final String oldValue, final String newValue) -> {
             //newValue = newValue.trim();
@@ -165,11 +181,20 @@ public class MutationMapper extends Application implements Initializable{
         final String cdsCoordinate = cdsTextField.getText();
         final String sequence = sequenceTextField.getText();
         if (!cdsCoordinate.isEmpty()){
+            if (!cdsTextField.getText().matches("\\d+")){
+                Alert alert = new Alert(AlertType.ERROR);
+                alert.setTitle("Mutation Mapper Error");
+                alert.setHeaderText("CDS Input Error");
+                alert.setContentText("CDS input must only be a whole number");
+                alert.showAndWait();
+                return;
+            }
             if (mutationTextField.getText().isEmpty()){
                 mapperTask = 
                         new Task<List<MutationMapperResult>>(){
                     @Override
-                    protected List<MutationMapperResult> call() throws ParseException, MalformedURLException, IOException, InterruptedException {
+                    protected List<MutationMapperResult> call() throws 
+                            ParseException, MalformedURLException, IOException, InterruptedException {
                         updateProgress(-1, -1);
                         return codingToGenomic(gene, species, cdsCoordinate);
                     }
@@ -188,9 +213,13 @@ public class MutationMapper extends Application implements Initializable{
         }else{
             final String seq = sequence.replaceAll("[\\W]", "");//remove non-word chars
             if (! sequenceIsDna(seq)){
-                System.out.println("Non-DNA characters in sequence field");
+                Alert alert = new Alert(AlertType.ERROR);
+                alert.setTitle("Mutation Mapper Error");
+                alert.setHeaderText("Matching Sequence Error");
+                alert.setContentText("Non-DNA characters found in Matching Sequence field");
+                alert.showAndWait();
                 return;
-            } 
+            }
             if (mutationTextField.getText().isEmpty()){
                 mapperTask = new Task<List<MutationMapperResult>>() {
                     @Override
@@ -202,13 +231,29 @@ public class MutationMapper extends Application implements Initializable{
                 };
                 
             }else{
+                final String mutSeq = mutationTextField.getText().replaceAll("[\\W]", "");//remove non-word chars
+                if (! sequenceIsDna(mutSeq)){
+                    Alert alert = new Alert(AlertType.ERROR);
+                    alert.setTitle("Mutation Mapper Error");
+                    alert.setHeaderText("Mutant Sequence Error");
+                    alert.setContentText("Non-DNA characters found in Mutant Sequence field");
+                    alert.showAndWait();
+                    return;
+                }
+                if (seq.equals(mutSeq)){
+                    Alert alert = new Alert(AlertType.ERROR);
+                    alert.setTitle("Mutation Mapper Error");
+                    alert.setHeaderText("Mutant Sequence Error");
+                    alert.setContentText("Mutant Sequence is the same as Matching Sequence");
+                    alert.showAndWait();
+                    return;
+                }
                 mapperTask = new Task<List<MutationMapperResult>>(){
                     @Override
-                    protected List<MutationMapperResult> call(){
-                        List<MutationMapperResult> results = new ArrayList<>();
-                        MutationMapperResult result = new MutationMapperResult();
-                        //TO DO!
-                        return results;
+                    protected List<MutationMapperResult> call()throws ParseException, 
+                            MalformedURLException, IOException, InterruptedException {
+                        updateProgress(-1, -1);
+                        return sequenceToGenomic(gene, species, seq, mutSeq);
                 
                     }
                 };
@@ -269,11 +314,17 @@ public class MutationMapper extends Application implements Initializable{
                  
          mapperTask.setOnFailed((WorkerStateEvent e) -> {
              Platform.runLater(() -> {
-                 setRunning(false);
-                 progressLabel.textProperty().unbind();
-                 progressLabel.setText("Failed!");
-                 progressIndicator.progressProperty().unbind();
-                 progressIndicator.progressProperty().set(0);
+                setRunning(false);
+                Alert alert = new Alert(AlertType.ERROR);
+                alert.setTitle("Mutation Mapper Error");
+                alert.setHeaderText("Run Failed");
+                alert.setContentText(e.getSource().getException().getMessage());
+                alert.showAndWait();
+                
+                progressLabel.textProperty().unbind();
+                progressLabel.setText("Failed!");
+                progressIndicator.progressProperty().unbind();
+                progressIndicator.progressProperty().set(0);
              });
         });
         progressIndicator.progressProperty().bind(mapperTask.progressProperty());
@@ -286,9 +337,15 @@ public class MutationMapper extends Application implements Initializable{
         
         
     }
+    private List<MutationMapperResult> sequenceToGenomic(String gene, String species, 
+            String seq)throws ParseException, MalformedURLException, 
+            IOException, InterruptedException{
+        return sequenceToGenomic(gene, species, seq, null);
+    }
     
-    private List<MutationMapperResult> sequenceToGenomic(String gene, String species, String seq)
-            throws ParseException, MalformedURLException, IOException, InterruptedException{
+    private List<MutationMapperResult> sequenceToGenomic(String gene, String species, 
+            String seq, String mutSeq)throws ParseException, MalformedURLException, 
+            IOException, InterruptedException{
         List<MutationMapperResult> results = new ArrayList<>();
         List<TranscriptDetails> transcripts = new ArrayList<>();
         String chrom;
@@ -315,7 +372,8 @@ public class MutationMapper extends Application implements Initializable{
             transcripts = g.getTranscripts();   
         }
         if (transcripts.isEmpty()){
-            return null;
+            throw new RuntimeException("No transcripts identified for gene "
+                    + "input " + gene);
         }
         //updateMessage("Found transcripts - getting DNA");
         String dna = getDna(chrom, start, end, species);
@@ -329,28 +387,31 @@ public class MutationMapper extends Application implements Initializable{
             indices.addAll(rcIndices);
         }
         if (indices.isEmpty()){
-            //TO DO - throw an error
-            System.out.println("ERROR: No matches for seq");
-            return null;
+            throw new RuntimeException("No matches found for sequence or its "
+                    + "reverse complement.");
         }
         if (indices.size() > 1){
-            //TO DO - throw an error
-            System.out.println("ERROR: Seq matches multiple (" + indices.size() + ") times.");
-            return null;
+            throw new RuntimeException("ERROR: Seq matches multiple (" + indices.size() + ") times.");
         }
         //Calculate start and end coordinates of input sequence
         int matchPos;
         int matchEnd;
 
-        if(revCompMatches){
-            matchEnd = indices.get(0) + start;
-            matchPos = matchEnd + seq.length() - 1;
-        }else{
-            matchPos = indices.get(0) + start;
-            matchEnd = matchPos + seq.length() - 1;
+        matchPos = indices.get(0) + start;
+        matchEnd = matchPos + seq.length() - 1;
 
+        HashMap<String, HashMap<String, String>> cons = new HashMap<>();
+        if (mutSeq != null && !mutSeq.isEmpty()){//get mutation consequences
+            if (revCompMatches){
+                cons = getVepConsequences(chrom, matchPos, species, 
+                        ReverseComplementDNA.reverseComplement(seq), 
+                        ReverseComplementDNA.reverseComplement(mutSeq));
+            }else{
+                cons = getVepConsequences(chrom, matchPos, species, seq, mutSeq);
+            }
+            
         }
-
+        
         //updateMessage("Formatting results.");
         //ArrayList<String> t_ids = new ArrayList<>();
         for (TranscriptDetails t: transcripts){
@@ -358,15 +419,64 @@ public class MutationMapper extends Application implements Initializable{
             // calculate CDS position from genomic position for each transcript
             String cds_pos_match = getCdsPosition(chrom, matchPos, t);
             String cds_pos_end = getCdsPosition(chrom, matchEnd, t);
-            result.setCdsCoordinate(String.format("%s-%s", cds_pos_match, cds_pos_end));
+            if (cds_pos_match.equals(cds_pos_end)){
+                /*
+                this should only occur if we haven't got a position but instead
+                transcript is non-coding or seq is outside transcribed sites
+                */
+                result.setCdsCoordinate(cds_pos_match);
+            }else{
+                result.setCdsCoordinate(String.format("%s-%s", cds_pos_match, cds_pos_end));
+            }
             result.setGenome(t.getGenomeBuild());
             result.setChromosome(chrom);
             result.setCoordinate(matchPos);
             result.setMatchingSequence(seq);
+            if (!cons.isEmpty()){
+                if (cons.containsKey(t.getTranscriptId())){
+                    if (cons.get(t.getTranscriptId()).containsKey("hgvsc")){
+                        result.setCdsConsequence(cons.get(t.getTranscriptId()).get("hgvsc"));
+                    }
+                    if (cons.get(t.getTranscriptId()).containsKey("hgvsp")){
+                        String pCons = cons.get(t.getTranscriptId()).get("hgvsp").replaceAll("%3D", "=");
+                        result.setProteinConsequence(pCons);
+                    }
+                    result.setRefAllele(cons.get(t.getTranscriptId()).get("ref"));
+                    result.setVarAllele(cons.get(t.getTranscriptId()).get("alt"));
+                }
+            }
             results.add(result);
             //t_ids.add(t.getTranscriptId());
         }
         return results;
+    }
+    
+    private HashMap<String, HashMap<String, String>> getVepConsequences(String chrom, int pos, 
+            String species, String ref, String alt)throws ParseException, 
+            MalformedURLException, IOException, InterruptedException {
+        /*
+        reduce sequences to simplest possible representations before submitting to VEP
+        */
+        String refTrim = ref;
+        String altTrim = alt;
+        int posShift = 0;//need to shunt coordinate up by one for every character trimmed from start of seq
+        // trim identical suffixes
+        while (refTrim.length() > 1 && altTrim.length() > 1 && 
+                refTrim.substring(refTrim.length()-1).equals(
+                altTrim.substring(altTrim.length()-1))){
+            refTrim = refTrim.substring(0, refTrim.length() -1);
+            altTrim = altTrim.substring(0, altTrim.length() -1);
+        }
+        // trim identical prefixes
+        while (refTrim.length() > 1 && altTrim.length() > 1 && 
+                refTrim.substring(0, 1).equals(altTrim.substring(0, 1))){
+            refTrim = refTrim.substring(1);
+            altTrim = altTrim.substring(1);
+            posShift++;
+        }
+        HashMap<String, HashMap<String, String>> results = rest.getVepConsequence(chrom, pos + posShift, species, refTrim, altTrim);
+        return results;
+        
     }
     
     private String getDna(String chrom, int start, int end, String species)
@@ -393,7 +503,9 @@ public class MutationMapper extends Application implements Initializable{
         List<TranscriptDetails> transcripts = getTranscriptsForGene(gene, species);
         
         if (transcripts.isEmpty()){
-            return null;
+            //we should have already thrown an error from EnsemblRests methods
+            throw new RuntimeException(String.format("Could not get transcripts "
+                  + "for %s in species %s.\n", gene, species));
         }
         for (TranscriptDetails t: transcripts){
             HashMap<String, String> g = rest.codingToGenomicTranscript(
@@ -402,7 +514,9 @@ public class MutationMapper extends Application implements Initializable{
             result.setCdsCoordinate(cdsCoordinate);
             if (g != null){
                 result.setChromosome(g.get("chromosome"));
-                result.setCoordinate(Integer.parseInt(g.get("coordinate")));
+                if (! g.get("coordinate").isEmpty()){
+                    result.setCoordinate(Integer.parseInt(g.get("coordinate")));
+                }
                 result.setGenome(g.get("assembly"));
             }
             results.add(result);
@@ -412,17 +526,17 @@ public class MutationMapper extends Application implements Initializable{
     
     private String getCdsPosition(String chrom, int pos, TranscriptDetails t){
         if (! t.isCoding()){
-            return "";
+            return "non-coding (" + t.getBiotype() + ")";
         }
         if (pos < t.getTxStart() || pos > t.getTxEnd()){
-            return "";
+            return "outside transcribed region";
         }
         if (pos < t.getCdsStart() || pos  > t.getCdsEnd()){
             return getUtrPosition(chrom, pos, t);
         }
         ArrayList<Exon> cds = t.getCodingRegions();
         if (!t.getChromosome().equals(chrom)){
-            return "";
+            return "chromosome does not match";
         }
         
         int cds_pos = 0;
@@ -493,14 +607,14 @@ public class MutationMapper extends Application implements Initializable{
     
     private String getUtrPosition(String chrom, int pos, TranscriptDetails t){
         if (! t.isCoding()){
-            return "";
+            return "non-coding (" + t.getBiotype() + ")";
         }
         if (pos > t.getCdsStart() && pos  <= t.getCdsEnd()){
             //Should we throw an exepction here?
-            return "";
+            return "not UTR";
         }
         if (!t.getChromosome().equals(chrom)){
-            return "";
+            return "chromosome does not match";
         }
         StringBuilder utr_string = new StringBuilder();
         int utr_pos = 0;
@@ -613,6 +727,7 @@ public class MutationMapper extends Application implements Initializable{
         result.setGeneSymbol(t.getSymbol());
         result.setGeneId(t.getId());
         result.setTranscript(t.getTranscriptId());
+        result.setBiotype(t.getBiotype());
         return result;
     }
     
@@ -634,7 +749,7 @@ public class MutationMapper extends Application implements Initializable{
     }
     
     private boolean sequenceIsDna(String seq){
-        return !seq.matches("(?i)[^ACTG]");
+        return seq.matches("(?i)[ACTG]+");
     }
     
     private boolean isTranscriptId(String id){
@@ -698,7 +813,13 @@ public class MutationMapper extends Application implements Initializable{
         }
     }
                 
-    
+    EventHandler<KeyEvent> checkNumeric(){
+        return (KeyEvent ke) -> {
+            if (!ke.getCharacter().matches("\\d")){
+                ke.consume();
+            }
+        };
+    }
     
     /**
      * @param args the command line arguments
