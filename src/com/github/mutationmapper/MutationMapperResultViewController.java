@@ -8,6 +8,8 @@ package com.github.mutationmapper;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.ResourceBundle;
+import java.util.ResourceBundle.Control;
+import javafx.animation.Animation.Status;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -15,12 +17,14 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuBar;
-import javafx.scene.control.MenuItem;
+import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.text.Text;
+import javafx.util.Callback;
 
 /**
  * FXML Controller class
@@ -75,9 +79,27 @@ public class MutationMapperResultViewController implements Initializable {
         transcriptCol.setCellValueFactory(new PropertyValueFactory<>("transcript"));
         cdsCol.setCellValueFactory(new PropertyValueFactory<>("cdsCoordinate"));
         genomicCol.setCellValueFactory(new PropertyValueFactory<>("genomicCoordinate"));
-        refCol.setCellValueFactory(new PropertyValueFactory<>("ref"));
-        varCol.setCellValueFactory(new PropertyValueFactory<>("var"));
+        refCol.setCellValueFactory(new PropertyValueFactory<>("refAllele"));
+        varCol.setCellValueFactory(new PropertyValueFactory<>("varAllele"));
         consequenceCol.setCellValueFactory(new PropertyValueFactory<>("consequences"));
+        consequenceCol.setCellFactory(new Callback<TableColumn<String,String>, TableCell<String,String>>() {
+               @Override
+               public TableCell<String, String> call( TableColumn<String, String> param) {
+                    final TableCell<String, String> cell = new TableCell<String, String>() {
+                         private Text text;
+                         @Override
+                         public void updateItem(String item, boolean empty) {
+                              super.updateItem(item, empty);
+                              if (item != null && !isEmpty()) {
+                                   text = new Text(item.toString());
+                                   text.wrappingWidthProperty().bind(consequenceCol.widthProperty()); // Setting the wrapping width to the Text
+                                   setGraphic(text);
+                              }
+                         }
+                    };
+                    return cell;
+               }
+          });
         knownVarCol.setCellValueFactory(new PropertyValueFactory<>("knownVar"));
         
     } 
