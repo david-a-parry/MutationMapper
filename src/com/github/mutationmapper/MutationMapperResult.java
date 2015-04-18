@@ -197,8 +197,11 @@ public class MutationMapperResult {
     }
     
     public String getGenomicCoordinate(){
-        if (chromosome == null || coordinate == null){
+        if (chromosome == null ){
             return "";
+        }
+        if (coordinate == null){//we use this as an indicator that we didn't get a coordinate but a message instead
+            return chromosome  + " (" + genome + ")";
         }
         String c;
         if (matchingSequence != null && !matchingSequence.isEmpty()){
