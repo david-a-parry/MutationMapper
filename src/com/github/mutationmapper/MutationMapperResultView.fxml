@@ -6,7 +6,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<AnchorPane id="AnchorPane" fx:id="resultPane" prefHeight="461.0" prefWidth="806.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.github.mutationmapper.MutationMapperResultViewController">
+<AnchorPane id="AnchorPane" fx:id="resultPane" prefHeight="460.0" prefWidth="840.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.github.mutationmapper.MutationMapperResultViewController">
    <children>
       <MenuBar prefHeight="29.0" prefWidth="600.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
         <menus>
@@ -33,20 +33,26 @@
             <content>
               <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                      <children>
-                        <TableView fx:id="resultTable" layoutX="27.0" layoutY="34.0" prefHeight="337.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-                          <columns>
-                            <TableColumn fx:id="indexCol" prefWidth="36.0" text="#" />
-                            <TableColumn fx:id="symbolCol" prefWidth="73.0" text="Symbol" />
-                              <TableColumn fx:id="geneCol" prefWidth="84.0" text="Gene" />
-                              <TableColumn fx:id="transcriptCol" prefWidth="120.0" text="Transcript" />
-                              <TableColumn fx:id="cdsCol" prefWidth="63.0" text="CDS" />
-                              <TableColumn fx:id="genomicCol" prefWidth="163.0" text="Genomic Coordinate" />
-                              <TableColumn fx:id="refCol" prefWidth="49.0" text="Ref" />
-                              <TableColumn fx:id="varCol" prefWidth="48.0" text="Var" />
-                              <TableColumn fx:id="consequenceCol" prefWidth="98.0" text="Consequence" />
-                              <TableColumn fx:id="knownVarCol" prefWidth="69.0" text="Known Variation" />
-                          </columns>
-                        </TableView>
+                        <ScrollPane prefViewportHeight="397.0" prefViewportWidth="840.0">
+                           <content>
+                              <TableView fx:id="resultTable" layoutX="27.0" layoutY="34.0" prefHeight="382.0" prefWidth="1469.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                <columns>
+                                  <TableColumn fx:id="indexCol" prefWidth="36.0" text="#" />
+                                  <TableColumn fx:id="symbolCol" prefWidth="73.0" text="Symbol" />
+                                    <TableColumn fx:id="geneCol" prefWidth="84.0" text="Gene" />
+                                    <TableColumn fx:id="transcriptCol" prefWidth="120.0" text="Transcript" />
+                                    <TableColumn fx:id="cdsCol" prefWidth="63.0" text="CDS" />
+                                    <TableColumn fx:id="genomicCol" prefWidth="193.0" text="Genomic Coordinate" />
+                                    <TableColumn fx:id="refCol" prefWidth="51.0" text="Ref" />
+                                    <TableColumn fx:id="varCol" prefWidth="44.0" text="Var" />
+                                    <TableColumn fx:id="consequenceCol" prefWidth="133.0" text="CDS Consequence" />
+                                    <TableColumn fx:id="consequenceCol1" prefWidth="133.0" text="Protein Consequence" />
+                                    <TableColumn fx:id="knownVarCol" prefWidth="116.0" text="Known Variation" />
+                                    <TableColumn minWidth="5.0" prefWidth="100.0" text="Polyphen" />
+                                </columns>
+                              </TableView>
+                           </content>
+                        </ScrollPane>
                      </children>
                   </AnchorPane>
             </content>
