@@ -9,7 +9,6 @@ TO DO
 give option to only output protein coding transcript results
 give option to translate ensembl IDs to RefSeq where possible
 maybe give option to automatically remove non-DNA characters from input boxes
-check CDS field is numeric
 
 CDS -> mutation 
 sequence -> mutation
@@ -200,18 +199,27 @@ public class MutationMapper extends Application implements Initializable{
                     }
                 };
             }else{
+                final String mutSeq = mutationTextField.getText().replaceAll("[\\s]", "").toUpperCase();//remove whitespace chars
+                    if (!mutSeq.isEmpty() && !cdsMutationIsOk(mutSeq)){
+                        Alert alert = new Alert(AlertType.ERROR);
+                        alert.setTitle("Mutation Mapper Error");
+                        alert.setHeaderText("Mutation Sequence Error");
+                        alert.setContentText("Mutation sequence must either be "
+                                + "DNA or be in the format \"ins,<seq>\" or \"del,<seq/number>\".");
+                        alert.showAndWait();
+                        return;
+                    }
+
                 mapperTask = new Task<List<MutationMapperResult>>(){
                     @Override
-                    protected List<MutationMapperResult> call(){
-                        List<MutationMapperResult> results = new ArrayList<>();
-                        MutationMapperResult result = new MutationMapperResult();
-                        //TO DO!
-                        return results;
+                    protected List<MutationMapperResult> call() throws 
+                            ParseException, MalformedURLException, IOException, InterruptedException {
+                        return codingToGenomic(gene, species, cdsCoordinate, mutSeq);
                     }
                 };
             }
         }else{
-            final String seq = sequence.replaceAll("[\\W]", "");//remove non-word chars
+            final String seq = sequence.replaceAll("[\\W]", "").toUpperCase();//remove non-word chars
             if (! sequenceIsDna(seq)){
                 Alert alert = new Alert(AlertType.ERROR);
                 alert.setTitle("Mutation Mapper Error");
@@ -231,7 +239,7 @@ public class MutationMapper extends Application implements Initializable{
                 };
                 
             }else{
-                final String mutSeq = mutationTextField.getText().replaceAll("[\\W]", "");//remove non-word chars
+                final String mutSeq = mutationTextField.getText().replaceAll("[\\W]", "").toUpperCase();//remove non-word chars
                 if (! sequenceIsDna(mutSeq)){
                     Alert alert = new Alert(AlertType.ERROR);
                     alert.setTitle("Mutation Mapper Error");
@@ -240,7 +248,7 @@ public class MutationMapper extends Application implements Initializable{
                     alert.showAndWait();
                     return;
                 }
-                if (seq.equals(mutSeq)){
+                if (seq.equalsIgnoreCase(mutSeq)){
                     Alert alert = new Alert(AlertType.ERROR);
                     alert.setTitle("Mutation Mapper Error");
                     alert.setHeaderText("Mutant Sequence Error");
@@ -496,9 +504,16 @@ public class MutationMapper extends Application implements Initializable{
         return indices;
     }
     
-    
     private List<MutationMapperResult> codingToGenomic(String gene, String species, 
             String cdsCoordinate) throws ParseException, MalformedURLException, IOException, InterruptedException{
+        return  codingToGenomic(gene, species, cdsCoordinate, null);
+    }
+    
+    private List<MutationMapperResult> codingToGenomic(String gene, String species, 
+            String cdsCoordinate, String mutSeq) throws ParseException, 
+            MalformedURLException, IOException, InterruptedException{
+        //TO DO implement mutation checking!
+        
         List<MutationMapperResult> results = new ArrayList<>();
         List<TranscriptDetails> transcripts = getTranscriptsForGene(gene, species);
         
@@ -746,6 +761,33 @@ public class MutationMapper extends Application implements Initializable{
             transcripts = rest.getGeneDetails(id).getTranscripts();
         }
         return transcripts;
+    }
+    
+    private boolean cdsMutationIsOk(String seq){
+        if (seq == null || seq.isEmpty()){
+            return false;
+        }
+        String[] split = seq.split(",");
+        if (split.length > 2){
+            return false;
+        }
+        if (split.length == 1){
+            return sequenceIsDna(seq);
+        }
+        if (split.length == 2){
+            if (!split[0].matches("(?)ins|del")){
+                return false;
+            }
+            if (sequenceIsDna(split[1])){
+                return true;
+            }else{
+                if (split[0].equalsIgnoreCase("del")){
+                    return split[1].matches("\\d+");
+                }
+                return false;
+            }
+        }
+        return false;//should only get here if seq is a , (?)
     }
     
     private boolean sequenceIsDna(String seq){
