@@ -459,6 +459,57 @@ public class MutationMapper extends Application implements Initializable{
         return results;
     }
     
+    private List<MutationMapperResult> codingToGenomic(String gene, String species, 
+            String cdsCoordinate) throws ParseException, MalformedURLException, IOException, InterruptedException{
+        return  codingToGenomic(gene, species, cdsCoordinate, null);
+    }
+    
+    private List<MutationMapperResult> codingToGenomic(String gene, String species, 
+            String cdsCoordinate, String mutSeq) throws ParseException, 
+            MalformedURLException, IOException, InterruptedException{
+        //TO DO implement mutation checking!
+        
+        List<MutationMapperResult> results = new ArrayList<>();
+        List<TranscriptDetails> transcripts = getTranscriptsForGene(gene, species);
+        
+        if (transcripts.isEmpty()){
+            //we should have already thrown an error from EnsemblRests methods
+            throw new RuntimeException(String.format("Could not get transcripts "
+                  + "for %s in species %s.\n", gene, species));
+        }
+        for (TranscriptDetails t: transcripts){
+            HashMap<String, String> g = rest.codingToGenomicTranscript(
+                    species, t.getTranscriptId(), Integer.parseInt(cdsCoordinate));
+            MutationMapperResult result = putBasicTranscriptInfo(t);
+            result.setCdsCoordinate(cdsCoordinate);
+            if (g != null){
+                result.setChromosome(g.get("chromosome"));
+                if (! g.get("coordinate").isEmpty()){
+                    result.setCoordinate(Integer.parseInt(g.get("coordinate")));
+                }
+                result.setGenome(g.get("assembly"));
+            }
+            if (mutSeq != null){
+                List<String> alleles = getCdsVarAlleles(t, species, 
+                        result.getCoordinate(), mutSeq);
+            }
+            results.add(result);
+        }
+        return results;
+    }
+    
+    private List<String> getCdsVarAlleles(TranscriptDetails t, String species, int genomicPos, String mut){
+        int span = 1; 
+        if (mut.matches("(?)del,[ACTG]+")){
+            String[] split = mut.split(",");
+            span = split[1].length();
+        }else if (mut.matches("(?)del,\\d+")){
+            String[] split = mut.split(",");
+            span = Integer.parseInt(split[1]); 
+        }
+        // TO DO get DNA
+    }
+    
     private HashMap<String, HashMap<String, String>> getVepConsequences(String chrom, int pos, 
             String species, String ref, String alt)throws ParseException, 
             MalformedURLException, IOException, InterruptedException {
@@ -503,42 +554,6 @@ public class MutationMapper extends Application implements Initializable{
         }
         return indices;
     }
-    
-    private List<MutationMapperResult> codingToGenomic(String gene, String species, 
-            String cdsCoordinate) throws ParseException, MalformedURLException, IOException, InterruptedException{
-        return  codingToGenomic(gene, species, cdsCoordinate, null);
-    }
-    
-    private List<MutationMapperResult> codingToGenomic(String gene, String species, 
-            String cdsCoordinate, String mutSeq) throws ParseException, 
-            MalformedURLException, IOException, InterruptedException{
-        //TO DO implement mutation checking!
-        
-        List<MutationMapperResult> results = new ArrayList<>();
-        List<TranscriptDetails> transcripts = getTranscriptsForGene(gene, species);
-        
-        if (transcripts.isEmpty()){
-            //we should have already thrown an error from EnsemblRests methods
-            throw new RuntimeException(String.format("Could not get transcripts "
-                  + "for %s in species %s.\n", gene, species));
-        }
-        for (TranscriptDetails t: transcripts){
-            HashMap<String, String> g = rest.codingToGenomicTranscript(
-                    species, t.getTranscriptId(), Integer.parseInt(cdsCoordinate));
-            MutationMapperResult result = putBasicTranscriptInfo(t);
-            result.setCdsCoordinate(cdsCoordinate);
-            if (g != null){
-                result.setChromosome(g.get("chromosome"));
-                if (! g.get("coordinate").isEmpty()){
-                    result.setCoordinate(Integer.parseInt(g.get("coordinate")));
-                }
-                result.setGenome(g.get("assembly"));
-            }
-            results.add(result);
-        }
-        return results;
-    }
-    
     
     
     private MutationMapperResult putBasicTranscriptInfo(TranscriptDetails t){
