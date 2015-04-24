@@ -56,9 +56,15 @@ public class EnsemblRest {
         return species;
     }
     
-    public String getDna(String chrom, int start, int end, String species)throws ParseException, MalformedURLException, IOException, InterruptedException {
-        String endpoint = String.format("/sequence/region/%s/%s:%d..%d:1?", 
-                species, chrom, start, end);
+    public String getDna(String chrom, int start, int end, String species)
+            throws ParseException, MalformedURLException, IOException, InterruptedException {
+        return getDna(chrom, start, end, species, 1);
+    }
+    
+    public String getDna(String chrom, int start, int end, String species, int strand)
+            throws ParseException, MalformedURLException, IOException, InterruptedException {
+        String endpoint = String.format("/sequence/region/%s/%s:%d..%d:%d?", 
+                species, chrom, start, end, strand);
         JSONObject info = (JSONObject) getJSON(endpoint);
         if(info.isEmpty()) {
           throw new RuntimeException(String.format("Could not retrieve DNA for "
