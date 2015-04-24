@@ -465,8 +465,8 @@ public class MutationMapper extends Application implements Initializable{
         /*
         reduce sequences to simplest possible representations before submitting to VEP
         */
-        String refTrim = ref;
-        String altTrim = alt;
+        String refTrim = ref.toUpperCase();
+        String altTrim = alt.toUpperCase();
         int posShift = 0;//need to shunt coordinate up by one for every character trimmed from start of seq
         // trim identical suffixes
         while (refTrim.length() > 1 && altTrim.length() > 1 && 
