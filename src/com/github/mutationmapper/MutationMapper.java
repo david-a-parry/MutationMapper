@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -498,16 +499,34 @@ public class MutationMapper extends Application implements Initializable{
         return results;
     }
     
-    private List<String> getCdsVarAlleles(TranscriptDetails t, String species, int genomicPos, String mut){
-        int span = 1; 
+    private List<String> getCdsVarAlleles(TranscriptDetails t, String species, int genomicPos, String mut)
+            throws ParseException, MalformedURLException, IOException, InterruptedException{
+        int span = 0; 
         if (mut.matches("(?)del,[ACTG]+")){
             String[] split = mut.split(",");
-            span = split[1].length();
+            span = split[1].length() -1;
         }else if (mut.matches("(?)del,\\d+")){
             String[] split = mut.split(",");
-            span = Integer.parseInt(split[1]); 
+            span = Integer.parseInt(split[1]) -1; 
         }
-        // TO DO get DNA
+        Integer strand = t.getStrand();
+        if (strand == null){
+            strand = 1; 
+        }
+        String ref = getDna(t.getChromosome(), genomicPos, genomicPos + span, species, strand);
+        // TO DO check deleted allele matches
+        
+        String alt;
+        if (mut.matches("(?)del,[\\dACTG]+")){
+            alt = ref.substring(0, 1);
+        }else if (mut.matches("(?)ins,[ACTG]+")){
+            String[] split = mut.split(",");
+            alt = ref + split[1];
+        }else{
+            alt = mut;
+        }
+        // TO DO check alt doesn't match ref?
+        return Arrays.asList(ref, alt);
     }
     
     private HashMap<String, HashMap<String, String>> getVepConsequences(String chrom, int pos, 
@@ -541,6 +560,11 @@ public class MutationMapper extends Application implements Initializable{
     private String getDna(String chrom, int start, int end, String species)
             throws ParseException, MalformedURLException, IOException, InterruptedException{
         return rest.getDna(chrom, start, end, species);
+    }
+    
+    private String getDna(String chrom, int start, int end, String species, int strand)
+            throws ParseException, MalformedURLException, IOException, InterruptedException{
+        return rest.getDna(chrom, start, end, species, strand);
     }
     
     private List<Integer> searchDna(String dna, String seq){
