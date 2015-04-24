@@ -226,6 +226,206 @@ public class TranscriptDetails {
     public String getGenomeBuild(){
         return genomeBuild;
     }
+    
+    
+    public String getCdsPosition(String chrom, int pos){
+        if (! isCoding()){
+            return "non-coding (" + getBiotype() + ")";
+        }
+        if (pos < getTxStart() || pos > getTxEnd()){
+            return "outside transcribed region";
+        }
+        if (pos < getCdsStart() || pos  > getCdsEnd()){
+            return getUtrPosition(chrom, pos);
+        }
+        ArrayList<Exon> cds = getCodingRegions();
+        if (!getChromosome().equals(chrom)){
+            return "chromosome does not match";
+        }
+        
+        int cds_pos = 0;
+        int intron_pos = 0;
+        StringBuilder cds_string = new StringBuilder();
+
+        boolean isExonic = false;
+        
+        for (int i = 0; i < cds.size(); i++){
+            if ( pos < cds.get(i).getStart()){//pos is before this exons start
+                break;
+            }
+            if (pos > cds.get(i).getEnd()){//pos is after this exon
+                cds_pos += cds.get(i).getLength();
+            }else{//pos is within exon
+                cds_pos += pos - cds.get(i).getStart() + 1;
+                isExonic = true; 
+                break;
+            }
+        }
+        
+        if (!isExonic){
+            for (int i = 0; i < cds.size() -1; i++){
+                if (pos >= cds.get(i).getEnd() && pos < cds.get(i+1).getStart()){
+                    Integer donor_pos = pos - cds.get(i).getEnd();
+                    Integer acceptor_pos = pos - cds.get(i+1).getStart();
+                    if (Math.abs(donor_pos) <= Math.abs(acceptor_pos)){
+                        intron_pos = donor_pos;
+                    }else{
+                        intron_pos = acceptor_pos;
+                        if (cds_pos < getCodingLength()){
+                            cds_pos++;
+                        }else{
+                            /*
+                            intronic position is actually after STOP codon
+                            but pre the first UTR exon
+                            */
+                            if (getStrand() < 0){// on - strand so actually 5'UTR
+                                intron_pos *= -1;
+                                cds_string.append("c.-1");
+                            }else{//if on + strand is 3' UTR
+                                cds_string.append("c.*1");
+                            }
+                            if (intron_pos > 0){
+                                cds_string.append("+");
+                            }
+                            cds_string.append(intron_pos);
+                            return cds_string.toString();
+                        }
+                    }
+                }
+            }
+        }
+        
+        if (getStrand() < 0){
+            intron_pos *= -1;
+            cds_pos = getCodingLength() - cds_pos + 1;
+        }
+        cds_string.append("c.").append(cds_pos);
+        if (intron_pos != 0){
+            if (intron_pos > 0){
+                cds_string.append("+");
+            }
+            cds_string.append(intron_pos);
+        }
+        return cds_string.toString();
+    }
+    
+    public String getUtrPosition(String chrom, int pos){
+        if (! isCoding()){
+            return "non-coding (" + getBiotype() + ")";
+        }
+        if (pos > getCdsStart() && pos  <= getCdsEnd()){
+            //Should we throw an exepction here?
+            return "not UTR";
+        }
+        if (!getChromosome().equals(chrom)){
+            return "chromosome does not match";
+        }
+        StringBuilder utr_string = new StringBuilder();
+        int utr_pos = 0;
+        int intron_pos = 0;
+        
+        ArrayList<Exon> exons = getExons();
+        boolean isExonic = false;
+        if (pos < getCdsStart()){
+            int utr_length = 0;
+            for (int i = 0; i < exons.size(); i++){
+                if (exons.get(i).getStart() > getCdsStart()){//exon is in CDS
+                    break;
+                }
+                if (exons.get(i).getEnd() < getCdsStart()){//whole exon is pre-CDS
+                    utr_length += exons.get(i).getLength();
+                    if (pos > exons.get(i).getEnd()){
+                        utr_pos += exons.get(i).getLength();
+                    }else if(pos >= exons.get(i).getStart()){
+                        utr_pos += pos - exons.get(i).getStart() ;
+                        isExonic = true;
+                    }
+                }else{//cds start is within exon
+                    utr_length += getCdsStart() - exons.get(i).getStart() ;
+                    if (pos >= exons.get(i).getStart()){
+                        utr_pos += pos - exons.get(i).getStart() ;
+                        isExonic = true;
+                    }
+                    break;
+                }
+            }
+            utr_pos = utr_length - utr_pos;
+            utr_pos *= -1;
+        }else{
+            for (int i = 0; i < exons.size(); i++){
+                if (exons.get(i).getEnd() < getCdsEnd()){//exon is before or within CDS
+                    continue;
+                }
+                if (exons.get(i).getStart() > getCdsEnd()){//whole exon is post CDS
+                    if (pos > exons.get(i).getEnd()){
+                        utr_pos += exons.get(i).getLength();
+                    }else if (pos >= exons.get(i).getStart() ){
+                        utr_pos += pos - exons.get(i).getStart();
+                        isExonic = true;
+                        break;
+                    }
+                }else{//cds end is in exon
+                    if (pos >= getCdsEnd() && pos <= exons.get(i).getEnd()){
+                        utr_pos += pos - getCdsEnd();
+                        isExonic = true;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        if (!isExonic){
+            for (int i = 0; i < exons.size() -1; i++){
+                if (pos >= exons.get(i).getEnd() && pos < exons.get(i+1).getStart()){
+                    Integer donor_pos = pos - exons.get(i).getEnd();
+                    Integer acceptor_pos = pos - exons.get(i+1).getStart();
+                    if (Math.abs(donor_pos) <= Math.abs(acceptor_pos)){
+                        intron_pos = donor_pos;
+                    }else{
+                        intron_pos = acceptor_pos;
+                        if (utr_pos != -1){
+                            utr_pos++;
+                        }else{
+                            /*
+                            intronic position is actually before first coding base
+                            */
+                            if (getStrand() < 0){// on - strand so actually just after last coding base
+                                intron_pos *= -1;
+                                utr_string.append("c.").append(getCodingLength());
+                            }else{//if on + strand is 3' UTR
+                                utr_string.append("c.1");
+                            }
+                            if (intron_pos > 0){
+                                utr_string.append("+");
+                            }
+                            utr_string.append(intron_pos);
+                            return utr_string.toString();
+                        }
+                    }
+                }
+            }
+        }
+        
+        if (getStrand() < 0){
+            intron_pos *= -1;
+            utr_pos = getCodingLength() - utr_pos + 1;
+        }
+        if (utr_pos > 0){
+            utr_string.append("c.*").append(utr_pos);
+        }else{
+            utr_string.append("c.").append(utr_pos);
+        }
+        if (intron_pos != 0){
+            if (intron_pos > 0){
+                utr_string.append("+");
+            }
+            utr_string.append(intron_pos);
+        }
+        return utr_string.toString();
+        
+        
+    }
+    
 
     
     public class Exon implements Comparable<Exon> {
@@ -309,6 +509,8 @@ public class TranscriptDetails {
             return this.getEnd() - o.getEnd();
         }
     }
+    
+    
     
     public class GeneExonsException extends Exception{
         public GeneExonsException() { super(); }
