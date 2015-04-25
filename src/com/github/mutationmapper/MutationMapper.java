@@ -441,19 +441,7 @@ public class MutationMapper extends Application implements Initializable{
             result.setChromosome(chrom);
             result.setCoordinate(matchPos);
             result.setMatchingSequence(seq);
-            if (!cons.isEmpty()){
-                if (cons.containsKey(t.getTranscriptId())){
-                    if (cons.get(t.getTranscriptId()).containsKey("hgvsc")){
-                        result.setCdsConsequence(cons.get(t.getTranscriptId()).get("hgvsc"));
-                    }
-                    if (cons.get(t.getTranscriptId()).containsKey("hgvsp")){
-                        String pCons = cons.get(t.getTranscriptId()).get("hgvsp").replaceAll("%3D", "=");
-                        result.setProteinConsequence(pCons);
-                    }
-                    result.setRefAllele(cons.get(t.getTranscriptId()).get("ref"));
-                    result.setVarAllele(cons.get(t.getTranscriptId()).get("alt"));
-                }
-            }
+            addVepConsequenceToMutationMapperResult(result, t, cons);
             results.add(result);
             //t_ids.add(t.getTranscriptId());
         }
@@ -491,14 +479,54 @@ public class MutationMapper extends Application implements Initializable{
                 result.setGenome(g.get("assembly"));
             }
             if (mutSeq != null){
+                /*
+                we use a rather convoluted means of getting VEP consequence so
+                that we can use the regions POST method as other methods don't support
+                more complex var alleles
+                */
                 List<String> alleles = getCdsVarAlleles(t, species, 
                         result.getCoordinate(), mutSeq);
+                if (alleles.get(0).equalsIgnoreCase(alleles.get(1))){
+                    result.setRefAllele(alleles.get(0));
+                    result.setVarAllele(alleles.get(1));
+                }else{
+                    // TO DO check deleted allele matches if supplied
+                    
+                }
+                HashMap<String, HashMap<String, String>> cons = 
+                        getVepConsequences(t.getChromosome(), result.getCoordinate(), 
+                                species, alleles.get(2), alleles.get(3));
+                addVepConsequenceToMutationMapperResult(result, t, cons);
             }
             results.add(result);
         }
         return results;
     }
     
+    private void addVepConsequenceToMutationMapperResult(MutationMapperResult r,
+            TranscriptDetails t, HashMap<String, HashMap<String, String>> cons){
+        if (!cons.isEmpty()){
+            if (cons.containsKey(t.getTranscriptId())){
+                if (cons.get(t.getTranscriptId()).containsKey("hgvsc")){
+                    r.setCdsConsequence(cons.get(t.getTranscriptId()).get("hgvsc"));
+                }
+                if (cons.get(t.getTranscriptId()).containsKey("hgvsp")){
+                    String pCons = cons.get(t.getTranscriptId()).get("hgvsp").replaceAll("%3D", "=");
+                    r.setProteinConsequence(pCons);
+                }
+                r.setRefAllele(cons.get(t.getTranscriptId()).get("ref"));
+                r.setVarAllele(cons.get(t.getTranscriptId()).get("alt"));
+            }
+        }
+    }
+    
+    /*
+    returns a list, in order of: 
+        CDS reference allele
+        CDS variant allele
+        Genomic reference allele
+        Genomic variant allele
+    */
     private List<String> getCdsVarAlleles(TranscriptDetails t, String species, int genomicPos, String mut)
             throws ParseException, MalformedURLException, IOException, InterruptedException{
         int span = 0; 
@@ -513,20 +541,37 @@ public class MutationMapper extends Application implements Initializable{
         if (strand == null){
             strand = 1; 
         }
-        String ref = getDna(t.getChromosome(), genomicPos, genomicPos + span, species, strand);
-        // TO DO check deleted allele matches
-        
-        String alt;
+        String cdsRef;
+        String cdsAlt;
+        String gRef;
+        String gAlt;
+        if (strand < 0){
+            cdsRef = getDna(t.getChromosome(), genomicPos - span, genomicPos, species, -1);
+            gRef = getDna(t.getChromosome(), genomicPos - span, genomicPos, species, 1);
+        }else{
+            cdsRef = getDna(t.getChromosome(), genomicPos, genomicPos + span, species, 1);
+            gRef = cdsRef;
+        }
         if (mut.matches("(?)del,[\\dACTG]+")){
-            alt = ref.substring(0, 1);
+            cdsAlt = cdsRef.substring(0, 1);
+            gAlt = gRef.substring(0, 1);
         }else if (mut.matches("(?)ins,[ACTG]+")){
             String[] split = mut.split(",");
-            alt = ref + split[1];
+            cdsAlt = cdsRef + split[1];
+            if (strand < 0){
+                gAlt = ReverseComplementDNA.reverseComplement(split[1]);
+            }else{
+                gAlt = cdsAlt;
+            }
         }else{
-            alt = mut;
+            cdsAlt = mut;
+            if (strand < 0){
+                gAlt = ReverseComplementDNA.reverseComplement(mut);
+            }else{
+                gAlt = mut;
+            }
         }
-        // TO DO check alt doesn't match ref?
-        return Arrays.asList(ref, alt);
+        return Arrays.asList(cdsRef, cdsAlt, gRef, gAlt);
     }
     
     private HashMap<String, HashMap<String, String>> getVepConsequences(String chrom, int pos, 
@@ -552,7 +597,8 @@ public class MutationMapper extends Application implements Initializable{
             altTrim = altTrim.substring(1);
             posShift++;
         }
-        HashMap<String, HashMap<String, String>> results = rest.getVepConsequence(chrom, pos + posShift, species, refTrim, altTrim);
+        HashMap<String, HashMap<String, String>> results = 
+                rest.getVepConsequence(chrom, pos + posShift, species, refTrim, altTrim);
         return results;
         
     }
