@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -425,8 +426,8 @@ public class MutationMapper extends Application implements Initializable{
         for (TranscriptDetails t: transcripts){
             MutationMapperResult result = putBasicTranscriptInfo(t);
             // calculate CDS position from genomic position for each transcript
-            String cds_pos_match = getCdsPosition(chrom, matchPos, t);
-            String cds_pos_end = getCdsPosition(chrom, matchEnd, t);
+            String cds_pos_match = t.getCdsPosition(chrom, matchPos);
+            String cds_pos_end = t.getCdsPosition(chrom, matchEnd);
             if (cds_pos_match.equals(cds_pos_end)){
                 /*
                 this should only occur if we haven't got a position but instead
@@ -459,51 +460,6 @@ public class MutationMapper extends Application implements Initializable{
         return results;
     }
     
-    private HashMap<String, HashMap<String, String>> getVepConsequences(String chrom, int pos, 
-            String species, String ref, String alt)throws ParseException, 
-            MalformedURLException, IOException, InterruptedException {
-        /*
-        reduce sequences to simplest possible representations before submitting to VEP
-        */
-        String refTrim = ref;
-        String altTrim = alt;
-        int posShift = 0;//need to shunt coordinate up by one for every character trimmed from start of seq
-        // trim identical suffixes
-        while (refTrim.length() > 1 && altTrim.length() > 1 && 
-                refTrim.substring(refTrim.length()-1).equals(
-                altTrim.substring(altTrim.length()-1))){
-            refTrim = refTrim.substring(0, refTrim.length() -1);
-            altTrim = altTrim.substring(0, altTrim.length() -1);
-        }
-        // trim identical prefixes
-        while (refTrim.length() > 1 && altTrim.length() > 1 && 
-                refTrim.substring(0, 1).equals(altTrim.substring(0, 1))){
-            refTrim = refTrim.substring(1);
-            altTrim = altTrim.substring(1);
-            posShift++;
-        }
-        HashMap<String, HashMap<String, String>> results = rest.getVepConsequence(chrom, pos + posShift, species, refTrim, altTrim);
-        return results;
-        
-    }
-    
-    private String getDna(String chrom, int start, int end, String species)
-            throws ParseException, MalformedURLException, IOException, InterruptedException{
-        return rest.getDna(chrom, start, end, species);
-    }
-    
-    private List<Integer> searchDna(String dna, String seq){
-        String lcDna = dna.toLowerCase();
-        String lcSeq = seq.toLowerCase();
-        int index = lcDna.indexOf(lcSeq);
-        List<Integer> indices = new ArrayList<>();
-        while (index >= 0){
-            indices.add(index);
-            index = lcDna.indexOf(lcSeq, index + 1);
-        }
-        return indices;
-    }
-    
     private List<MutationMapperResult> codingToGenomic(String gene, String species, 
             String cdsCoordinate) throws ParseException, MalformedURLException, IOException, InterruptedException{
         return  codingToGenomic(gene, species, cdsCoordinate, null);
@@ -534,208 +490,95 @@ public class MutationMapper extends Application implements Initializable{
                 }
                 result.setGenome(g.get("assembly"));
             }
+            if (mutSeq != null){
+                List<String> alleles = getCdsVarAlleles(t, species, 
+                        result.getCoordinate(), mutSeq);
+            }
             results.add(result);
         }
         return results;
     }
     
-    private String getCdsPosition(String chrom, int pos, TranscriptDetails t){
-        if (! t.isCoding()){
-            return "non-coding (" + t.getBiotype() + ")";
+    private List<String> getCdsVarAlleles(TranscriptDetails t, String species, int genomicPos, String mut)
+            throws ParseException, MalformedURLException, IOException, InterruptedException{
+        int span = 0; 
+        if (mut.matches("(?)del,[ACTG]+")){
+            String[] split = mut.split(",");
+            span = split[1].length() -1;
+        }else if (mut.matches("(?)del,\\d+")){
+            String[] split = mut.split(",");
+            span = Integer.parseInt(split[1]) -1; 
         }
-        if (pos < t.getTxStart() || pos > t.getTxEnd()){
-            return "outside transcribed region";
+        Integer strand = t.getStrand();
+        if (strand == null){
+            strand = 1; 
         }
-        if (pos < t.getCdsStart() || pos  > t.getCdsEnd()){
-            return getUtrPosition(chrom, pos, t);
-        }
-        ArrayList<Exon> cds = t.getCodingRegions();
-        if (!t.getChromosome().equals(chrom)){
-            return "chromosome does not match";
-        }
+        String ref = getDna(t.getChromosome(), genomicPos, genomicPos + span, species, strand);
+        // TO DO check deleted allele matches
         
-        int cds_pos = 0;
-        int intron_pos = 0;
-        StringBuilder cds_string = new StringBuilder();
-
-        boolean isExonic = false;
-        
-        for (int i = 0; i < cds.size(); i++){
-            if ( pos < cds.get(i).getStart()){//pos is before this exons start
-                break;
-            }
-            if (pos > cds.get(i).getEnd()){//pos is after this exon
-                cds_pos += cds.get(i).getLength();
-            }else{//pos is within exon
-                cds_pos += pos - cds.get(i).getStart() + 1;
-                isExonic = true; 
-                break;
-            }
+        String alt;
+        if (mut.matches("(?)del,[\\dACTG]+")){
+            alt = ref.substring(0, 1);
+        }else if (mut.matches("(?)ins,[ACTG]+")){
+            String[] split = mut.split(",");
+            alt = ref + split[1];
+        }else{
+            alt = mut;
         }
-        
-        if (!isExonic){
-            for (int i = 0; i < cds.size() -1; i++){
-                if (pos >= cds.get(i).getEnd() && pos < cds.get(i+1).getStart()){
-                    Integer donor_pos = pos - cds.get(i).getEnd();
-                    Integer acceptor_pos = pos - cds.get(i+1).getStart();
-                    if (Math.abs(donor_pos) <= Math.abs(acceptor_pos)){
-                        intron_pos = donor_pos;
-                    }else{
-                        intron_pos = acceptor_pos;
-                        if (cds_pos < t.getCodingLength()){
-                            cds_pos++;
-                        }else{
-                            /*
-                            intronic position is actually after STOP codon
-                            but pre the first UTR exon
-                            */
-                            if (t.getStrand() < 0){// on - strand so actually 5'UTR
-                                intron_pos *= -1;
-                                cds_string.append("c.-1");
-                            }else{//if on + strand is 3' UTR
-                                cds_string.append("c.*1");
-                            }
-                            if (intron_pos > 0){
-                                cds_string.append("+");
-                            }
-                            cds_string.append(intron_pos);
-                            return cds_string.toString();
-                        }
-                    }
-                }
-            }
-        }
-        
-        if (t.getStrand() < 0){
-            intron_pos *= -1;
-            cds_pos = t.getCodingLength() - cds_pos + 1;
-        }
-        cds_string.append("c.").append(cds_pos);
-        if (intron_pos != 0){
-            if (intron_pos > 0){
-                cds_string.append("+");
-            }
-            cds_string.append(intron_pos);
-        }
-        return cds_string.toString();
+        // TO DO check alt doesn't match ref?
+        return Arrays.asList(ref, alt);
     }
     
-    private String getUtrPosition(String chrom, int pos, TranscriptDetails t){
-        if (! t.isCoding()){
-            return "non-coding (" + t.getBiotype() + ")";
+    private HashMap<String, HashMap<String, String>> getVepConsequences(String chrom, int pos, 
+            String species, String ref, String alt)throws ParseException, 
+            MalformedURLException, IOException, InterruptedException {
+        /*
+        reduce sequences to simplest possible representations before submitting to VEP
+        */
+        String refTrim = ref.toUpperCase();
+        String altTrim = alt.toUpperCase();
+        int posShift = 0;//need to shunt coordinate up by one for every character trimmed from start of seq
+        // trim identical suffixes
+        while (refTrim.length() > 1 && altTrim.length() > 1 && 
+                refTrim.substring(refTrim.length()-1).equals(
+                altTrim.substring(altTrim.length()-1))){
+            refTrim = refTrim.substring(0, refTrim.length() -1);
+            altTrim = altTrim.substring(0, altTrim.length() -1);
         }
-        if (pos > t.getCdsStart() && pos  <= t.getCdsEnd()){
-            //Should we throw an exepction here?
-            return "not UTR";
+        // trim identical prefixes
+        while (refTrim.length() > 1 && altTrim.length() > 1 && 
+                refTrim.substring(0, 1).equals(altTrim.substring(0, 1))){
+            refTrim = refTrim.substring(1);
+            altTrim = altTrim.substring(1);
+            posShift++;
         }
-        if (!t.getChromosome().equals(chrom)){
-            return "chromosome does not match";
-        }
-        StringBuilder utr_string = new StringBuilder();
-        int utr_pos = 0;
-        int intron_pos = 0;
-        
-        ArrayList<Exon> exons = t.getExons();
-        boolean isExonic = false;
-        if (pos < t.getCdsStart()){
-            int utr_length = 0;
-            for (int i = 0; i < exons.size(); i++){
-                if (exons.get(i).getStart() > t.getCdsStart()){//exon is in CDS
-                    break;
-                }
-                if (exons.get(i).getEnd() < t.getCdsStart()){//whole exon is pre-CDS
-                    utr_length += exons.get(i).getLength();
-                    if (pos > exons.get(i).getEnd()){
-                        utr_pos += exons.get(i).getLength();
-                    }else if(pos >= exons.get(i).getStart()){
-                        utr_pos += pos - exons.get(i).getStart() ;
-                        isExonic = true;
-                    }
-                }else{//cds start is within exon
-                    utr_length += t.getCdsStart() - exons.get(i).getStart() ;
-                    if (pos >= exons.get(i).getStart()){
-                        utr_pos += pos - exons.get(i).getStart() ;
-                        isExonic = true;
-                    }
-                    break;
-                }
-            }
-            utr_pos = utr_length - utr_pos;
-            utr_pos *= -1;
-        }else{
-            for (int i = 0; i < exons.size(); i++){
-                if (exons.get(i).getEnd() < t.getCdsEnd()){//exon is before or within CDS
-                    continue;
-                }
-                if (exons.get(i).getStart() > t.getCdsEnd()){//whole exon is post CDS
-                    if (pos > exons.get(i).getEnd()){
-                        utr_pos += exons.get(i).getLength();
-                    }else if (pos >= exons.get(i).getStart() ){
-                        utr_pos += pos - exons.get(i).getStart();
-                        isExonic = true;
-                        break;
-                    }
-                }else{//cds end is in exon
-                    if (pos >= t.getCdsEnd() && pos <= exons.get(i).getEnd()){
-                        utr_pos += pos - t.getCdsEnd();
-                        isExonic = true;
-                        break;
-                    }
-                }
-            }
-        }
-        
-        if (!isExonic){
-            for (int i = 0; i < exons.size() -1; i++){
-                if (pos >= exons.get(i).getEnd() && pos < exons.get(i+1).getStart()){
-                    Integer donor_pos = pos - exons.get(i).getEnd();
-                    Integer acceptor_pos = pos - exons.get(i+1).getStart();
-                    if (Math.abs(donor_pos) <= Math.abs(acceptor_pos)){
-                        intron_pos = donor_pos;
-                    }else{
-                        intron_pos = acceptor_pos;
-                        if (utr_pos != -1){
-                            utr_pos++;
-                        }else{
-                            /*
-                            intronic position is actually before first coding base
-                            */
-                            if (t.getStrand() < 0){// on - strand so actually just after last coding base
-                                intron_pos *= -1;
-                                utr_string.append("c.").append(t.getCodingLength());
-                            }else{//if on + strand is 3' UTR
-                                utr_string.append("c.1");
-                            }
-                            if (intron_pos > 0){
-                                utr_string.append("+");
-                            }
-                            utr_string.append(intron_pos);
-                            return utr_string.toString();
-                        }
-                    }
-                }
-            }
-        }
-        
-        if (t.getStrand() < 0){
-            intron_pos *= -1;
-            utr_pos = t.getCodingLength() - utr_pos + 1;
-        }
-        if (utr_pos > 0){
-            utr_string.append("c.*").append(utr_pos);
-        }else{
-            utr_string.append("c.").append(utr_pos);
-        }
-        if (intron_pos != 0){
-            if (intron_pos > 0){
-                utr_string.append("+");
-            }
-            utr_string.append(intron_pos);
-        }
-        return utr_string.toString();
-        
+        HashMap<String, HashMap<String, String>> results = rest.getVepConsequence(chrom, pos + posShift, species, refTrim, altTrim);
+        return results;
         
     }
+    
+    private String getDna(String chrom, int start, int end, String species)
+            throws ParseException, MalformedURLException, IOException, InterruptedException{
+        return rest.getDna(chrom, start, end, species);
+    }
+    
+    private String getDna(String chrom, int start, int end, String species, int strand)
+            throws ParseException, MalformedURLException, IOException, InterruptedException{
+        return rest.getDna(chrom, start, end, species, strand);
+    }
+    
+    private List<Integer> searchDna(String dna, String seq){
+        String lcDna = dna.toLowerCase();
+        String lcSeq = seq.toLowerCase();
+        int index = lcDna.indexOf(lcSeq);
+        List<Integer> indices = new ArrayList<>();
+        while (index >= 0){
+            indices.add(index);
+            index = lcDna.indexOf(lcSeq, index + 1);
+        }
+        return indices;
+    }
+    
     
     private MutationMapperResult putBasicTranscriptInfo(TranscriptDetails t){
         MutationMapperResult result = new MutationMapperResult();
