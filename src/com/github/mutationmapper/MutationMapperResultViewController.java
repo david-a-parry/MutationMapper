@@ -56,7 +56,9 @@ public class MutationMapperResultViewController implements Initializable {
    @FXML
    TableColumn varCol;
    @FXML
-   TableColumn consequenceCol;
+   TableColumn cdsConsequenceCol;
+   @FXML
+   TableColumn proteinConsequenceCol;
    @FXML
    TableColumn knownVarCol;
    @FXML
@@ -81,8 +83,10 @@ public class MutationMapperResultViewController implements Initializable {
         genomicCol.setCellValueFactory(new PropertyValueFactory<>("genomicCoordinate"));
         refCol.setCellValueFactory(new PropertyValueFactory<>("refAllele"));
         varCol.setCellValueFactory(new PropertyValueFactory<>("varAllele"));
-        consequenceCol.setCellValueFactory(new PropertyValueFactory<>("consequences"));
-        consequenceCol.setCellFactory(new Callback<TableColumn<String,String>, TableCell<String,String>>() {
+        proteinConsequenceCol.setCellValueFactory(new PropertyValueFactory<>("proteinConsequence"));
+        cdsConsequenceCol.setCellValueFactory(new PropertyValueFactory<>("cdsConsequence"));
+        /*
+        cdsConsequenceCol.setCellFactory(new Callback<TableColumn<String,String>, TableCell<String,String>>() {
                @Override
                public TableCell<String, String> call( TableColumn<String, String> param) {
                     final TableCell<String, String> cell = new TableCell<String, String>() {
@@ -92,7 +96,7 @@ public class MutationMapperResultViewController implements Initializable {
                               super.updateItem(item, empty);
                               if (item != null && !isEmpty()) {
                                    text = new Text(item.toString());
-                                   text.wrappingWidthProperty().bind(consequenceCol.widthProperty()); // Setting the wrapping width to the Text
+                                   text.wrappingWidthProperty().bind(cdsConsequenceCol.widthProperty()); // Setting the wrapping width to the Text
                                    setGraphic(text);
                               }
                          }
@@ -100,6 +104,7 @@ public class MutationMapperResultViewController implements Initializable {
                     return cell;
                }
           });
+        */
         knownVarCol.setCellValueFactory(new PropertyValueFactory<>("knownVar"));
         
     } 
