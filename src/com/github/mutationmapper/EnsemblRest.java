@@ -383,6 +383,7 @@ public class EnsemblRest {
         return transcriptIds;
     }
     
+    //we use the POST method because other methods don't cope with larger indels
     public HashMap<String, HashMap<String, String>> getVepConsequence(String chrom, int coord, 
             String species, String ref, String alt) throws ParseException, 
             MalformedURLException, IOException, InterruptedException {
@@ -412,15 +413,16 @@ public class EnsemblRest {
                 }
             }
             if (result.containsKey("colocated_variants")){
-                HashMap<String, String> snpMap = new HashMap<>();
                 for (Object k: (JSONArray) result.get("colocated_variants")){
+                    HashMap<String, String> snpMap = new HashMap<>();
                     JSONObject snp = (JSONObject) k;
                     for (String key: snp.keySet()){
                         //results.put(key, cons.get(key).toString());
                         snpMap.put(key, snp.get(key).toString());
                     }
+                    results.put("snps_" + snpMap.get("id"), snpMap);
                 }
-                results.put("snps_" + snpMap.get("id"), snpMap);
+                
             }
             if (result.containsKey("most_severe_consequence")){
                 //complicated by the fact that we are just returning a single HashMap of HashMaps.
