@@ -441,6 +441,7 @@ public class MutationMapper extends Application implements Initializable{
             result.setChromosome(chrom);
             result.setCoordinate(matchPos);
             result.setMatchingSequence(seq);
+            result.setMutation(mutSeq);
             addVepConsequenceToMutationMapperResult(result, t, cons);
             results.add(result);
             //t_ids.add(t.getTranscriptId());
@@ -478,7 +479,7 @@ public class MutationMapper extends Application implements Initializable{
                 }
                 result.setGenome(g.get("assembly"));
             }
-            if (mutSeq != null){
+            if (mutSeq != null && result.getCoordinate() != null){
                 /*
                 we use a rather convoluted means of getting VEP consequence so
                 that we can use the regions POST method as other methods don't support
@@ -514,6 +515,42 @@ public class MutationMapper extends Application implements Initializable{
                     String pCons = cons.get(t.getTranscriptId()).get("hgvsp").replaceAll("%3D", "=");
                     r.setProteinConsequence(pCons);
                 }
+                if(cons.get(t.getTranscriptId()).containsKey("polyphen_prediction")
+                 && cons.get(t.getTranscriptId()).containsKey("polyphen_score")){
+                    r.setPolyphenResult(String.format("%s (%s)", 
+                            cons.get(t.getTranscriptId()).get("polyphen_prediction"),
+                            cons.get(t.getTranscriptId()).get("polyphen_score")));
+                }
+                if(cons.get(t.getTranscriptId()).containsKey("sift_prediction")
+                 && cons.get(t.getTranscriptId()).containsKey("sift_score")){
+                    r.setSiftResult(String.format("%s (%s)", 
+                            cons.get(t.getTranscriptId()).get("sift_prediction"),
+                            cons.get(t.getTranscriptId()).get("sift_score")));
+                }
+                if (cons.get(t.getTranscriptId()).containsKey("consequence_terms")){
+                    r.setConsequence(cons.get(t.getTranscriptId()).get("consequence_terms").
+                            replaceAll("[\\[\\]]", ""));
+                }
+                
+                StringBuilder snpIds = new StringBuilder();
+                for (String k: cons.keySet()){
+                    if (k.startsWith("snps_")){
+                        if(snpIds.length() > 0){
+                            snpIds.append("/");
+                        }
+                        snpIds.append(cons.get(k).get("id"));
+                        if (cons.get(k).containsKey("clin_sig")){
+                            if (!cons.get(k).get("clin_sig").isEmpty()){
+                                snpIds.append(" (clin_sig=").append(cons.get(k).get("clin_sig")).append(")");
+                            }
+                        }
+                    }else if (k.equals("Consequence")){
+                        r.setMostSeverConsequence(cons.get(k).get("most_severe_consequence"));
+                    }
+                }
+                if (snpIds.length() > 0){
+                    r.setKnownIds(snpIds.toString());
+                }
                 r.setRefAllele(cons.get(t.getTranscriptId()).get("ref"));
                 r.setVarAllele(cons.get(t.getTranscriptId()).get("alt"));
             }
@@ -530,12 +567,12 @@ public class MutationMapper extends Application implements Initializable{
     private List<String> getCdsVarAlleles(TranscriptDetails t, String species, int genomicPos, String mut)
             throws ParseException, MalformedURLException, IOException, InterruptedException{
         int span = 0; 
-        if (mut.matches("(?)del,[ACTG]+")){
+        if (mut.matches("(?i)del,[ACTG]+")){
             String[] split = mut.split(",");
-            span = split[1].length() -1;
-        }else if (mut.matches("(?)del,\\d+")){
+            span = split[1].length() ;
+        }else if (mut.matches("(?i)del,\\d+")){
             String[] split = mut.split(",");
-            span = Integer.parseInt(split[1]) -1; 
+            span = Integer.parseInt(split[1]) ; 
         }
         Integer strand = t.getStrand();
         if (strand == null){
@@ -552,10 +589,10 @@ public class MutationMapper extends Application implements Initializable{
             cdsRef = getDna(t.getChromosome(), genomicPos, genomicPos + span, species, 1);
             gRef = cdsRef;
         }
-        if (mut.matches("(?)del,[\\dACTG]+")){
+        if (mut.matches("(?i)del,[\\dACTG]+")){
             cdsAlt = cdsRef.substring(0, 1);
             gAlt = gRef.substring(0, 1);
-        }else if (mut.matches("(?)ins,[ACTG]+")){
+        }else if (mut.matches("(?i)ins,[ACTG]+")){
             String[] split = mut.split(",");
             cdsAlt = cdsRef + split[1];
             if (strand < 0){
@@ -664,7 +701,7 @@ public class MutationMapper extends Application implements Initializable{
             return sequenceIsDna(seq);
         }
         if (split.length == 2){
-            if (!split[0].matches("(?)ins|del")){
+            if (!split[0].matches("(?i)ins|del")){
                 return false;
             }
             if (sequenceIsDna(split[1])){
