@@ -12,7 +12,7 @@ import java.util.HashMap;
  * @author david
  */
 public class MutationMapperResult {
-    private Integer index;
+    private String index;
     private String chromosome;
     private Integer coordinate;
     private String genome;
@@ -35,7 +35,7 @@ public class MutationMapperResult {
     private String biotype;
     private HashMap<String, String> vepResults;
     
-    public void setIndex(Integer i){
+    public void setIndex(String i){
         index = i;
     }
     
@@ -123,7 +123,7 @@ public class MutationMapperResult {
         vepResults = results;
     }
     
-    public Integer getIndex(){
+    public String getIndex(){
         return index;
     }
     
