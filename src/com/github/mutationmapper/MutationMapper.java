@@ -471,8 +471,8 @@ public class MutationMapper extends Application implements Initializable{
             HashMap<String, String> g = rest.codingToGenomicTranscript(
                     species, t.getTranscriptId(), Integer.parseInt(cdsCoordinate));
             MutationMapperResult result = putBasicTranscriptInfo(t);
-            result.setCdsCoordinate(cdsCoordinate);
             if (g != null){
+                result.setCdsCoordinate(cdsCoordinate);
                 result.setChromosome(g.get("chromosome"));
                 if (! g.get("coordinate").isEmpty()){
                     result.setCoordinate(Integer.parseInt(g.get("coordinate")));
@@ -487,15 +487,16 @@ public class MutationMapper extends Application implements Initializable{
                 */
                 List<String> alleles = getCdsVarAlleles(t, species, 
                         result.getCoordinate(), mutSeq);
-                if (alleles.get(0).equalsIgnoreCase(alleles.get(1))){
-                    result.setRefAllele(alleles.get(0));
-                    result.setVarAllele(alleles.get(1));
-                }else{
-                    // TO DO check deleted allele matches if supplied
-                    
+                result.setRefAllele(alleles.get(2));
+                result.setVarAllele(alleles.get(3));
+                // TO DO check deleted allele matches if supplied
+                int genomicCoordinate = result.getCoordinate();
+                if (t.getStrand() < 0){
+                    genomicCoordinate -= getMutationSpan(mutSeq);
                 }
+                
                 HashMap<String, HashMap<String, String>> cons = 
-                        getVepConsequences(t.getChromosome(), result.getCoordinate(), 
+                        getVepConsequences(t.getChromosome(), genomicCoordinate, 
                                 species, alleles.get(2), alleles.get(3));
                 addVepConsequenceToMutationMapperResult(result, t, cons);
             }
@@ -551,10 +552,23 @@ public class MutationMapper extends Application implements Initializable{
                 if (snpIds.length() > 0){
                     r.setKnownIds(snpIds.toString());
                 }
-                r.setRefAllele(cons.get(t.getTranscriptId()).get("ref"));
-                r.setVarAllele(cons.get(t.getTranscriptId()).get("alt"));
+                //r.setRefAllele(cons.get(t.getTranscriptId()).get("ref"));
+                //r.setVarAllele(cons.get(t.getTranscriptId()).get("alt"));
             }
         }
+    }
+    
+    private int getMutationSpan(String mut){
+        if (mut.matches("(?i)del,[ACTG]+")){
+            String[] split = mut.split(",");
+            return split[1].length() ;
+        }else if (mut.matches("(?i)del,\\d+")){
+            String[] split = mut.split(",");
+            return Integer.parseInt(split[1]); 
+        }else if (mut.matches("(?i)[ACTG]+")){
+            return mut.length() - 1;
+        }
+        return 0;
     }
     
     /*
@@ -566,16 +580,7 @@ public class MutationMapper extends Application implements Initializable{
     */
     private List<String> getCdsVarAlleles(TranscriptDetails t, String species, int genomicPos, String mut)
             throws ParseException, MalformedURLException, IOException, InterruptedException{
-        int span = 0; 
-        if (mut.matches("(?i)del,[ACTG]+")){
-            String[] split = mut.split(",");
-            span = split[1].length() ;
-        }else if (mut.matches("(?i)del,\\d+")){
-            String[] split = mut.split(",");
-            span = Integer.parseInt(split[1]); 
-        }else if (mut.matches("(?i)[ACTG]+")){
-            span = mut.length() - 1;
-        }
+        int span = getMutationSpan(mut);
         Integer strand = t.getStrand();
         if (strand == null){
             strand = 1; 
@@ -598,7 +603,7 @@ public class MutationMapper extends Application implements Initializable{
             String[] split = mut.split(",");
             cdsAlt = cdsRef + split[1];
             if (strand < 0){
-                gAlt = ReverseComplementDNA.reverseComplement(split[1]);
+                gAlt = ReverseComplementDNA.reverseComplement(cdsAlt);
             }else{
                 gAlt = cdsAlt;
             }
