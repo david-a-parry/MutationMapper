@@ -572,7 +572,9 @@ public class MutationMapper extends Application implements Initializable{
             span = split[1].length() ;
         }else if (mut.matches("(?i)del,\\d+")){
             String[] split = mut.split(",");
-            span = Integer.parseInt(split[1]) ; 
+            span = Integer.parseInt(split[1]); 
+        }else if (mut.matches("(?i)[ACTG]+")){
+            span = mut.length() - 1;
         }
         Integer strand = t.getStrand();
         if (strand == null){
