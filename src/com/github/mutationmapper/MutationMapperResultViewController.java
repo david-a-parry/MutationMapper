@@ -56,11 +56,19 @@ public class MutationMapperResultViewController implements Initializable {
    @FXML
    TableColumn varCol;
    @FXML
+   TableColumn consequenceCol;
+   @FXML
    TableColumn cdsConsequenceCol;
    @FXML
    TableColumn proteinConsequenceCol;
    @FXML
+   TableColumn polyphenCol;
+   @FXML
+   TableColumn siftCol;
+   @FXML
    TableColumn knownVarCol;
+   @FXML
+   TableColumn seqInputCol;
    @FXML
    Button closeButton;
    @FXML 
@@ -85,6 +93,11 @@ public class MutationMapperResultViewController implements Initializable {
         varCol.setCellValueFactory(new PropertyValueFactory<>("varAllele"));
         proteinConsequenceCol.setCellValueFactory(new PropertyValueFactory<>("proteinConsequence"));
         cdsConsequenceCol.setCellValueFactory(new PropertyValueFactory<>("cdsConsequence"));
+        consequenceCol.setCellValueFactory(new PropertyValueFactory<>("consequence"));
+        knownVarCol.setCellValueFactory(new PropertyValueFactory<>("knownIds"));
+        seqInputCol.setCellValueFactory(new PropertyValueFactory<>("seqInput"));
+        polyphenCol.setCellValueFactory(new PropertyValueFactory<>("polyphenResult"));
+        siftCol.setCellValueFactory(new PropertyValueFactory<>("siftResult"));
         /*
         cdsConsequenceCol.setCellFactory(new Callback<TableColumn<String,String>, TableCell<String,String>>() {
                @Override
@@ -105,7 +118,6 @@ public class MutationMapperResultViewController implements Initializable {
                }
           });
         */
-        knownVarCol.setCellValueFactory(new PropertyValueFactory<>("knownVar"));
         
     } 
     public void displayData(ArrayList<MutationMapperResult> results){
