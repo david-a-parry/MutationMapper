@@ -46,6 +46,7 @@ import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
@@ -115,8 +116,8 @@ public class MutationMapper extends Application implements Initializable{
             primaryStage.setTitle("MutationMapper");
             primaryStage.setResizable(false);
             primaryStage.show();
-            //primaryStage.getIcons().add(new Image(this.getClass().
-            //        getResourceAsStream("icon.png")));
+            primaryStage.getIcons().add(new Image(this.getClass().
+                    getResourceAsStream("icon.png")));
             scene.getStylesheets().add(com.github.mutationmapper.MutationMapper.class.getResource("mmapper.css").toExternalForm());
             primaryStage.setOnCloseRequest((WindowEvent e) -> {
                 Platform.exit();
@@ -303,8 +304,8 @@ public class MutationMapper extends Application implements Initializable{
                 }Platform.runLater(() -> {
                     resultView.displayData(results);
                     tableStage.setTitle("MutationMapper Results");
-                    //tableStage.getIcons().add(new Image(this.getClass()
-                    //        .getResourceAsStream("icon.png")));
+                    tableStage.getIcons().add(new Image(this.getClass()
+                            .getResourceAsStream("icon.png")));
                     if (!tableStage.isShowing()){
                         tableStage.show();
                     }else{
