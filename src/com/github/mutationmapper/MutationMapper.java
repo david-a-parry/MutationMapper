@@ -39,13 +39,16 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ProgressIndicator;
+import javafx.scene.control.RadioMenuItem;
 import javafx.scene.control.TextField;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.AnchorPane;
@@ -88,6 +91,16 @@ public class MutationMapper extends Application implements Initializable{
     Button runButton;
     @FXML
     MenuItem quitMenuItem;
+    @FXML
+    CheckMenuItem canonicalOnlyMenu;
+    @FXML
+    CheckMenuItem codingOnlyMenu;
+    @FXML
+    RadioMenuItem noRefSeqMenu;
+    @FXML
+    RadioMenuItem refSeqMenu;
+    @FXML
+    RadioMenuItem refSeqOnlyMenu;
     
     //Result display window
     FXMLLoader tableLoader;
@@ -160,6 +173,11 @@ public class MutationMapper extends Application implements Initializable{
             Platform.exit();
         });
         
+        ToggleGroup refseqToggleGroup = new ToggleGroup();
+        refSeqMenu.setToggleGroup(refseqToggleGroup);
+        refSeqOnlyMenu.setToggleGroup(refseqToggleGroup);
+        noRefSeqMenu.setToggleGroup(refseqToggleGroup);
+        
         runButton.setDefaultButton(true);
         runButton.setOnAction((ActionEvent actionEvent) -> {
             mapMutation();
@@ -172,6 +190,7 @@ public class MutationMapper extends Application implements Initializable{
     private void mapMutation() {
         final Task<List<MutationMapperResult>> mapperTask;
         final String gene = geneTextField.getText();
+        
         if (gene.isEmpty()){
             //TO DO please enter gene dialog
             return;
@@ -364,6 +383,11 @@ public class MutationMapper extends Application implements Initializable{
             IOException, InterruptedException{
         List<MutationMapperResult> results = new ArrayList<>();
         List<TranscriptDetails> transcripts = new ArrayList<>();
+        final Boolean refSeq = refSeqMenu.isSelected();
+        final Boolean refSeqOnly = refSeqOnlyMenu.isSelected();
+        final Boolean canonicalOnly = canonicalOnlyMenu.isSelected();
+        final Boolean codingOnly = codingOnlyMenu.isSelected();
+        
         String chrom;
         int start;
         int end; 
@@ -481,6 +505,11 @@ public class MutationMapper extends Application implements Initializable{
         
         List<MutationMapperResult> results = new ArrayList<>();
         List<TranscriptDetails> transcripts = getTranscriptsForGene(gene, species);
+        
+        final Boolean refSeq = refSeqMenu.isSelected();
+        final Boolean refSeqOnly = refSeqOnlyMenu.isSelected();
+        final Boolean canonicalOnly = canonicalOnlyMenu.isSelected();
+        final Boolean codingOnly = codingOnlyMenu.isSelected();
         
         if (transcripts.isEmpty()){
             //we should have already thrown an error from EnsemblRests methods
