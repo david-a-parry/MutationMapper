@@ -6,7 +6,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<AnchorPane id="AnchorPane" fx:id="resultPane" prefHeight="460.0" prefWidth="840.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.github.mutationmapper.MutationMapperResultViewController">
+<AnchorPane id="AnchorPane" fx:id="resultPane" prefHeight="1112.0" prefWidth="1901.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.github.mutationmapper.MutationMapperResultViewController">
    <children>
       <MenuBar prefHeight="29.0" prefWidth="600.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
         <menus>
@@ -33,27 +33,25 @@
             <content>
               <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                      <children>
-                        <ScrollPane prefViewportHeight="397.0" prefViewportWidth="840.0">
-                           <content>
-                              <TableView fx:id="resultTable" layoutX="27.0" layoutY="34.0" prefHeight="382.0" prefWidth="1469.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-                                <columns>
-                                  <TableColumn fx:id="indexCol" prefWidth="36.0" text="#" />
-                                  <TableColumn fx:id="symbolCol" prefWidth="73.0" text="Symbol" />
-                                    <TableColumn fx:id="geneCol" prefWidth="84.0" text="Gene" />
-                                    <TableColumn fx:id="transcriptCol" prefWidth="120.0" text="Transcript" />
-                                    <TableColumn fx:id="genomicCol" prefWidth="166.0" text="Genomic Coordinate" />
-                                    <TableColumn fx:id="cdsCol" prefWidth="63.0" text="CDS" />
-                                    <TableColumn fx:id="refCol" prefWidth="51.0" text="Ref" />
-                                    <TableColumn fx:id="varCol" prefWidth="44.0" text="Var" />
-                                    <TableColumn prefWidth="147.0" text="Consequence" />
-                                    <TableColumn fx:id="cdsConsequenceCol" prefWidth="147.0" text="CDS Consequence" />
-                                    <TableColumn fx:id="proteinConsequenceCol" prefWidth="147.0" text="Protein Consequence" />
-                                    <TableColumn fx:id="knownVarCol" prefWidth="147.0" text="Known Variation" />
-                                    <TableColumn minWidth="5.0" prefWidth="147.0" text="Polyphen" />
-                                </columns>
-                              </TableView>
-                           </content>
-                        </ScrollPane>
+                        <TableView fx:id="resultTable" prefHeight="382.0" prefWidth="1469.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                          <columns>
+                            <TableColumn fx:id="indexCol" prefWidth="36.0" text="#" />
+                            <TableColumn fx:id="symbolCol" prefWidth="73.0" text="Symbol" />
+                              <TableColumn fx:id="geneCol" prefWidth="84.0" text="Gene" />
+                              <TableColumn fx:id="transcriptCol" prefWidth="120.0" text="Transcript" />
+                              <TableColumn fx:id="genomicCol" prefWidth="166.0" text="Genomic Coordinate" />
+                              <TableColumn fx:id="cdsCol" prefWidth="63.0" text="CDS" />
+                              <TableColumn fx:id="refCol" prefWidth="51.0" text="Ref" />
+                              <TableColumn fx:id="varCol" prefWidth="44.0" text="Var" />
+                              <TableColumn fx:id="consequenceCol" prefWidth="147.0" text="Consequence" />
+                              <TableColumn fx:id="cdsConsequenceCol" prefWidth="250.0" text="CDS Consequence" />
+                              <TableColumn fx:id="proteinConsequenceCol" prefWidth="219.0" text="Protein Consequence" />
+                              <TableColumn fx:id="knownVarCol" prefWidth="151.0" text="Colocated Variation" />
+                              <TableColumn fx:id="polyphenCol" minWidth="5.0" prefWidth="133.0" text="Polyphen" />
+                              <TableColumn fx:id="siftCol" minWidth="5.0" prefWidth="127.0" text="Sift" />
+                              <TableColumn fx:id="seqInputCol" minWidth="5.0" prefWidth="236.0" text="Seq Input" />
+                          </columns>
+                        </TableView>
                      </children>
                   </AnchorPane>
             </content>
