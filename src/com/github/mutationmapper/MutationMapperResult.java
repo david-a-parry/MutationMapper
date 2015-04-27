@@ -24,55 +24,16 @@ public class MutationMapperResult {
     private String mutation;
     private String refAllele;
     private String varAllele;
+    private String consequence;
     private String cdsConsequence;
     private String proteinConsequence;
-    private String knownId;
+    private String polyphenResult;
+    private String siftResult;
+    private String mostSevereConsequence;
+    private String knownIds;
     private Double knownFreq;
     private String biotype;
     private HashMap<String, String> vepResults;
-    
-    
-    MutationMapperResult(){
-        this (null, null, null, null, null, null, null, null,
-              null, null, null, null, null, null, null, null);
-    }
-    
-    MutationMapperResult(String chrom, Integer coord, String build, String symbol,
-            String id, String transId, String cdsCoord){
-        this (chrom, coord, build, symbol, id, transId, cdsCoord, null, null, 
-                null, null, null, null, null, null, null);
-    }
-    
-    MutationMapperResult(String chrom, Integer coord, String build, String symbol,
-            String id, String transId, String cdsCoord, String seq, String mut,
-            String ref, String var){
-        this (chrom, coord, build, symbol, id, transId, cdsCoord, seq, mut, ref, 
-                var, null, null, null, null, null);
-    }
-    
-    
-    MutationMapperResult(String chrom, Integer coord, String build, String symbol,
-            String id, String transId, String cdsCoord, String seq, String mut, 
-            String ref, String var, String cCons, String pCons, String snpId, 
-            Double freq, String type){
-        
-        chromosome = chrom;
-        coordinate = coord;
-        genome = build;
-        geneSymbol = symbol;
-        geneId = id;
-        transcript = transId;
-        cdsCoordinate = cdsCoord;
-        matchingSequence = seq;
-        mutation = mut;
-        refAllele = ref;
-        varAllele = var;
-        cdsConsequence = cCons;
-        proteinConsequence = pCons;
-        knownId = snpId;
-        knownFreq = freq;
-        biotype = type;
-    }
     
     public void setIndex(Integer i){
         index = i;
@@ -122,6 +83,10 @@ public class MutationMapperResult {
         varAllele = var;
     }
     
+    public void setConsequence(String cons){
+        consequence = cons;
+    }
+    
     public void setCdsConsequence(String ccons){
         cdsConsequence = ccons;
     }
@@ -130,8 +95,20 @@ public class MutationMapperResult {
         proteinConsequence = pcons;
     }
     
-    public void setKnownId(String id){
-        knownId = id;
+    public void setPolyphenResult(String result){
+        polyphenResult = result;
+    }
+    
+    public void setSiftResult(String result){
+        siftResult = result;
+    }
+    
+    public void setMostSeverConsequence(String consequence){
+        mostSevereConsequence = consequence;
+    }
+    
+    public void setKnownIds(String id){
+        knownIds = id;
     }
     
     public void setKnownFreq(Double freq){
@@ -194,6 +171,10 @@ public class MutationMapperResult {
         return varAllele;
     }
     
+    public String getConsequence(){
+        return consequence;
+    }
+    
     public String getCdsConsequence(){
         return cdsConsequence;
     }
@@ -202,8 +183,30 @@ public class MutationMapperResult {
         return proteinConsequence;
     }
     
-    public String getKnownId(){
-        return knownId;
+    public String getPolyphenResult(){
+        return polyphenResult;
+    }
+    
+    public String getSiftResult(){
+        return siftResult;
+    }
+    
+    public String getMostSevereConsequence(){
+        return mostSevereConsequence;
+    }
+    
+    public String getSeqInput(){
+        if (matchingSequence != null){
+            if (mutation != null){
+                return matchingSequence + "/" + mutation; 
+            }
+            return matchingSequence;
+        }
+        return null;
+    }
+    
+    public String getKnownIds(){
+        return knownIds;
     }
     
     public Double getKnownFreq(){
@@ -235,15 +238,16 @@ public class MutationMapperResult {
     }
     
     public String getKnownVar(){
-        if (knownId == null){
+        if (knownIds == null){
             return "";
         }
         if (knownFreq == null){
-            return knownId;
+            return knownIds;
         }
-        return knownId + " (" + knownFreq + ")";
+        return knownIds + " (" + knownFreq + ")";
     }
     
+   
     public String getConsequences(){
         if (cdsConsequence == null){
             return null;
