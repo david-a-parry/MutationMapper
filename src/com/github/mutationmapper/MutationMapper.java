@@ -410,21 +410,34 @@ public class MutationMapper extends Application implements Initializable{
         matchEnd = matchPos + seq.length() - 1;
 
         HashMap<String, HashMap<String, String>> cons = new HashMap<>();
+        HashMap<String, String> trim = new HashMap<>();
         if (mutSeq != null && !mutSeq.isEmpty()){//get mutation consequences
+            //trim ref and alt alleles and get relative position of variant
             if (revCompMatches){
-                cons = getVepConsequences(chrom, matchPos, species, 
-                        ReverseComplementDNA.reverseComplement(seq), 
+                trim = trimRefAlt(ReverseComplementDNA.reverseComplement(seq), 
                         ReverseComplementDNA.reverseComplement(mutSeq));
             }else{
-                cons = getVepConsequences(chrom, matchPos, species, seq, mutSeq);
+                trim = trimRefAlt(seq, mutSeq);
             }
-            
+            cons = getVepConsequences(chrom, matchPos + Integer.parseInt(trim.get("shift")), 
+                    species, trim.get("ref"), trim.get("alt"));
         }
         
         //updateMessage("Formatting results.");
         //ArrayList<String> t_ids = new ArrayList<>();
         for (TranscriptDetails t: transcripts){
             MutationMapperResult result = putBasicTranscriptInfo(t);
+            if (!trim.isEmpty()){
+                result.setRefAllele(trim.get("ref"));
+                result.setVarAllele(trim.get("alt"));
+            }else{
+                if (revCompMatches){
+                    result.setRefAllele(ReverseComplementDNA.reverseComplement(seq));
+                }else{
+                    result.setRefAllele(seq);
+                }
+            }
+            
             // calculate CDS position from genomic position for each transcript
             String cds_pos_match = t.getCdsPosition(chrom, matchPos);
             String cds_pos_end = t.getCdsPosition(chrom, matchEnd);
@@ -487,17 +500,18 @@ public class MutationMapper extends Application implements Initializable{
                 */
                 List<String> alleles = getCdsVarAlleles(t, species, 
                         result.getCoordinate(), mutSeq);
-                result.setRefAllele(alleles.get(2));
-                result.setVarAllele(alleles.get(3));
                 // TO DO check deleted allele matches if supplied
                 int genomicCoordinate = result.getCoordinate();
                 if (t.getStrand() < 0){
                     genomicCoordinate -= getMutationSpan(mutSeq);
                 }
-                
+                HashMap<String, String> trim = trimRefAlt(alleles.get(2), alleles.get(3));
+                result.setRefAllele(trim.get("ref"));
+                result.setVarAllele(trim.get("alt"));
                 HashMap<String, HashMap<String, String>> cons = 
-                        getVepConsequences(t.getChromosome(), genomicCoordinate, 
-                                species, alleles.get(2), alleles.get(3));
+                        getVepConsequences(t.getChromosome(), 
+                                Integer.parseInt(trim.get("shift")) + genomicCoordinate, 
+                                species, trim.get("ref"), trim.get("alt"));
                 addVepConsequenceToMutationMapperResult(result, t, cons);
             }
             results.add(result);
@@ -618,12 +632,8 @@ public class MutationMapper extends Application implements Initializable{
         return Arrays.asList(cdsRef, cdsAlt, gRef, gAlt);
     }
     
-    private HashMap<String, HashMap<String, String>> getVepConsequences(String chrom, int pos, 
-            String species, String ref, String alt)throws ParseException, 
-            MalformedURLException, IOException, InterruptedException {
-        /*
-        reduce sequences to simplest possible representations before submitting to VEP
-        */
+    private HashMap<String, String> trimRefAlt(String ref, String alt){
+        HashMap<String, String> trimmed = new HashMap<>();
         String refTrim = ref.toUpperCase();
         String altTrim = alt.toUpperCase();
         int posShift = 0;//need to shunt coordinate up by one for every character trimmed from start of seq
@@ -641,8 +651,21 @@ public class MutationMapper extends Application implements Initializable{
             altTrim = altTrim.substring(1);
             posShift++;
         }
+        trimmed.put("ref", refTrim);
+        trimmed.put("alt", altTrim);
+        trimmed.put("shift", String.valueOf(posShift));
+        return trimmed;
+    }
+    
+    private HashMap<String, HashMap<String, String>> getVepConsequences(String chrom, int pos, 
+            String species, String ref, String alt)throws ParseException, 
+            MalformedURLException, IOException, InterruptedException {
+        /*
+        reduce sequences to simplest possible representations before submitting to VEP
+        */
+        
         HashMap<String, HashMap<String, String>> results = 
-                rest.getVepConsequence(chrom, pos + posShift, species, refTrim, altTrim);
+                rest.getVepConsequence(chrom, pos, species, ref, alt);
         return results;
         
     }
