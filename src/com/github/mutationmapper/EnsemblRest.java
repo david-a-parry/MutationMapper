@@ -388,7 +388,7 @@ public class EnsemblRest {
             String species, String ref, String alt) throws ParseException, 
             MalformedURLException, IOException, InterruptedException {
         HashMap<String, HashMap<String, String>> results = new HashMap<>();
-        String endpoint = "/vep/" + species +"/region?hgvs=1";
+        String endpoint = "/vep/" + species +"/region?hgvs=1;canonical=1;numbers=1;xref_refseq=1";
         String post = String.format("{ \"variants\" : [\"%s  %d  . %s %s . . .\" ] }", 
                 chrom, coord, ref, alt);
         JSONArray info = (JSONArray) getPostJSON(endpoint, post);
