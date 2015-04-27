@@ -15,7 +15,6 @@ sequence -> mutation
 */ 
 package com.github.mutationmapper;
 
-import com.github.mutationmapper.TranscriptDetails.Exon;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -44,6 +43,7 @@ import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyEvent;
@@ -85,6 +85,8 @@ public class MutationMapper extends Application implements Initializable{
     ProgressIndicator progressIndicator;
     @FXML
     Button runButton;
+    @FXML
+    MenuItem quitMenuItem;
     
     //Result display window
     FXMLLoader tableLoader;
@@ -151,6 +153,10 @@ public class MutationMapper extends Application implements Initializable{
             Platform.runLater(() -> {
                 cdsTextField.setDisable(!newValue.isEmpty());
             });
+        });
+        
+        quitMenuItem.setOnAction((ActionEvent e) -> {
+            Platform.exit();
         });
         
         runButton.setDefaultButton(true);
