@@ -15,6 +15,19 @@
               <MenuItem fx:id="quitMenuItem" mnemonicParsing="false" text="Quit" />
             </items>
           </Menu>
+            <Menu mnemonicParsing="false" text="Options">
+              <items>
+                  <CheckMenuItem fx:id="canonicalOnlyMenu" mnemonicParsing="false" text="Only Report Canonical Transcripts" />
+                  <CheckMenuItem fx:id="codingOnlyMenu" mnemonicParsing="false" text="Only Report Coding Transcripts" />
+                  <Menu mnemonicParsing="false" text="RefSeq">
+                    <items>
+                        <RadioMenuItem fx:id="refSeqMenu" mnemonicParsing="false" text="Use RefSeq IDs where available" />
+                        <RadioMenuItem fx:id="refSeqOnlyMenu" mnemonicParsing="false" text="Only Report RefSeq Transcripts" />
+                        <RadioMenuItem fx:id="noRefSeqMenu" mnemonicParsing="false" selected="true" text="Do Not Use RefSeq IDs" />
+                    </items>
+                  </Menu>
+              </items>
+            </Menu>
           <Menu fx:id="helpMenu" mnemonicParsing="false" text="Help">
             <items>
               <MenuItem mnemonicParsing="false" text="About" />
