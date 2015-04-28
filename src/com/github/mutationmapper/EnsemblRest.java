@@ -145,6 +145,13 @@ public class EnsemblRest {
         trans.setTranscriptId((String) j.get("id"));
         String biotype = (String)j.get("biotype");
         trans.setBiotype(biotype);
+        if (j.containsKey("is_canonical")){
+            if (Integer.parseInt((String)j.get("is_canonical")) > 0){
+                trans.setIsCanonical(true);
+            }else{
+                trans.setIsCanonical(false);
+            }
+        }
         if (j.containsKey("strand")){
            if ((Long) j.get("strand") > 0){
                trans.setStrand(1);
@@ -378,6 +385,20 @@ public class EnsemblRest {
             for (Object t: trs){
                JSONObject j = (JSONObject) t;
                transcriptIds.add((String) j.get("id"));
+            }
+        }
+        return transcriptIds;
+    }
+    
+    public ArrayList<String> getRefSeqIds(String id)
+            throws ParseException, MalformedURLException, IOException, InterruptedException {
+        ArrayList<String> transcriptIds = new ArrayList<>();
+        String endpoint = String.format("/xrefs/id/%s?external_db=RefSeq_mRNA", id);
+        JSONArray info = (JSONArray) getJSON(endpoint);
+        for (Object o: info){
+            JSONObject j = (JSONObject) o;
+            if (j.containsKey("display_id")){
+                transcriptIds.add((String) j.get("display_id"));
             }
         }
         return transcriptIds;
