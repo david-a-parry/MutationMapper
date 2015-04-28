@@ -6,7 +6,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<AnchorPane id="AnchorPane" fx:id="resultPane" prefHeight="1112.0" prefWidth="1901.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.github.mutationmapper.MutationMapperResultViewController">
+<AnchorPane id="AnchorPane" fx:id="resultPane" prefHeight="1233.0" prefWidth="2085.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.github.mutationmapper.MutationMapperResultViewController">
    <children>
       <MenuBar prefHeight="29.0" prefWidth="600.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
         <menus>
@@ -17,11 +17,19 @@
                   <MenuItem fx:id="closeMenuItem" mnemonicParsing="false" text="Close" />
             </items>
           </Menu>
-          <Menu mnemonicParsing="false" text="Edit">
-            <items>
-              <MenuItem mnemonicParsing="false" text="Delete" />
-            </items>
-          </Menu>
+            <Menu mnemonicParsing="false" text="Options">
+               <items>
+                  <CheckMenuItem fx:id="canonicalOnlyMenu" mnemonicParsing="false" text="Only Report Canonical Transcripts" />
+                  <CheckMenuItem fx:id="codingOnlyMenu" mnemonicParsing="false" text="Only Report Coding Transcripts" />
+                  <Menu mnemonicParsing="false" text="RefSeq">
+                     <items>
+                        <RadioMenuItem fx:id="refSeqMenu" mnemonicParsing="false" text="Use RefSeq IDs where available" />
+                        <RadioMenuItem fx:id="refSeqOnlyMenu" mnemonicParsing="false" text="Only Report RefSeq Transcripts" />
+                        <RadioMenuItem fx:id="noRefSeqMenu" mnemonicParsing="false" selected="true" text="Do Not Use RefSeq IDs" />
+                     </items>
+                  </Menu>
+               </items>
+            </Menu>
           <Menu mnemonicParsing="false" text="Help">
             <items>
               <MenuItem mnemonicParsing="false" text="About" />
@@ -48,7 +56,8 @@
                               <TableColumn fx:id="consequenceCol" prefWidth="151.0" text="Consequence" />
                               <TableColumn fx:id="cdsConsequenceCol" prefWidth="281.0" style="-fx-wrap-text: true;" text="CDS Consequence" />
                               <TableColumn fx:id="proteinConsequenceCol" prefWidth="199.0" style="-fx-wrap-text: true;" text="Protein Consequence" />
-                              <TableColumn fx:id="knownVarCol" prefWidth="161.0" text="Colocated Variation" />
+                              <TableColumn fx:id="exonIntronCol" prefWidth="124.0" style="-fx-wrap-text: true;" text="Exon/Intron" />
+                              <TableColumn fx:id="knownVarCol" prefWidth="236.0" text="Colocated Variation" />
                               <TableColumn fx:id="polyphenCol" minWidth="5.0" prefWidth="142.0" style="-fx-wrap-text: true;" text="Polyphen" />
                               <TableColumn fx:id="siftCol" minWidth="5.0" prefWidth="126.0" style="-fx-wrap-text: true;" text="Sift" />
                               <TableColumn fx:id="seqInputCol" minWidth="5.0" prefWidth="159.0" style="-fx-wrap-text: true;" text="Seq Input" />
