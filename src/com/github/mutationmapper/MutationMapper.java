@@ -27,6 +27,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Task;
 import javafx.concurrent.WorkerStateEvent;
@@ -314,13 +316,18 @@ public class MutationMapper extends Application implements Initializable{
                 if (resultView == null){
                     resultView =
                             (MutationMapperResultViewController) tableLoader.getController();
+                    resultView.canonicalOnlyMenu.selectedProperty().bindBidirectional(canonicalOnlyMenu.selectedProperty());
+                    resultView.codingOnlyMenu.selectedProperty().bindBidirectional(codingOnlyMenu.selectedProperty());
+                    resultView.refSeqOnlyMenu.selectedProperty().bindBidirectional(refSeqOnlyMenu.selectedProperty());
+                    resultView.refSeqMenu.selectedProperty().bindBidirectional(refSeqMenu.selectedProperty());
                 }
                 if (tableScene == null){
                     tableScene = new Scene(tablePane);
                     tableStage = new Stage();
                     tableStage.setScene(tableScene);
                     tableStage.initModality(Modality.NONE);
-                }Platform.runLater(() -> {
+                }
+                Platform.runLater(() -> {
                     resultView.displayData(results);
                     tableStage.setTitle("MutationMapper Results");
                     tableStage.getIcons().add(new Image(this.getClass()
@@ -383,10 +390,6 @@ public class MutationMapper extends Application implements Initializable{
             IOException, InterruptedException{
         List<MutationMapperResult> results = new ArrayList<>();
         List<TranscriptDetails> transcripts = new ArrayList<>();
-        final Boolean refSeq = refSeqMenu.isSelected();
-        final Boolean refSeqOnly = refSeqOnlyMenu.isSelected();
-        final Boolean canonicalOnly = canonicalOnlyMenu.isSelected();
-        final Boolean codingOnly = codingOnlyMenu.isSelected();
         
         String chrom;
         int start;
@@ -506,11 +509,6 @@ public class MutationMapper extends Application implements Initializable{
         List<MutationMapperResult> results = new ArrayList<>();
         List<TranscriptDetails> transcripts = getTranscriptsForGene(gene, species);
         
-        final Boolean refSeq = refSeqMenu.isSelected();
-        final Boolean refSeqOnly = refSeqOnlyMenu.isSelected();
-        final Boolean canonicalOnly = canonicalOnlyMenu.isSelected();
-        final Boolean codingOnly = codingOnlyMenu.isSelected();
-        
         if (transcripts.isEmpty()){
             //we should have already thrown an error from EnsemblRests methods
             throw new RuntimeException(String.format("Could not get transcripts "
@@ -582,6 +580,23 @@ public class MutationMapper extends Application implements Initializable{
                     r.setConsequence(cons.get(t.getTranscriptId()).get("consequence_terms").
                             replaceAll("[\\[\\]]", ""));
                 }
+                if (cons.get(t.getTranscriptId()).containsKey("refseq_transcript_ids")){
+                    r.setRefSeqIds(cons.get(t.getTranscriptId()).get("refseq_transcript_ids").
+                            replaceAll("[\\[\\]]", ""));
+                }
+                if (cons.get(t.getTranscriptId()).containsKey("canonical")){
+                    if (Integer.parseInt(cons.get(t.getTranscriptId()).get("canonical")) > 0){
+                        r.setIsCanonical(true);
+                    }else{
+                        r.setIsCanonical(false);
+                    }
+                }
+                if (cons.get(t.getTranscriptId()).containsKey("exon")){
+                    r.setExonIntronNumber("exon " + cons.get(t.getTranscriptId()).get("exon"));
+                }else if (cons.get(t.getTranscriptId()).containsKey("intron")){
+                    r.setExonIntronNumber("intron " + cons.get(t.getTranscriptId()).get("intron"));
+                }
+                
                 
                 StringBuilder snpIds = new StringBuilder();
                 for (String k: cons.keySet()){

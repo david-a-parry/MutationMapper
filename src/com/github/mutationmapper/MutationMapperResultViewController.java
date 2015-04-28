@@ -9,6 +9,10 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.ResourceBundle;
 import javafx.application.Platform;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -16,16 +20,19 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.RadioMenuItem;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TablePosition;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
@@ -33,7 +40,6 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.Region;
 import javafx.stage.Stage;
 
 /**
@@ -72,6 +78,8 @@ public class MutationMapperResultViewController implements Initializable {
    @FXML
    TableColumn proteinConsequenceCol;
    @FXML
+   TableColumn exonIntronCol;
+   @FXML
    TableColumn polyphenCol;
    @FXML
    TableColumn siftCol;
@@ -91,11 +99,29 @@ public class MutationMapperResultViewController implements Initializable {
    MenuItem clearAndCloseMenuItem;
    @FXML
    MenuItem clearMenuItem;
+   @FXML
+   CheckMenuItem canonicalOnlyMenu;
+   @FXML
+   CheckMenuItem codingOnlyMenu;
+   @FXML
+   RadioMenuItem noRefSeqMenu;
+   @FXML
+   RadioMenuItem refSeqMenu;
+   @FXML
+   RadioMenuItem refSeqOnlyMenu;
    
    private final ObservableList<MutationMapperResult> data = FXCollections.observableArrayList();
+   private final ObservableList<MutationMapperResult> displayData = FXCollections.observableArrayList();
+   
    Integer lastIndex = 0;
+   BooleanProperty refSeq = new SimpleBooleanProperty();
+   BooleanProperty refSeqOnly = new SimpleBooleanProperty();
+   BooleanProperty codingOnly = new SimpleBooleanProperty();
+   BooleanProperty canonicalOnly = new SimpleBooleanProperty();
     /**
      * Initializes the controller class.
+     * @param url
+     * @param rb
      */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -109,6 +135,7 @@ public class MutationMapperResultViewController implements Initializable {
         varCol.setCellValueFactory(new PropertyValueFactory<>("varAllele"));
         proteinConsequenceCol.setCellValueFactory(new PropertyValueFactory<>("proteinConsequence"));
         cdsConsequenceCol.setCellValueFactory(new PropertyValueFactory<>("cdsConsequence"));
+        exonIntronCol.setCellValueFactory(new PropertyValueFactory<>("exonIntronNumber"));
         consequenceCol.setCellValueFactory(new PropertyValueFactory<>("consequence"));
         knownVarCol.setCellValueFactory(new PropertyValueFactory<>("knownIds"));
         seqInputCol.setCellValueFactory(new PropertyValueFactory<>("seqInput"));
@@ -122,7 +149,7 @@ public class MutationMapperResultViewController implements Initializable {
                 public void updateIndex(int i) {
                     super.updateIndex(i);
 
-                    setMinHeight(35);// * i);
+                    setMinHeight(40);// * i);
                 }
             };
         });
@@ -180,44 +207,65 @@ public class MutationMapperResultViewController implements Initializable {
         copyItem.setAccelerator(new KeyCodeCombination(KeyCode.C, KeyCombination.SHORTCUT_DOWN));
         resultTable.setContextMenu(menu);
         
-        closeMenuItem.setOnAction(new EventHandler<ActionEvent>(){
-            @Override
-            public void handle(ActionEvent e){
-                Platform.runLater(new Runnable(){
-                    @Override
-                    public void run(){
-                        Stage stage = (Stage) resultPane.getScene().getWindow();
-                        stage.close();
-                    }
-                });
-            }
+        closeMenuItem.setOnAction((ActionEvent e) -> {
+            Platform.runLater(() -> {
+                Stage stage = (Stage) resultPane.getScene().getWindow();
+                stage.close();
+            });
         });
         
-        clearAndCloseMenuItem.setOnAction(new EventHandler<ActionEvent>(){
-            @Override
-            public void handle(ActionEvent e){
-                Platform.runLater(new Runnable(){
-                    @Override
-                    public void run(){
-                        clearTable();
-                        Stage stage = (Stage) resultPane.getScene().getWindow();
-                        stage.close();
-                    }
-                });
-            }
+        clearAndCloseMenuItem.setOnAction((ActionEvent e) -> {
+            Platform.runLater(() -> {
+                clearTable();
+                Stage stage = (Stage) resultPane.getScene().getWindow();
+                stage.close();
+            });
         });
         
-        clearMenuItem.setOnAction(new EventHandler<ActionEvent>(){
-            @Override
-            public void handle(ActionEvent e){
-                Platform.runLater(new Runnable(){
-                    @Override
-                    public void run(){
-                        clearTable();
-                    }
-                });
-            }
+        clearMenuItem.setOnAction((ActionEvent e) -> {
+            Platform.runLater(() -> {
+                clearTable();
+            });
         });
+        
+        ToggleGroup refseqToggleGroup = new ToggleGroup();
+        refSeqMenu.setToggleGroup(refseqToggleGroup);
+        refSeqOnlyMenu.setToggleGroup(refseqToggleGroup);
+        noRefSeqMenu.setToggleGroup(refseqToggleGroup);
+        refSeqMenu.selectedProperty().addListener(new ChangeListener<Boolean>() {
+                @Override
+                public void changed(ObservableValue ov,Boolean old_val, Boolean new_val) {
+                        redisplayData();
+                }
+        });
+        refSeqOnlyMenu.selectedProperty().addListener(new ChangeListener<Boolean>() {
+                @Override
+                public void changed(ObservableValue ov,Boolean old_val, Boolean new_val) {
+                        redisplayData();
+                }
+        });
+        noRefSeqMenu.selectedProperty().addListener(new ChangeListener<Boolean>() {
+                @Override
+                public void changed(ObservableValue ov,Boolean old_val, Boolean new_val) {
+                        redisplayData();
+                }
+        });
+        canonicalOnlyMenu.selectedProperty().addListener(new ChangeListener<Boolean>() {
+                @Override
+                public void changed(ObservableValue ov,Boolean old_val, Boolean new_val) {
+                        redisplayData();
+                }
+        });
+        codingOnlyMenu.selectedProperty().addListener(new ChangeListener<Boolean>() {
+                @Override
+                public void changed(ObservableValue ov,Boolean old_val, Boolean new_val) {
+                        redisplayData();
+                }
+        });
+        refSeq.bind(refSeqMenu.selectedProperty());
+        refSeqOnly.bind(refSeqOnlyMenu.selectedProperty());
+        canonicalOnly.bind(canonicalOnlyMenu.selectedProperty());
+        codingOnly.bind(codingOnlyMenu.selectedProperty());
         
     } 
     
@@ -235,13 +283,48 @@ public class MutationMapperResultViewController implements Initializable {
             sub++;
         }
         lastIndex++;
-        resultTable.setItems(data);
-    } 
+        setTableItems();
+    }
     
+    private void setTableItems(){
+        displayData.clear();
+        for (MutationMapperResult r: data){
+            if (canonicalOnly.getValue()){
+                if (!r.getIsCanonical()){
+                    continue;
+                }
+            }
+            if (codingOnly.getValue()){
+                if (!r.getBiotype().equals("protein_coding")){
+                    continue;
+                }
+            }
+            if (refSeqOnly.getValue()){
+                if (r.getRefSeqIds() == null || r.getRefSeqIds().isEmpty()){
+                    continue;
+                }
+            }
+            displayData.add(r);
+        }
+        if (refSeq.getValue() || refSeqOnly.getValue()){
+            transcriptCol.setCellValueFactory(new PropertyValueFactory<>("refSeqIfAvailable"));
+        }else{
+            transcriptCol.setCellValueFactory(new PropertyValueFactory<>("transcript"));
+        }
+        resultTable.setItems(displayData);
+    }
     
-    private void clearTable(){
+    public void redisplayData(){
+        resultTable.getItems().clear();
+        setTableItems();
+    }
+
+    public void clearTable(){
         lastIndex = 0;
         data.clear();
+        displayData.clear();
         resultTable.getItems().clear();
     }
+    
+    
 }
