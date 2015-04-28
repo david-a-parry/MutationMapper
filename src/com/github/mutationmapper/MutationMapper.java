@@ -6,12 +6,13 @@
 
 /*
 TO DO
-give option to only output protein coding transcript results
-give option to translate ensembl IDs to RefSeq where possible
-maybe give option to automatically remove non-DNA characters from input boxes
 
-CDS -> mutation 
-sequence -> mutation
+Allow user to write output to spreadsheet/csv/tsv
+Make about dialog
+Add some missing error dialogs
+Handle no internet connection
+Write manual
+
 */ 
 package com.github.mutationmapper;
 
@@ -27,8 +28,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Task;
 import javafx.concurrent.WorkerStateEvent;
