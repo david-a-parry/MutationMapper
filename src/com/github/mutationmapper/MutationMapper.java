@@ -547,6 +547,10 @@ public class MutationMapper extends Application implements Initializable{
                                 Integer.parseInt(trim.get("shift")) + genomicCoordinate, 
                                 species, trim.get("ref"), trim.get("alt"));
                 addVepConsequenceToMutationMapperResult(result, t, cons);
+            }else if (result.getCoordinate() != null){
+                String gRef = getDna(t.getChromosome(), result.getCoordinate(), 
+                        result.getCoordinate(), species, 1);
+                result.setRefAllele(gRef);
             }
             results.add(result);
         }
@@ -578,11 +582,11 @@ public class MutationMapper extends Application implements Initializable{
                 }
                 if (cons.get(t.getTranscriptId()).containsKey("consequence_terms")){
                     r.setConsequence(cons.get(t.getTranscriptId()).get("consequence_terms").
-                            replaceAll("[\\[\\]]", ""));
+                            replaceAll("[\\[\\]\"]", ""));
                 }
-                if (cons.get(t.getTranscriptId()).containsKey("refseq_transcript_ids")){
+                /*if (cons.get(t.getTranscriptId()).containsKey("refseq_transcript_ids")){
                     r.setRefSeqIds(cons.get(t.getTranscriptId()).get("refseq_transcript_ids").
-                            replaceAll("[\\[\\]]", ""));
+                            replaceAll("[\\[\\]\"]", ""));
                 }
                 if (cons.get(t.getTranscriptId()).containsKey("canonical")){
                     if (Integer.parseInt(cons.get(t.getTranscriptId()).get("canonical")) > 0){
@@ -590,7 +594,7 @@ public class MutationMapper extends Application implements Initializable{
                     }else{
                         r.setIsCanonical(false);
                     }
-                }
+                }*/
                 if (cons.get(t.getTranscriptId()).containsKey("exon")){
                     r.setExonIntronNumber("exon " + cons.get(t.getTranscriptId()).get("exon"));
                 }else if (cons.get(t.getTranscriptId()).containsKey("intron")){
@@ -636,6 +640,7 @@ public class MutationMapper extends Application implements Initializable{
         return 0;
     }
     
+    
     /*
     returns a list, in order of: 
         CDS reference allele
@@ -655,11 +660,12 @@ public class MutationMapper extends Application implements Initializable{
         String gRef;
         String gAlt;
         if (strand < 0){
-            cdsRef = getDna(t.getChromosome(), genomicPos - span, genomicPos, species, -1);
+            //cdsRef = getDna(t.getChromosome(), genomicPos - span, genomicPos, species, -1);
             gRef = getDna(t.getChromosome(), genomicPos - span, genomicPos, species, 1);
+            cdsRef = ReverseComplementDNA.reverseComplement(gRef);
         }else{
-            cdsRef = getDna(t.getChromosome(), genomicPos, genomicPos + span, species, 1);
-            gRef = cdsRef;
+            gRef = getDna(t.getChromosome(), genomicPos, genomicPos + span, species, 1);
+            cdsRef = gRef;
         }
         if (mut.matches("(?i)del,[\\dACTG]+")){
             cdsAlt = cdsRef.substring(0, 1);
@@ -744,12 +750,15 @@ public class MutationMapper extends Application implements Initializable{
     }
     
     
-    private MutationMapperResult putBasicTranscriptInfo(TranscriptDetails t){
+    private MutationMapperResult putBasicTranscriptInfo(TranscriptDetails t)
+            throws ParseException, MalformedURLException, IOException, InterruptedException{
         MutationMapperResult result = new MutationMapperResult();
         result.setGeneSymbol(t.getSymbol());
         result.setGeneId(t.getId());
         result.setTranscript(t.getTranscriptId());
         result.setBiotype(t.getBiotype());
+        result.setIsCanonical(t.getIsCanonical());
+        result.setRefSeqIds(String.join("\n", rest.getRefSeqIds(t.getTranscriptId()) ) );
         return result;
     }
     
