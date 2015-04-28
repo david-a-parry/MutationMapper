@@ -6,7 +6,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<AnchorPane id="AnchorPane" fx:id="resultPane" prefHeight="1233.0" prefWidth="2085.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.github.mutationmapper.MutationMapperResultViewController">
+<AnchorPane id="AnchorPane" fx:id="resultPane" prefHeight="711.0" prefWidth="1541.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.github.mutationmapper.MutationMapperResultViewController">
    <children>
       <MenuBar prefHeight="29.0" prefWidth="600.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
         <menus>
@@ -46,18 +46,18 @@
                         <TableView fx:id="resultTable" prefHeight="382.0" prefWidth="1469.0" tableMenuButtonVisible="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                           <columns>
                             <TableColumn fx:id="indexCol" editable="false" prefWidth="36.0" text="#" />
-                            <TableColumn fx:id="symbolCol" prefWidth="73.0" text="Symbol" />
-                              <TableColumn fx:id="geneCol" prefWidth="84.0" text="Gene" />
-                              <TableColumn fx:id="transcriptCol" prefWidth="150.0" text="Transcript" />
+                            <TableColumn fx:id="symbolCol" prefWidth="73.0" style="-fx-wrap-text: true;" text="Symbol" />
+                              <TableColumn fx:id="geneCol" prefWidth="84.0" style="-fx-wrap-text: true;" text="Gene" />
+                              <TableColumn fx:id="transcriptCol" prefWidth="150.0" style="-fx-wrap-text: true;" text="Transcript" />
                               <TableColumn fx:id="genomicCol" prefWidth="172.0" style="-fx-wrap-text: true;" text="Genomic Coordinate" />
-                              <TableColumn fx:id="refCol" prefWidth="54.0" text="Ref" />
-                              <TableColumn fx:id="varCol" minWidth="5.0" prefWidth="48.0" text="Var" />
-                              <TableColumn fx:id="cdsCol" prefWidth="64.0" text="CDS" />
-                              <TableColumn fx:id="consequenceCol" prefWidth="151.0" text="Consequence" />
-                              <TableColumn fx:id="cdsConsequenceCol" prefWidth="281.0" style="-fx-wrap-text: true;" text="CDS Consequence" />
-                              <TableColumn fx:id="proteinConsequenceCol" prefWidth="199.0" style="-fx-wrap-text: true;" text="Protein Consequence" />
-                              <TableColumn fx:id="exonIntronCol" prefWidth="124.0" style="-fx-wrap-text: true;" text="Exon/Intron" />
-                              <TableColumn fx:id="knownVarCol" prefWidth="236.0" text="Colocated Variation" />
+                              <TableColumn fx:id="refCol" prefWidth="54.0" style="-fx-wrap-text: true;" text="Ref" />
+                              <TableColumn fx:id="varCol" minWidth="5.0" prefWidth="48.0" style="-fx-wrap-text: true;" text="Var" />
+                              <TableColumn fx:id="cdsCol" prefWidth="91.0" style="-fx-wrap-text: true;" text="CDS" />
+                              <TableColumn fx:id="consequenceCol" prefWidth="147.0" style="-fx-wrap-text: true;" text="Consequence" />
+                              <TableColumn fx:id="cdsConsequenceCol" prefWidth="252.0" style="-fx-wrap-text: true;" text="CDS Consequence" />
+                              <TableColumn fx:id="proteinConsequenceCol" prefWidth="242.0" style="-fx-wrap-text: true;" text="Protein Consequence" />
+                              <TableColumn fx:id="exonIntronCol" prefWidth="104.0" style="-fx-wrap-text: true;" text="Exon/Intron" />
+                              <TableColumn fx:id="knownVarCol" prefWidth="219.0" style="-fx-wrap-text: true;" text="Colocated Variation" />
                               <TableColumn fx:id="polyphenCol" minWidth="5.0" prefWidth="142.0" style="-fx-wrap-text: true;" text="Polyphen" />
                               <TableColumn fx:id="siftCol" minWidth="5.0" prefWidth="126.0" style="-fx-wrap-text: true;" text="Sift" />
                               <TableColumn fx:id="seqInputCol" minWidth="5.0" prefWidth="159.0" style="-fx-wrap-text: true;" text="Seq Input" />
