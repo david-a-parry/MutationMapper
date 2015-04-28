@@ -33,6 +33,9 @@ public class MutationMapperResult {
     private String knownIds;
     private Double knownFreq;
     private String biotype;
+    private String refSeqIds;
+    private boolean isCanonical = false;
+    private String exonIntronNumber;
     private HashMap<String, String> vepResults;
     
     public void setIndex(String i){
@@ -117,6 +120,18 @@ public class MutationMapperResult {
     
     public void setBiotype(String type){
         biotype = type;
+    }
+    
+    public void setRefSeqIds(String refId){
+        refSeqIds = refId;
+    }
+    
+    public void setIsCanonical(boolean canonical){
+        isCanonical = canonical;
+    }
+    
+    public void setExonIntronNumber(String num){
+        exonIntronNumber = num;
     }
     
     public void setVepResults(HashMap<String, String> results){
@@ -215,6 +230,25 @@ public class MutationMapperResult {
     
     public String getBiotype(){
         return biotype;
+    }
+    
+    public String getRefSeqIds(){
+        return refSeqIds;
+    }
+    
+    public String getRefSeqIfAvailable(){
+        if (refSeqIds != null && !refSeqIds.isEmpty()){
+            return refSeqIds;
+        }
+        return transcript;
+    }
+    
+    public boolean getIsCanonical(){
+        return isCanonical;
+    }
+    
+    public String getExonIntronNumber(){
+        return exonIntronNumber;
     }
     
     public String getGenomicCoordinate(){
