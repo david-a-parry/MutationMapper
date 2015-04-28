@@ -75,11 +75,11 @@
                   </VBox>
                </children>
             </HBox>
-            <HBox alignment="CENTER_LEFT" layoutX="12.0" layoutY="182.0" spacing="15.0">
+            <HBox alignment="CENTER_LEFT" layoutX="12.0" layoutY="182.0" prefHeight="44.0" prefWidth="473.0" spacing="15.0">
                <children>
                   <ProgressIndicator fx:id="progressIndicator" prefHeight="44.0" prefWidth="29.0" progress="0.0" style="-fx-fill: null;" />
                   <Label fx:id="progressLabel" layoutX="14.0" layoutY="188.0" prefHeight="16.0" prefWidth="376.0" text="Mutation Mapper" />
-                  <Button fx:id="runButton" layoutX="429.0" layoutY="182.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="52.0" text="Run" />
+                  <Button fx:id="runButton" layoutX="429.0" layoutY="182.0" mnemonicParsing="false" prefHeight="26.0" prefWidth="73.0" text="Run" />
                </children>
             </HBox>
          </children>
