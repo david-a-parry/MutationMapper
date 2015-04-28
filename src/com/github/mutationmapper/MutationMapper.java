@@ -214,6 +214,9 @@ public class MutationMapper extends Application implements Initializable{
                 alert.setHeaderText("CDS Input Error");
                 alert.setContentText("CDS input must only be a whole number");
                 alert.showAndWait();
+                Platform.runLater(() -> {
+                    runButton.getScene().getWindow().requestFocus();
+                });
                 return;
             }
             if (mutationTextField.getText().isEmpty()){
@@ -234,6 +237,9 @@ public class MutationMapper extends Application implements Initializable{
                         alert.setHeaderText("Mutation Sequence Error");
                         alert.setContentText("Mutation sequence must either be "
                                 + "DNA or be in the format \"ins,<seq>\" or \"del,<seq/number>\".");
+                        Platform.runLater(() -> {
+                            runButton.getScene().getWindow().requestFocus();
+                        });
                         alert.showAndWait();
                         return;
                     }
@@ -254,6 +260,9 @@ public class MutationMapper extends Application implements Initializable{
                 alert.setHeaderText("Matching Sequence Error");
                 alert.setContentText("Non-DNA characters found in Matching Sequence field");
                 alert.showAndWait();
+                Platform.runLater(() -> {
+                    runButton.getScene().getWindow().requestFocus();
+                });
                 return;
             }
             if (mutationTextField.getText().isEmpty()){
@@ -274,6 +283,9 @@ public class MutationMapper extends Application implements Initializable{
                     alert.setHeaderText("Mutant Sequence Error");
                     alert.setContentText("Non-DNA characters found in Mutant Sequence field");
                     alert.showAndWait();
+                    Platform.runLater(() -> {
+                        runButton.getScene().getWindow().requestFocus();
+                    });
                     return;
                 }
                 if (seq.equalsIgnoreCase(mutSeq)){
@@ -282,6 +294,9 @@ public class MutationMapper extends Application implements Initializable{
                     alert.setHeaderText("Mutant Sequence Error");
                     alert.setContentText("Mutant Sequence is the same as Matching Sequence");
                     alert.showAndWait();
+                    Platform.runLater(() -> {
+                        runButton.getScene().getWindow().requestFocus();
+                    });
                     return;
                 }
                 mapperTask = new Task<List<MutationMapperResult>>(){
@@ -350,6 +365,9 @@ public class MutationMapper extends Application implements Initializable{
                 progressLabel.setText("Cancelled");
                 progressIndicator.progressProperty().unbind();
                 progressIndicator.progressProperty().set(0);
+                Platform.runLater(() -> {
+                    runButton.getScene().getWindow().requestFocus();
+                });
             });
         });
                  
@@ -366,6 +384,9 @@ public class MutationMapper extends Application implements Initializable{
                 progressLabel.setText("Failed!");
                 progressIndicator.progressProperty().unbind();
                 progressIndicator.progressProperty().set(0);
+                Platform.runLater(() -> {
+                    runButton.getScene().getWindow().requestFocus();
+                });
              });
         });
         progressIndicator.progressProperty().bind(mapperTask.progressProperty());
