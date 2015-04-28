@@ -149,7 +149,7 @@ public class MutationMapperResultViewController implements Initializable {
                 public void updateIndex(int i) {
                     super.updateIndex(i);
 
-                    setMinHeight(40);// * i);
+                    setMinHeight(50);// * i);
                 }
             };
         });
@@ -288,6 +288,11 @@ public class MutationMapperResultViewController implements Initializable {
     
     private void setTableItems(){
         displayData.clear();
+        if (refSeq.getValue() || refSeqOnly.getValue()){
+            transcriptCol.setCellValueFactory(new PropertyValueFactory<>("refSeqIfAvailable"));
+        }else{
+            transcriptCol.setCellValueFactory(new PropertyValueFactory<>("transcript"));
+        }
         for (MutationMapperResult r: data){
             if (canonicalOnly.getValue()){
                 if (!r.getIsCanonical()){
@@ -306,11 +311,7 @@ public class MutationMapperResultViewController implements Initializable {
             }
             displayData.add(r);
         }
-        if (refSeq.getValue() || refSeqOnly.getValue()){
-            transcriptCol.setCellValueFactory(new PropertyValueFactory<>("refSeqIfAvailable"));
-        }else{
-            transcriptCol.setCellValueFactory(new PropertyValueFactory<>("transcript"));
-        }
+        
         resultTable.setItems(displayData);
     }
     
