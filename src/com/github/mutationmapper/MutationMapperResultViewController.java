@@ -339,11 +339,12 @@ public class MutationMapperResultViewController implements Initializable {
         ArrayList<MutationMapperResult> lastRun = new ArrayList<>();
         for (MutationMapperResult r: data){
             if (r.getIndex().matches(lastIndex + "[A-Z]+")){
+                r.setIndex(null);
                 lastRun.add(r);
             }
         }
-        data.clear();
-        data.addAll(lastRun);
-        redisplayData();
+        clearTable();
+        lastIndex = 0;
+        displayData(lastRun);
     }
 }
