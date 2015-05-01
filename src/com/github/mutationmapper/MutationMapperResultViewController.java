@@ -96,6 +96,8 @@ public class MutationMapperResultViewController implements Initializable {
    @FXML
    MenuItem closeMenuItem;
    @FXML
+   MenuItem clearPreviousMenuItem;
+   @FXML
    MenuItem clearAndCloseMenuItem;
    @FXML
    MenuItem clearMenuItem;
@@ -228,6 +230,12 @@ public class MutationMapperResultViewController implements Initializable {
             });
         });
         
+        clearPreviousMenuItem.setOnAction((ActionEvent e) -> {
+            Platform.runLater(()->{
+                clearPreviousResults();
+            });
+        });
+        
         ToggleGroup refseqToggleGroup = new ToggleGroup();
         refSeqMenu.setToggleGroup(refseqToggleGroup);
         refSeqOnlyMenu.setToggleGroup(refseqToggleGroup);
@@ -327,5 +335,15 @@ public class MutationMapperResultViewController implements Initializable {
         resultTable.getItems().clear();
     }
     
-    
+    public void clearPreviousResults(){
+        ArrayList<MutationMapperResult> lastRun = new ArrayList<>();
+        for (MutationMapperResult r: data){
+            if (r.getIndex().matches(lastIndex + "[A-Z]+")){
+                lastRun.add(r);
+            }
+        }
+        data.clear();
+        data.addAll(lastRun);
+        redisplayData();
+    }
 }
