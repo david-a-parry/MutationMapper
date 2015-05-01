@@ -129,7 +129,8 @@ public class EnsemblRest {
         return gene;
     }
     
-    public TranscriptDetails getTranscriptDetails(String id) throws ParseException, MalformedURLException, IOException, InterruptedException {
+    public TranscriptDetails getTranscriptDetails(String id) 
+            throws ParseException, MalformedURLException, IOException, InterruptedException {
         String endpoint = "/lookup/id/"+id+"?expand=1";
         JSONObject j = (JSONObject) getJSON(endpoint);
         if(j.isEmpty()) {
@@ -140,7 +141,8 @@ public class EnsemblRest {
         return getTranscriptDetailsFromJson(j);
     }
     
-    private TranscriptDetails getTranscriptDetailsFromJson(JSONObject j){
+    private TranscriptDetails getTranscriptDetailsFromJson(JSONObject j)
+            throws ParseException, MalformedURLException, IOException, InterruptedException {
         TranscriptDetails trans = new TranscriptDetails();        
         trans.setTranscriptId((String) j.get("id"));
         String biotype = (String)j.get("biotype");
@@ -209,21 +211,37 @@ public class EnsemblRest {
            Long length = (Long) p.get("length");
            trans.setProteinLength(length.intValue());
        }
-        return trans;
+       List<String> idName = getGeneAndSymbolFromTranscript(trans.getTranscriptId());
+       trans.setId(idName.get(0));
+       trans.setSymbol(idName.get(1));       
+       return trans;
     }
     
     public List<String> getGeneAndSymbolFromTranscript(String id)throws ParseException, MalformedURLException, IOException, InterruptedException {
-        String endpoint = "/overlap/id/" + id + "?feature=gene";
+        String endpoint = "/lookup/id/" + id ;
+        JSONObject gene = (JSONObject) getJSON(endpoint);
+        String symbol = new String();
+        if (gene.containsKey("display_name")){
+            String display_name = (String) gene.get("display_name");
+            symbol = display_name.split("-")[0];
+        }
+        endpoint = "/overlap/id/" + id + "?feature=gene";
         JSONArray genes = (JSONArray) getJSON(endpoint);
         if (genes.isEmpty()){
             throw new RuntimeException(String.format("Could not get gene details "
                   + "for transcript %s.\nRetrieval from URL %s%s returned nothing.", 
                   id, SERVER, endpoint));
         }
-        JSONObject gene = (JSONObject)genes.get(0);
-        String ensid = (String) gene.get("id");
-        String name = (String) gene.get("external_name");
-        return Arrays.asList(ensid, name);
+        for (Object o: genes){
+            JSONObject g = (JSONObject) o;
+            String name = (String) g.get("external_name");
+            if (name.equalsIgnoreCase(symbol)){
+                String ensid = (String) g.get("id");
+                return (Arrays.asList(ensid, symbol));
+            }
+        }
+        //failed to get ensgene id 
+        return (Arrays.asList("", symbol));
     }
     
     /*returns arraylist of hashmaps of gene symbol, gene ID,
