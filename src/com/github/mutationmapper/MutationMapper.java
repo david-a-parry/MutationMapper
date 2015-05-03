@@ -6,7 +6,8 @@
 
 /*
 TO DO
-
+Fix methods for searching with transcript IDs (i.e. get gene/symbol, translation)
+Allow intronic CDS coordinate (e.g. c.100-2)
 Allow user to write output to spreadsheet/csv/tsv
 Make about dialog
 Add some missing error dialogs
@@ -213,6 +214,7 @@ public class MutationMapper extends Application implements Initializable{
                 alert.setTitle("Mutation Mapper Error");
                 alert.setHeaderText("CDS Input Error");
                 alert.setContentText("CDS input must only be a whole number");
+                System.out.println(alert.getContentText());
                 alert.showAndWait();
                 Platform.runLater(() -> {
                     runButton.getScene().getWindow().requestFocus();
@@ -237,10 +239,11 @@ public class MutationMapper extends Application implements Initializable{
                         alert.setHeaderText("Mutation Sequence Error");
                         alert.setContentText("Mutation sequence must either be "
                                 + "DNA or be in the format \"ins,<seq>\" or \"del,<seq/number>\".");
+                        System.out.println(alert.getContentText());
+                        alert.showAndWait();
                         Platform.runLater(() -> {
                             runButton.getScene().getWindow().requestFocus();
                         });
-                        alert.showAndWait();
                         return;
                     }
 
@@ -259,6 +262,7 @@ public class MutationMapper extends Application implements Initializable{
                 alert.setTitle("Mutation Mapper Error");
                 alert.setHeaderText("Matching Sequence Error");
                 alert.setContentText("Non-DNA characters found in Matching Sequence field");
+                System.out.println(alert.getContentText());        
                 alert.showAndWait();
                 Platform.runLater(() -> {
                     runButton.getScene().getWindow().requestFocus();
@@ -282,6 +286,7 @@ public class MutationMapper extends Application implements Initializable{
                     alert.setTitle("Mutation Mapper Error");
                     alert.setHeaderText("Mutant Sequence Error");
                     alert.setContentText("Non-DNA characters found in Mutant Sequence field");
+                    System.out.println(alert.getContentText());
                     alert.showAndWait();
                     Platform.runLater(() -> {
                         runButton.getScene().getWindow().requestFocus();
@@ -293,6 +298,7 @@ public class MutationMapper extends Application implements Initializable{
                     alert.setTitle("Mutation Mapper Error");
                     alert.setHeaderText("Mutant Sequence Error");
                     alert.setContentText("Mutant Sequence is the same as Matching Sequence");
+                    System.out.println(alert.getContentText());
                     alert.showAndWait();
                     Platform.runLater(() -> {
                         runButton.getScene().getWindow().requestFocus();
@@ -378,6 +384,7 @@ public class MutationMapper extends Application implements Initializable{
                 alert.setTitle("Mutation Mapper Error");
                 alert.setHeaderText("Run Failed");
                 alert.setContentText(e.getSource().getException().getMessage());
+                System.out.println(alert.getContentText());
                 alert.showAndWait();
                 
                 progressLabel.textProperty().unbind();
@@ -411,9 +418,9 @@ public class MutationMapper extends Application implements Initializable{
         List<MutationMapperResult> results = new ArrayList<>();
         List<TranscriptDetails> transcripts = new ArrayList<>();
         
-        String chrom;
-        int start;
-        int end; 
+        String chrom = null;
+        Integer start = null;
+        Integer end = null; 
         //updateMessage("Searching Genes");
         if (isTranscriptId(gene)){
             TranscriptDetails t = rest.getTranscriptDetails(gene);
@@ -421,6 +428,15 @@ public class MutationMapper extends Application implements Initializable{
             start = t.getTxStart();
             end = t.getTxEnd();
             transcripts.add(t);
+        }else if (isRefSeqId(gene)){
+            HashMap<String, String> ids = rest.getEnsemblFromRefSeqId(gene);
+            if (ids.containsKey("transcript")){
+                TranscriptDetails t = rest.getTranscriptDetails(ids.get("transcript"));
+                chrom = t.getChromosome();
+                start = t.getTxStart();
+                end = t.getTxEnd();
+                transcripts.add(t);
+            }
         }else{
             GeneDetails g;
             if (isGeneId(gene)){
@@ -788,6 +804,11 @@ public class MutationMapper extends Application implements Initializable{
         String id;
         if(isTranscriptId(gene)){
             transcripts.add(rest.getTranscriptDetails(gene));
+        }else if (isRefSeqId(gene)){
+            HashMap<String, String> ids = rest.getEnsemblFromRefSeqId(gene);
+            if (ids.containsKey("transcript")){
+                transcripts.add(rest.getTranscriptDetails(ids.get("transcript")));
+            }
         }else{
             if (isGeneId(gene)){//is gene id
                 id = gene;
@@ -836,6 +857,10 @@ public class MutationMapper extends Application implements Initializable{
     private boolean isGeneId(String id){
         return id.matches("ENS\\w*G\\d{11}.*\\d*");
     }
+    private boolean isRefSeqId(String id){//tests for both protein or RNA IDs
+        return id.matches("[NX][MRP]_\\d+(.\\d+)*");
+    }
+    
     
     private void getAvailableSpecies(){
         final Task<List<String>> getSpeciesTask = new Task<List<String>>(){
