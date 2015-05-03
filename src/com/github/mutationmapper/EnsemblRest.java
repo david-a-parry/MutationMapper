@@ -131,14 +131,18 @@ public class EnsemblRest {
     
     public TranscriptDetails getTranscriptDetails(String id) 
             throws ParseException, MalformedURLException, IOException, InterruptedException {
-        String endpoint = "/lookup/id/"+id+"?expand=1";
-        JSONObject j = (JSONObject) getJSON(endpoint);
-        if(j.isEmpty()) {
-          throw new RuntimeException(String.format("Could not get transcript details "
-                  + "for %s.\nRetrieval from URL %s%s returned nothing.", 
-                  id, SERVER, endpoint));
+        /*
+        need to get gene details first because rest won't return translation 
+        details from a transcript ID
+        */
+        List<String> idName = getGeneAndSymbolFromTranscript(id);
+        GeneDetails gene = getGeneDetails(idName.get(0));
+        for (TranscriptDetails t: gene.getTranscripts()){
+            if (t.getTranscriptId().equalsIgnoreCase(id)){
+                return t;
+            }
         }
-        return getTranscriptDetailsFromJson(j);
+        return new TranscriptDetails();
     }
     
     private TranscriptDetails getTranscriptDetailsFromJson(JSONObject j)
@@ -199,7 +203,8 @@ public class EnsemblRest {
            Long end = (Long)j.get("end");
            trans.setTxEnd(end.intValue());
        }
-
+       
+       
        //get translation start and end if coding                   
        if (biotype.equals("protein_coding") && j.containsKey("Translation")){
            JSONObject p = (JSONObject) j.get("Translation");
@@ -210,10 +215,9 @@ public class EnsemblRest {
            trans.setCdsEnd(end.intValue());
            Long length = (Long) p.get("length");
            trans.setProteinLength(length.intValue());
+       }else{
+           //if using a transcript id for some reason rest won't return translation
        }
-       List<String> idName = getGeneAndSymbolFromTranscript(trans.getTranscriptId());
-       trans.setId(idName.get(0));
-       trans.setSymbol(idName.get(1));       
        return trans;
     }
     
@@ -420,6 +424,20 @@ public class EnsemblRest {
             }
         }
         return transcriptIds;
+    }
+    
+    public HashMap<String, String> getEnsemblFromRefSeqId(String id)throws ParseException, 
+            MalformedURLException, IOException, InterruptedException {
+        HashMap<String, String> ensIds = new HashMap<>();
+        String endpoint = String.format("/xrefs/symbol/homo_sapiens/%s", id);
+        JSONArray info = (JSONArray) getJSON(endpoint);
+        for (Object o: info){
+            JSONObject j = (JSONObject) o;
+            if (j.containsKey("id") && j.containsKey("type")){
+                ensIds.put((String) j.get("type"), (String) j.get("id"));
+            }
+        }
+        return ensIds;
     }
     
     //we use the POST method because other methods don't cope with larger indels
