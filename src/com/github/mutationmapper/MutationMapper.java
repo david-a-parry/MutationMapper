@@ -6,8 +6,6 @@
 
 /*
 TO DO
-Fix methods for searching with transcript IDs (i.e. get gene/symbol, translation)
-Allow intronic CDS coordinate (e.g. c.100-2)
 Allow user to write output to spreadsheet/csv/tsv
 Make about dialog
 Add some missing error dialogs
@@ -209,7 +207,7 @@ public class MutationMapper extends Application implements Initializable{
         final String cdsCoordinate = cdsTextField.getText().trim();
         final String sequence = sequenceTextField.getText().trim();
         if (!cdsCoordinate.isEmpty()){
-            if (!cdsTextField.getText().matches("\\d+")){
+            if (!cdsTextField.getText().matches("\\d+([+-]\\d+)*")){
                 Alert alert = new Alert(AlertType.ERROR);
                 alert.setTitle("Mutation Mapper Error");
                 alert.setHeaderText("CDS Input Error");
@@ -550,15 +548,34 @@ public class MutationMapper extends Application implements Initializable{
             throw new RuntimeException(String.format("Could not get transcripts "
                   + "for %s in species %s.\n", gene, species));
         }
+        int spliceCoord = 0;
+        int cdsCoord;
+        if (cdsCoordinate.matches("\\d+\\+\\d+")){
+            String[] c = cdsCoordinate.split("\\+");
+            cdsCoord = Integer.parseInt(c[0]);
+            spliceCoord = Integer.parseInt(c[1]);
+        }else if (cdsCoordinate.matches("\\d+-\\d+")){
+            String[] c = cdsCoordinate.split("-");
+            cdsCoord = Integer.parseInt(c[0]);
+            spliceCoord = -1 * Integer.parseInt(c[1]);
+        }else{
+            cdsCoord = Integer.parseInt(cdsCoordinate);
+        }
         for (TranscriptDetails t: transcripts){
             HashMap<String, String> g = rest.codingToGenomicTranscript(
-                    species, t.getTranscriptId(), Integer.parseInt(cdsCoordinate));
+                    species, t.getTranscriptId(), cdsCoord);
             MutationMapperResult result = putBasicTranscriptInfo(t);
             if (g != null){
                 result.setCdsCoordinate(cdsCoordinate);
                 result.setChromosome(g.get("chromosome"));
                 if (! g.get("coordinate").isEmpty()){
-                    result.setCoordinate(Integer.parseInt(g.get("coordinate")));
+                    int c = Integer.parseInt(g.get("coordinate"));
+                    if (t.getStrand() < 0){
+                        c -= spliceCoord;
+                    }else{
+                        c += spliceCoord;
+                    }
+                    result.setCoordinate(c);
                 }
                 result.setGenome(g.get("assembly"));
             }
@@ -918,7 +935,7 @@ public class MutationMapper extends Application implements Initializable{
                 
     EventHandler<KeyEvent> checkNumeric(){
         return (KeyEvent ke) -> {
-            if (!ke.getCharacter().matches("\\d")){
+            if (!ke.getCharacter().matches("[\\d-+]")){
                 ke.consume();
             }
         };
