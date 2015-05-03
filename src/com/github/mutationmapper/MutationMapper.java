@@ -191,13 +191,13 @@ public class MutationMapper extends Application implements Initializable{
     
     private void mapMutation() {
         final Task<List<MutationMapperResult>> mapperTask;
-        final String gene = geneTextField.getText();
-        
+        final String gene = geneTextField.getText().trim();
         if (gene.isEmpty()){
             //TO DO please enter gene dialog
             return;
         }
-        if (cdsTextField.getText().isEmpty() && sequenceTextField.getText().isEmpty()){
+        if (cdsTextField.getText().trim().isEmpty() && 
+                sequenceTextField.getText().trim().isEmpty()){
             //TO DO please ender coordinate or matching sequence dialog
             return;
         }
@@ -206,8 +206,8 @@ public class MutationMapper extends Application implements Initializable{
             //TO DO you must select a species dialog
             return;
         }
-        final String cdsCoordinate = cdsTextField.getText();
-        final String sequence = sequenceTextField.getText();
+        final String cdsCoordinate = cdsTextField.getText().trim();
+        final String sequence = sequenceTextField.getText().trim();
         if (!cdsCoordinate.isEmpty()){
             if (!cdsTextField.getText().matches("\\d+")){
                 Alert alert = new Alert(AlertType.ERROR);
@@ -221,7 +221,7 @@ public class MutationMapper extends Application implements Initializable{
                 });
                 return;
             }
-            if (mutationTextField.getText().isEmpty()){
+            if (mutationTextField.getText().trim().isEmpty()){
                 mapperTask = 
                         new Task<List<MutationMapperResult>>(){
                     @Override
@@ -269,7 +269,7 @@ public class MutationMapper extends Application implements Initializable{
                 });
                 return;
             }
-            if (mutationTextField.getText().isEmpty()){
+            if (mutationTextField.getText().trim().isEmpty()){
                 mapperTask = new Task<List<MutationMapperResult>>() {
                     @Override
                     protected List<MutationMapperResult> call()
