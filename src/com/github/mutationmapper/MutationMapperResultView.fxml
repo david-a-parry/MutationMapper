@@ -8,10 +8,11 @@
 
 <AnchorPane id="AnchorPane" fx:id="resultPane" prefHeight="711.0" prefWidth="1541.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.github.mutationmapper.MutationMapperResultViewController">
    <children>
-      <MenuBar prefHeight="29.0" prefWidth="600.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+      <MenuBar focusTraversable="false" prefHeight="29.0" prefWidth="600.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
         <menus>
           <Menu mnemonicParsing="false" text="File">
             <items>
+                  <MenuItem fx:id="saveMenuItem" mnemonicParsing="false" text="Save Results To File" />
                   <MenuItem fx:id="clearPreviousMenuItem" mnemonicParsing="false" text="Clear Previous Results" />
                   <MenuItem fx:id="clearMenuItem" mnemonicParsing="false" text="Clear Table" />
               <MenuItem fx:id="clearAndCloseMenuItem" mnemonicParsing="false" text="Clear Table and Close" />
