@@ -161,6 +161,7 @@ public class MutationMapper extends Application implements Initializable{
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
+        menuBar.setUseSystemMenuBar(true);
         tableLoader = new FXMLLoader(getClass().
                                        getResource("MutationMapperResultView.fxml"));
         Platform.runLater(() -> {
