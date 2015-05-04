@@ -243,6 +243,11 @@ public class MutationMapperResultViewController implements Initializable {
             });
         });
         
+        if (System.getProperty("os.name").equals("Mac OS X")){
+           closeMenuItem.setAccelerator
+                (new KeyCodeCombination(KeyCode.W, KeyCombination.SHORTCUT_DOWN));
+        }
+        
         saveMenuItem.setOnAction((ActionEvent e) -> {
             try{
                 writeResultsToFile();

@@ -50,6 +50,9 @@ import javafx.scene.control.RadioMenuItem;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.Image;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
@@ -138,7 +141,19 @@ public class MutationMapper extends Application implements Initializable{
                 Platform.exit();
                 System.exit(0);
             });
-            
+            final KeyCombination macCloseKeyComb = 
+                new KeyCodeCombination(KeyCode.W, KeyCombination.SHORTCUT_DOWN);
+            if (System.getProperty("os.name").equals("Mac OS X")){
+               scene.addEventHandler(
+                    KeyEvent.KEY_RELEASED, new EventHandler<KeyEvent>() {
+                    @Override
+                    public void handle(KeyEvent ev){
+                        if (macCloseKeyComb.match(ev)){
+                            primaryStage.close();
+                        }
+                    }
+                });
+            }
         } catch (Exception ex) {
             Logger.getLogger(MutationMapper.class.getName()).log(Level.SEVERE, null, ex);
         }
