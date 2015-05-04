@@ -5,21 +5,38 @@
  */
 package com.github.mutationmapper;
 
+import java.io.BufferedOutputStream;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import static java.lang.System.getProperty;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Optional;
 import java.util.ResourceBundle;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Service;
+import javafx.concurrent.Task;
+import javafx.concurrent.WorkerStateEvent;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
@@ -40,7 +57,15 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Priority;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 /**
  * FXML Controller class
@@ -93,6 +118,8 @@ public class MutationMapperResultViewController implements Initializable {
    Label summaryLabel;
    @FXML
    TextArea resultTextArea;
+   @FXML
+   MenuItem saveMenuItem;
    @FXML
    MenuItem closeMenuItem;
    @FXML
@@ -216,6 +243,21 @@ public class MutationMapperResultViewController implements Initializable {
             });
         });
         
+        saveMenuItem.setOnAction((ActionEvent e) -> {
+            try{
+                writeResultsToFile();
+            }catch(IOException ex){
+                Platform.runLater(() -> {
+                    Alert error = getExceptionDialog(ex);
+                    error.setTitle("Write Failed");
+                    error.setHeaderText("Error writing file.");
+                    error.setContentText("Exception encountered when attempting "
+                                + "the saved file. See below:");
+                    error.showAndWait();
+                });
+            }       
+        });
+        saveMenuItem.disableProperty().bind(Bindings.size(displayData).lessThan(1));
         clearAndCloseMenuItem.setOnAction((ActionEvent e) -> {
             Platform.runLater(() -> {
                 clearTable();
@@ -346,5 +388,313 @@ public class MutationMapperResultViewController implements Initializable {
         clearTable();
         lastIndex = 0;
         displayData(lastRun);
+    }
+    
+    private void writeResultsToFile() throws IOException{
+        if (displayData.isEmpty()){
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Nothing to save");
+            alert.setHeaderText("No results to save");
+            alert.setContentText("No results are visible with current filters,"
+                    + " no file can be saved.");
+            alert.setResizable(true);
+            alert.showAndWait();
+            return;
+        }
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.getExtensionFilters().addAll(
+               new FileChooser.ExtensionFilter("Excel  (*.xlsx)", "*.xlsx"),
+               new FileChooser.ExtensionFilter("CSV  (*.csv)", "*.csv"),
+               new FileChooser.ExtensionFilter("Text  (*.txt)", "*.txt")
+       );
+       fileChooser.setTitle("Write results to file...");
+       fileChooser.setInitialDirectory(new File(getProperty("user.home")));
+       File wFile = fileChooser.showSaveDialog(resultPane.getScene().getWindow());
+       if (wFile == null){
+           return;
+       }else if (! wFile.getName().endsWith(".xlsx") && 
+                 !wFile.getName().endsWith(".csv")   &&
+                 !wFile.getName().endsWith(".txt")){
+            String ext = //annoying bug with filechooser means extension might not be appended
+                fileChooser.selectedExtensionFilterProperty().get().getExtensions().get(0).substring(1);
+            wFile = new File(wFile.getAbsolutePath() + ext);
+       }
+       if (wFile.getName().endsWith(".xlsx")){
+           writeResultsToExcel(wFile);
+       }else if (wFile.getName().endsWith(".csv")){
+           writeResultsToCsv(wFile);
+       }else{
+           writeResultsToTsv(wFile);
+       }
+    }
+    
+    private void writeResultsToExcel(final File f) throws IOException{
+       final Service<Void> service = new Service<Void>(){
+            @Override
+            protected Task<Void> createTask(){
+                return new Task<Void>(){
+                    @Override
+                    protected Void call() throws IOException {
+                        BufferedOutputStream bo = new BufferedOutputStream(new 
+                           FileOutputStream(f));
+                        Workbook wb = new XSSFWorkbook();
+                        //CellStyle hlink_style = wb.createCellStyle();
+                        //Font hlink_font = wb.createFont();
+                        //hlink_font.setUnderline(Font.U_SINGLE);
+                        //hlink_font.setColor(IndexedColors.BLUE.getIndex());
+                        //hlink_style.setFont(hlink_font);
+                        //CreationHelper createHelper = wb.getCreationHelper();
+                        Sheet sheet = wb.createSheet();
+                        Row row = null;
+                        int rowNo = 0;
+                        row = sheet.createRow(rowNo++);
+                        String header[] = {"#", "Symbol", "Gene", "Transcript", 
+                            "Genomic Coordinate", "Ref", "Var", "CDS", "Consequence",
+                            "CDS Consequence", "Protein Consequence", "Exon/Intron",
+                            "Colocated Variants", "Polyphen", "Sift", "Seq Input"};
+                        for (int col = 0; col < header.length; col ++){
+                            Cell cell = row.createCell(col);
+                            cell.setCellValue(header[col]);
+                        }
+                        
+                        updateMessage("Writing results . . .");
+                        updateProgress(0, displayData.size());
+                        int n = 0;
+                        for (MutationMapperResult r: displayData){
+                            n++;
+                            updateMessage("Writing result " + n + " . . .");
+                            row = sheet.createRow(rowNo++);
+                            int col = 0;
+                            ArrayList<String> resultsToWrite = getResultArray(r);
+                            for (String s: resultsToWrite){
+                                Cell cell = row.createCell(col++);
+                                cell.setCellValue(s);
+                            }    
+                            updateProgress(n, displayData.size());
+                        }
+                        
+                        updateMessage("Wrote " + displayData.size() + " results to file.");
+                        wb.write(bo);
+                        bo.close();
+                        return null;
+                    }
+                };
+            }
+            
+        };
+       
+        service.setOnSucceeded(new EventHandler<WorkerStateEvent>(){
+                @Override
+                public void handle (WorkerStateEvent e){
+                    Alert alert = new Alert(AlertType.CONFIRMATION);
+                    alert.setTitle("File Saved");
+                    alert.setHeaderText("Displayed results saved to " + f.getName());
+                    alert.setContentText("Open this file now?");
+                    ButtonType yesButton = ButtonType.YES;
+                    ButtonType noButton = ButtonType.NO;
+                    alert.getButtonTypes().setAll(yesButton, noButton);
+                    Optional<ButtonType> response = alert.showAndWait();
+                    if (response.get() == yesButton){
+                        try{
+                            openFile(f);
+                        } catch (Exception ex) {
+                            Alert openError = getExceptionDialog(ex);
+                            openError.setTitle("Open Failed");
+                            openError.setHeaderText("Could not open ouput file.");
+                            openError.setContentText("Exception encountered when attempting to open "
+                                        + "the saved file. See below:");
+                            openError.showAndWait();
+                        }
+                    }
+                }
+        });
+        service.setOnCancelled(new EventHandler<WorkerStateEvent>(){
+            @Override
+            public void handle (WorkerStateEvent e){
+                Alert writeCancelled = new Alert(AlertType.INFORMATION);
+                    writeCancelled.setTitle("Cancelled writing to file");
+                    writeCancelled.setHeaderText("User cancelled writing primers to file.");
+                    writeCancelled.showAndWait();
+            }
+        });
+        service.setOnFailed(new EventHandler<WorkerStateEvent>(){
+            @Override
+            public void handle (WorkerStateEvent e){
+                Alert writeFailed = getExceptionDialog(e.getSource().getException());
+                writeFailed.setTitle("Write Failed");
+                writeFailed.setHeaderText("Could not write ouput file.");
+                writeFailed.setContentText("Exception encountered when attempting to write "
+                            + "results to file. See below:");
+                writeFailed.showAndWait();
+
+            }
+        });
+        service.start();
+    }
+    
+    private void writeResultsToCsv(final File f) throws IOException{
+        writeResultsToText(f, ",");
+    }
+    
+    private void writeResultsToTsv(final File f) throws IOException{
+        writeResultsToText(f, "\t");
+    }
+    
+    //takes output file and delimiter string as arguments
+    private void writeResultsToText(final File f, final String d) throws IOException{
+        final Service<Void> service = new Service<Void>(){
+            @Override
+            protected Task<Void> createTask(){
+                return new Task<Void>(){
+                    @Override
+                    protected Void call() throws IOException {
+                        FileWriter fw = new FileWriter(f.getAbsoluteFile());
+                        BufferedWriter bw = new BufferedWriter(fw);
+                        updateMessage("Writing primers . . .");
+                        updateProgress(0, displayData.size());
+                        String header[] = {"#", "Symbol", "Gene", "Transcript", 
+                            "Genomic Coordinate", "Ref", "Var", "CDS", "Consequence",
+                            "CDS Consequence", "Protein Consequence", "Exon/Intron",
+                            "Colocated Variants", "Polyphen", "Sift", "Seq Input"
+                        };
+                        bw.write(String.join(d, header));
+                        bw.newLine();
+                        int n = 0;
+                        for (MutationMapperResult r: displayData){
+                            n++;
+                            updateMessage("Writing result " + n + " . . .");
+                            ArrayList<String> resultsToWrite = getResultArray(r);
+                            bw.write(String.join(d, resultsToWrite));
+                            bw.newLine();
+                            updateProgress(n, displayData.size());
+                        }
+                        updateMessage("Wrote " + n + " results to file.");
+                        bw.close();
+                        return null;
+                    }
+                };
+            }
+            
+        };
+        
+        
+        service.setOnSucceeded(new EventHandler<WorkerStateEvent>(){
+                @Override
+                public void handle (WorkerStateEvent e){
+                    Alert alert = new Alert(AlertType.CONFIRMATION);
+                    alert.setTitle("File Saved");
+                    alert.setHeaderText("Displayed results saved to " + f.getName());
+                    alert.setContentText("Open this file now?");
+                    ButtonType yesButton = ButtonType.YES;
+                    ButtonType noButton = ButtonType.NO;
+                    alert.getButtonTypes().setAll(yesButton, noButton);
+                    Optional<ButtonType> response = alert.showAndWait();
+                    if (response.get() == yesButton){
+                        try{
+                            openFile(f);
+                        } catch (Exception ex) {
+                            Alert openError = getExceptionDialog(ex);
+                            openError.setTitle("Open Failed");
+                            openError.setHeaderText("Could not open output file.");
+                            openError.setContentText("Exception encountered when attempting to open "
+                                        + "the saved file. See below:");
+                            openError.showAndWait();
+                        }
+                    }
+                }
+        });
+        service.setOnCancelled(new EventHandler<WorkerStateEvent>(){
+            @Override
+            public void handle (WorkerStateEvent e){
+                Alert writeCancelled = new Alert(AlertType.INFORMATION);
+                    writeCancelled.setTitle("Cancelled writing to file");
+                    writeCancelled.setHeaderText("User cancelled writing primers to file.");
+                    writeCancelled.showAndWait();
+            }
+        });
+        service.setOnFailed(new EventHandler<WorkerStateEvent>(){
+            @Override
+            public void handle (WorkerStateEvent e){
+                Alert writeFailed = getExceptionDialog(e.getSource().getException());
+                writeFailed.setTitle("Write Failed");
+                writeFailed.setHeaderText("Could not write output file.");
+                writeFailed.setContentText("Exception encountered when attempting to write "
+                            + "results to file. See below:");
+                writeFailed.showAndWait();
+
+            }
+        });
+           
+        service.start();
+    }
+    
+    private ArrayList<String> getResultArray(MutationMapperResult r){
+        ArrayList<String> values = new ArrayList<>();
+        values.add(r.getIndex());
+        values.add(r.getGeneSymbol());
+        values.add(r.getGeneId());
+        if (refSeq.getValue() || refSeqOnly.getValue()){
+            values.add(r.getRefSeqIfAvailable());
+        }else{
+            values.add(r.getTranscript());
+        }
+        values.add(r.getGenomicCoordinate());
+        values.add(r.getRefAllele());
+        values.add(r.getVarAllele());
+        values.add(r.getCdsCoordinate());
+        values.add(r.getConsequence());
+        values.add(r.getCdsConsequence());
+        values.add(r.getProteinConsequence());
+        values.add(r.getExonIntronNumber());
+        values.add(r.getKnownIds());
+        values.add(r.getPolyphenResult());
+        values.add(r.getSiftResult());
+        values.add(r.getSeqInput());
+        return values;
+    }
+    
+    private void openFile(File f) throws IOException{
+        String command;
+        //Desktop.getDesktop().open(f);
+        if (System.getProperty("os.name").equals("Linux")) {
+            command = "xdg-open " + f;
+        }else if (System.getProperty("os.name").equals("Mac OS X")) {
+            command = "open " + f;
+        }else if (System.getProperty("os.name").contains("Windows")){
+            command = "cmd /C start " + f;
+        }else {
+            return;
+        }
+        Runtime.getRuntime().exec(command);
+    }
+    
+    private Alert getExceptionDialog(Throwable ex){
+        // Create expandable Exception.
+        Alert alert = new Alert(AlertType.ERROR);
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        ex.printStackTrace(pw);
+        String exceptionText = sw.toString();
+
+        Label label = new Label("The exception stacktrace was:");
+
+        TextArea textArea = new TextArea(exceptionText);
+        textArea.setEditable(false);
+        textArea.setWrapText(true);
+
+        textArea.setMaxWidth(Double.MAX_VALUE);
+        textArea.setMaxHeight(Double.MAX_VALUE);
+        GridPane.setVgrow(textArea, Priority.ALWAYS);
+        GridPane.setHgrow(textArea, Priority.ALWAYS);
+
+        GridPane expContent = new GridPane();
+        expContent.setMaxWidth(Double.MAX_VALUE);
+        expContent.add(label, 0, 0);
+        expContent.add(textArea, 0, 1);
+
+        // Set expandable Exception into the dialog pane.
+        alert.getDialogPane().setExpandableContent(expContent);
+        alert.setResizable(true);
+        return alert;
     }
 }
