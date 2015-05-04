@@ -90,6 +90,8 @@ public class MutationMapper extends Application implements Initializable{
     @FXML
     Button runButton;
     @FXML
+    MenuItem saveMenuItem;
+    @FXML
     MenuItem quitMenuItem;
     @FXML
     CheckMenuItem canonicalOnlyMenu;
@@ -168,7 +170,7 @@ public class MutationMapper extends Application implements Initializable{
                 cdsTextField.setDisable(!newValue.isEmpty());
             });
         });
-        
+        saveMenuItem.setDisable(false);
         quitMenuItem.setOnAction((ActionEvent e) -> {
             Platform.exit();
         });
@@ -207,12 +209,13 @@ public class MutationMapper extends Application implements Initializable{
         final String cdsCoordinate = cdsTextField.getText().trim();
         final String sequence = sequenceTextField.getText().trim();
         if (!cdsCoordinate.isEmpty()){
-            if (!cdsTextField.getText().matches("\\d+([+-]\\d+)*")){
+            if (!cdsTextField.getText().matches("\\d+([+-]\\d+)?+")){
                 Alert alert = new Alert(AlertType.ERROR);
                 alert.setTitle("Mutation Mapper Error");
                 alert.setHeaderText("CDS Input Error");
                 alert.setContentText("CDS input must only be a whole number");
                 System.out.println(alert.getContentText());
+                alert.setResizable(true);
                 alert.showAndWait();
                 Platform.runLater(() -> {
                     runButton.getScene().getWindow().requestFocus();
@@ -260,7 +263,8 @@ public class MutationMapper extends Application implements Initializable{
                 alert.setTitle("Mutation Mapper Error");
                 alert.setHeaderText("Matching Sequence Error");
                 alert.setContentText("Non-DNA characters found in Matching Sequence field");
-                System.out.println(alert.getContentText());        
+                System.out.println(alert.getContentText());
+                alert.setResizable(true);
                 alert.showAndWait();
                 Platform.runLater(() -> {
                     runButton.getScene().getWindow().requestFocus();
@@ -285,6 +289,7 @@ public class MutationMapper extends Application implements Initializable{
                     alert.setHeaderText("Mutant Sequence Error");
                     alert.setContentText("Non-DNA characters found in Mutant Sequence field");
                     System.out.println(alert.getContentText());
+                    alert.setResizable(true);
                     alert.showAndWait();
                     Platform.runLater(() -> {
                         runButton.getScene().getWindow().requestFocus();
@@ -297,6 +302,7 @@ public class MutationMapper extends Application implements Initializable{
                     alert.setHeaderText("Mutant Sequence Error");
                     alert.setContentText("Mutant Sequence is the same as Matching Sequence");
                     System.out.println(alert.getContentText());
+                    alert.setResizable(true);
                     alert.showAndWait();
                     Platform.runLater(() -> {
                         runButton.getScene().getWindow().requestFocus();
@@ -338,6 +344,10 @@ public class MutationMapper extends Application implements Initializable{
                     resultView.codingOnlyMenu.selectedProperty().bindBidirectional(codingOnlyMenu.selectedProperty());
                     resultView.refSeqOnlyMenu.selectedProperty().bindBidirectional(refSeqOnlyMenu.selectedProperty());
                     resultView.refSeqMenu.selectedProperty().bindBidirectional(refSeqMenu.selectedProperty());
+                    saveMenuItem.disableProperty().bind(resultView.saveMenuItem.disableProperty());
+                    saveMenuItem.setOnAction((ActionEvent actionEvent) -> {
+                        resultView.saveMenuItem.fire();
+                    });
                 }
                 if (tableScene == null){
                     tableScene = new Scene(tablePane);
@@ -382,6 +392,7 @@ public class MutationMapper extends Application implements Initializable{
                 alert.setTitle("Mutation Mapper Error");
                 alert.setHeaderText("Run Failed");
                 alert.setContentText(e.getSource().getException().getMessage());
+                alert.setResizable(true);
                 System.out.println(alert.getContentText());
                 alert.showAndWait();
                 
@@ -923,10 +934,12 @@ public class MutationMapper extends Application implements Initializable{
         }
         if (running){
             runButton.setText("Cancel");
+            runButton.setDefaultButton(false);
             runButton.setCancelButton(true);
         }else{
             runButton.setText("Run");
             runButton.setDefaultButton(true);
+            runButton.setCancelButton(false);
             runButton.setOnAction((ActionEvent actionEvent) -> {
                 mapMutation();
             });
