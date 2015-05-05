@@ -154,6 +154,8 @@ public class MutationMapperResultViewController implements Initializable {
      */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
+        menuBar.setUseSystemMenuBar(true);
+        
         indexCol.setCellValueFactory(new PropertyValueFactory<>("index"));
         symbolCol.setCellValueFactory(new PropertyValueFactory<>("geneSymbol"));
         geneCol.setCellValueFactory(new PropertyValueFactory<>("geneId"));
@@ -242,6 +244,11 @@ public class MutationMapperResultViewController implements Initializable {
                 stage.close();
             });
         });
+        
+        if (System.getProperty("os.name").equals("Mac OS X")){
+           closeMenuItem.setAccelerator
+                (new KeyCodeCombination(KeyCode.W, KeyCombination.SHORTCUT_DOWN));
+        }
         
         saveMenuItem.setOnAction((ActionEvent e) -> {
             try{
