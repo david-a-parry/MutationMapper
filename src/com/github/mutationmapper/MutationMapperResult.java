@@ -107,7 +107,7 @@ public class MutationMapperResult {
         siftResult = result;
     }
     
-    public void setMostSeverConsequence(String consequence){
+    public void setMostSevereConsequence(String consequence){
         mostSevereConsequence = consequence;
     }
     
