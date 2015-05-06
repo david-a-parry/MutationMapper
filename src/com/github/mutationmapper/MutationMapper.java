@@ -6,6 +6,7 @@
 
 /*
 TO DO
+Make custom result summary dialog
 Make about dialog
 Add some missing error dialogs
 Handle no internet connection
@@ -380,6 +381,7 @@ public class MutationMapper extends Application implements Initializable{
                     }else{
                         tableStage.requestFocus();
                     }
+                    //TO DO - make custom controller
                     Alert alert = new Alert(AlertType.INFORMATION);
                     alert.setTitle("Mutation Mapper Result");
                     if (results.get(0).getMostSevereConsequence() == null){
@@ -562,7 +564,7 @@ public class MutationMapper extends Application implements Initializable{
             StringBuilder description = new StringBuilder();
             MutationMapperResult result = putBasicTranscriptInfo(t);
             if (cons.containsKey("Consequence")){
-                result.setMostSeverConsequence(
+                result.setMostSevereConsequence(
                         cons.get("Consequence").get("most_severe_consequence"));
             }
             if (seqSwapped){
@@ -705,7 +707,9 @@ public class MutationMapper extends Application implements Initializable{
         consequences.sort(new ConsequenceComparator());
         for (MutationMapperResult r: results){
             r.setDescription(description.toString());
-            r.setMostSeverConsequence(consequences.get(0));
+            if (!consequences.isEmpty()){
+                r.setMostSevereConsequence(consequences.get(0));
+            }
         }
         return results;
     }
@@ -768,7 +772,7 @@ public class MutationMapper extends Application implements Initializable{
                             }
                         }
                     }else if (k.equals("Consequence")){
-                        r.setMostSeverConsequence(cons.get(k).get("most_severe_consequence"));
+                        r.setMostSevereConsequence(cons.get(k).get("most_severe_consequence"));
                     }
                 }
                 if (snpIds.length() > 0){
