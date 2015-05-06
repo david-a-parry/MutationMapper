@@ -6,7 +6,6 @@
 
 /*
 TO DO
-Allow user to write output to spreadsheet/csv/tsv
 Make about dialog
 Add some missing error dialogs
 Handle no internet connection
@@ -381,6 +380,20 @@ public class MutationMapper extends Application implements Initializable{
                     }else{
                         tableStage.requestFocus();
                     }
+                    Alert alert = new Alert(AlertType.INFORMATION);
+                    alert.setTitle("Mutation Mapper Result");
+                    if (results.get(0).getMostSevereConsequence() == null){
+                        alert.setHeaderText("Mapper Result");
+                    }else{
+                        alert.setHeaderText("Most Severe Consequence: " + 
+                                results.get(0).getMostSevereConsequence());
+                    }
+                    alert.setContentText(results.get(0).getDescription());
+                    alert.setResizable(true);
+                    alert.setWidth(400);
+                    alert.setHeight(450);
+                    alert.show();
+                    
                 });
             }catch(Exception ex){
                 //TO DO - show error dialog
@@ -483,6 +496,7 @@ public class MutationMapper extends Application implements Initializable{
         String dna = getDna(chrom, start, end, species);
         //updateMessage("Searching DNA for input sequence...");
         boolean revCompMatches = false;
+        boolean seqSwapped = false;
         List<Integer> indices = searchDna(dna, seq);
         List<Integer> rcIndices = searchDna(
                 dna, ReverseComplementDNA.reverseComplement(seq));
@@ -491,11 +505,36 @@ public class MutationMapper extends Application implements Initializable{
             indices.addAll(rcIndices);
         }
         if (indices.isEmpty()){
+            if (mutSeq != null){
+                indices = searchDna(dna, mutSeq);
+                rcIndices = searchDna(dna, 
+                        ReverseComplementDNA.reverseComplement(mutSeq));
+                if (!rcIndices.isEmpty()){
+                    revCompMatches = true;
+                    indices.addAll(rcIndices);
+                }
+                if (!indices.isEmpty()){
+                    seqSwapped = true;
+                }
+            }
+        }
+        if (indices.isEmpty()){
             throw new RuntimeException("No matches found for sequence or its "
                     + "reverse complement.");
         }
         if (indices.size() > 1){
-            throw new RuntimeException("ERROR: Seq matches multiple (" + indices.size() + ") times.");
+            if (seqSwapped){
+                throw new RuntimeException("ERROR: Seq matches 0 times, mutated "
+                        + "sequence matches multiple (" + indices.size() + ") times.");        
+            }else{
+                throw new RuntimeException("ERROR: Seq matches multiple (" + 
+                        indices.size() + ") times.");
+            }
+        }
+        if (seqSwapped){
+            String tempSeq = seq;
+            seq = mutSeq;
+            mutSeq = tempSeq;
         }
         //Calculate start and end coordinates of input sequence
         int matchPos;
@@ -517,11 +556,27 @@ public class MutationMapper extends Application implements Initializable{
             cons = getVepConsequences(chrom, matchPos + Integer.parseInt(trim.get("shift")), 
                     species, trim.get("ref"), trim.get("alt"));
         }
-        
         //updateMessage("Formatting results.");
         //ArrayList<String> t_ids = new ArrayList<>();
         for (TranscriptDetails t: transcripts){
+            StringBuilder description = new StringBuilder();
             MutationMapperResult result = putBasicTranscriptInfo(t);
+            if (cons.containsKey("Consequence")){
+                result.setMostSeverConsequence(
+                        cons.get("Consequence").get("most_severe_consequence"));
+            }
+            if (seqSwapped){
+                description.append("Mutant sequence matches, matching sequence "
+                        + "does not. Sequences swapped. ");
+            }
+            if (revCompMatches){
+                description.append("Reverse complement matched ");
+            }else{
+                description.append("Sequence matched ");
+            }
+            description.append("at genomic coordinate ").append(chrom)
+                    .append(":").append(matchPos).append("\n");
+            result.setDescription(description.toString());
             if (!trim.isEmpty()){
                 result.setRefAllele(trim.get("ref"));
                 result.setVarAllele(trim.get("alt"));
@@ -588,6 +643,8 @@ public class MutationMapper extends Application implements Initializable{
         }else{
             cdsCoord = Integer.parseInt(cdsCoordinate);
         }
+        ArrayList<String> consequences = new ArrayList<>();
+        StringBuilder description = new StringBuilder();
         for (TranscriptDetails t: transcripts){
             HashMap<String, String> g = rest.codingToGenomicTranscript(
                     species, t.getTranscriptId(), cdsCoord);
@@ -605,6 +662,9 @@ public class MutationMapper extends Application implements Initializable{
                     result.setCoordinate(c);
                 }
                 result.setGenome(g.get("assembly"));
+                description.append(t.getTranscriptId()).append(" c.")
+                        .append(cdsCoordinate).append(" => ")
+                        .append(result.getGenomicCoordinate()).append("\n");
             }
             if (mutSeq != null && result.getCoordinate() != null){
                 /*
@@ -632,7 +692,15 @@ public class MutationMapper extends Application implements Initializable{
                         result.getCoordinate(), species, 1);
                 result.setRefAllele(gRef);
             }
+            if (result.getConsequence() != null){
+                consequences.addAll(Arrays.asList(result.getConsequence().split(",")));
+            }
             results.add(result);
+        }
+        consequences.sort(new ConsequenceComparator());
+        for (MutationMapperResult r: results){
+            r.setDescription(description.toString());
+            r.setMostSeverConsequence(consequences.get(0));
         }
         return results;
     }
