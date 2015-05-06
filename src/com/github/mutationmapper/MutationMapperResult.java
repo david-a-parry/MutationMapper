@@ -37,6 +37,7 @@ public class MutationMapperResult {
     private boolean isCanonical = false;
     private String exonIntronNumber;
     private HashMap<String, String> vepResults;
+    private String description;
     
     public void setIndex(String i){
         index = i;
@@ -136,6 +137,10 @@ public class MutationMapperResult {
     
     public void setVepResults(HashMap<String, String> results){
         vepResults = results;
+    }
+    
+    public void setDescription(String d){
+        description = d;
     }
     
     public String getIndex(){
@@ -294,5 +299,9 @@ public class MutationMapperResult {
     
     public HashMap<String, String> getVepResults(){
         return vepResults;
+    }
+    
+    public String getDescription(){
+        return description;
     }
 }
