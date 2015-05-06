@@ -662,7 +662,12 @@ public class MutationMapper extends Application implements Initializable{
                     result.setCoordinate(c);
                 }
                 result.setGenome(g.get("assembly"));
-                description.append(t.getTranscriptId()).append(" c.")
+                if (refSeqMenu.isSelected() || refSeqOnlyMenu.isSelected()){
+                    description.append(result.getRefSeqIfAvailable());
+                }else{
+                    description.append(t.getTranscriptId());
+                }
+                description.append(" c.")
                         .append(cdsCoordinate).append(" => ")
                         .append(result.getGenomicCoordinate()).append("\n");
             }
