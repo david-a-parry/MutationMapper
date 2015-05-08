@@ -381,21 +381,36 @@ public class MutationMapper extends Application implements Initializable{
                     }else{
                         tableStage.requestFocus();
                     }
-                    //TO DO - make custom controller
-                    Alert alert = new Alert(AlertType.INFORMATION);
-                    alert.setTitle("Mutation Mapper Result");
-                    if (results.get(0).getMostSevereConsequence() == null){
-                        alert.setHeaderText("Mapper Result");
-                    }else{
-                        alert.setHeaderText("Most Severe Consequence: " + 
-                                results.get(0).getMostSevereConsequence());
+                    FXMLLoader rstLoader = new FXMLLoader(this.getClass().
+                                       getResource("ResultSummary.fxml"));
+                    try{
+                        Pane rstPane = (Pane) rstLoader.load();
+                        ResultSummaryController rst = (ResultSummaryController) 
+                                rstLoader.getController();
+                        Scene rstScene = new Scene(rstPane);
+                        Stage rstStage = new Stage();
+                        rstStage.setScene(rstScene);
+                        rstStage.setTitle("MutationMapper Results");
+                        rstStage.getIcons().add(new Image(this.getClass()
+                                .getResourceAsStream("icon.png")));
+                        if (results.get(0).getMostSevereConsequence() == null){
+                            rst.setMessage("Mapper Result");
+                        }else{
+                            rst.setMessage("Most Severe Consequence: " + 
+                                    results.get(0).getMostSevereConsequence());
+                        }
+                        rst.setDetails(results.get(0).getDescription());
+                        rstStage.initModality(Modality.APPLICATION_MODAL);
+                        rstStage.show();
+                    }catch(IOException ex){
+                        Alert alert = new Alert(AlertType.ERROR);
+                        alert.setTitle("Mutation Mapper Error");
+                        alert.setHeaderText("Error Displaying Summary");
+                        alert.setContentText(ex.getMessage());
+                        alert.setResizable(true);
+                        System.out.println(alert.getContentText());
+                        alert.showAndWait();
                     }
-                    alert.setContentText(results.get(0).getDescription());
-                    alert.setResizable(true);
-                    alert.setWidth(400);
-                    alert.setHeight(450);
-                    alert.show();
-                    
                 });
             }catch(Exception ex){
                 //TO DO - show error dialog
@@ -577,7 +592,8 @@ public class MutationMapper extends Application implements Initializable{
                 description.append("Sequence matched ");
             }
             description.append("at genomic coordinate ").append(chrom)
-                    .append(":").append(matchPos).append("\n");
+                    .append(":").append(matchPos).append(" (")
+                    .append(t.getGenomeBuild()).append(")\n");
             result.setDescription(description.toString());
             if (!trim.isEmpty()){
                 result.setRefAllele(trim.get("ref"));
