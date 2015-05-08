@@ -413,8 +413,13 @@ public class MutationMapper extends Application implements Initializable{
                     }
                 });
             }catch(Exception ex){
-                //TO DO - show error dialog
-                ex.printStackTrace();
+                Alert alert = new Alert(AlertType.ERROR);
+                alert.setTitle("Mutation Mapper Error");
+                alert.setHeaderText("Error Displaying Results");
+                alert.setContentText(ex.getMessage());
+                alert.setResizable(true);
+                System.out.println(alert.getContentText());
+                alert.showAndWait();
             }
         });
         
