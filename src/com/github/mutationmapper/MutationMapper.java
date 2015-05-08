@@ -27,6 +27,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Task;
 import javafx.concurrent.WorkerStateEvent;
@@ -49,6 +50,7 @@ import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.RadioMenuItem;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleGroup;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
@@ -106,6 +108,8 @@ public class MutationMapper extends Application implements Initializable{
     RadioMenuItem refSeqMenu;
     @FXML
     RadioMenuItem refSeqOnlyMenu;
+    @FXML
+    CheckMenuItem grch37Menu;
     
     //Result display window
     FXMLLoader tableLoader;
@@ -167,6 +171,18 @@ public class MutationMapper extends Application implements Initializable{
         Platform.runLater(() -> {
             geneTextField.requestFocus();
         });
+        speciesChoiceBox.getSelectionModel().selectedItemProperty().addListener(
+            (new ChangeListener<String>(){
+                @Override
+                public void changed (ObservableValue ov, String value, final String new_value){ 
+                    if (new_value.equalsIgnoreCase("Human")){
+                        grch37Menu.setDisable(false);
+                    }else{
+                        grch37Menu.setDisable(true);
+                    }
+                }
+            })
+        );
         
         cdsTextField.addEventFilter(KeyEvent.KEY_TYPED, checkNumeric());
         
@@ -222,6 +238,12 @@ public class MutationMapper extends Application implements Initializable{
             //TO DO you must select a species dialog
             return;
         }
+        if (species.equalsIgnoreCase("Human") && grch37Menu.isSelected()){
+            rest.setGRCh37Server();
+        }else{
+            rest.setDefaultServer();
+        }
+        
         final String cdsCoordinate = cdsTextField.getText().trim();
         final String sequence = sequenceTextField.getText().trim();
         if (!cdsCoordinate.isEmpty()){
@@ -1045,8 +1067,13 @@ public class MutationMapper extends Application implements Initializable{
         if (!running){
             sequenceTextField.setDisable(!cdsTextField.getText().isEmpty());
             cdsTextField.setDisable(!sequenceTextField.getText().isEmpty());
+            String species = (String) speciesChoiceBox.getSelectionModel().getSelectedItem();
+            if (species.equalsIgnoreCase("Human")){
+                grch37Menu.setDisable(false);
+            }
         }
         if (running){
+            grch37Menu.setDisable(true);
             runButton.setText("Cancel");
             runButton.setDefaultButton(false);
             runButton.setCancelButton(true);
