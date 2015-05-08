@@ -6,7 +6,6 @@
 
 /*
 TO DO
-Make custom result summary dialog
 Make about dialog
 Add some missing error dialogs
 Handle no internet connection
