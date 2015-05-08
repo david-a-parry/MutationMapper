@@ -33,11 +33,20 @@ import net.minidev.json.parser.ParseException;
  */
 public class EnsemblRest {
     public static String SERVER = "http://rest.ensembl.org";
+    public static final String DEFAULTSERVER = "http://rest.ensembl.org";
     public static final String GRCh37Server = "http://grch37.rest.ensembl.org/";
     public static final JSONParser PARSER = new JSONParser(JSONParser.MODE_JSON_SIMPLE);
 
     public static int requestCount = 0;
     public static long lastRequestTime = System.currentTimeMillis();
+    
+    public void setDefaultServer(){
+        SERVER = DEFAULTSERVER;
+    }
+    
+    public void setGRCh37Server(){
+        SERVER = GRCh37Server;
+    }
     
     public List<String> getAvailableSpecies()throws ParseException, MalformedURLException, IOException, InterruptedException {
         ArrayList<String> species = new ArrayList<>();
