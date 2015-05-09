@@ -112,8 +112,6 @@ public class MutationMapperResultViewController implements Initializable {
    TableColumn knownVarCol;
    @FXML
    TableColumn seqInputCol;
-   @FXML
-   Button closeButton;
    @FXML 
    Label summaryLabel;
    @FXML
@@ -122,6 +120,8 @@ public class MutationMapperResultViewController implements Initializable {
    MenuItem saveMenuItem;
    @FXML
    MenuItem closeMenuItem;
+   @FXML
+   MenuItem quitMenuItem;
    @FXML
    MenuItem clearPreviousMenuItem;
    @FXML
@@ -249,6 +249,13 @@ public class MutationMapperResultViewController implements Initializable {
            closeMenuItem.setAccelerator
                 (new KeyCodeCombination(KeyCode.W, KeyCombination.SHORTCUT_DOWN));
         }
+        
+        quitMenuItem.setOnAction((ActionEvent e) -> {
+            Platform.runLater(() -> {
+                Platform.exit();
+                System.exit(0);
+            });
+        });
         
         saveMenuItem.setOnAction((ActionEvent e) -> {
             try{
