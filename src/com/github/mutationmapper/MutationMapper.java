@@ -236,17 +236,20 @@ public class MutationMapper extends Application implements Initializable{
         final Task<List<MutationMapperResult>> mapperTask;
         final String gene = geneTextField.getText().trim();
         if (gene.isEmpty()){
-            //TO DO please enter gene dialog
+            complainAndCancel("Please enter a gene symbol/id");
+            return;
+        }else if (gene.split("\\s+").length > 1){
+            complainAndCancel("Please only enter one gene symbol/id");
             return;
         }
         if (cdsTextField.getText().trim().isEmpty() && 
                 sequenceTextField.getText().trim().isEmpty()){
-            //TO DO please ender coordinate or matching sequence dialog
+            complainAndCancel("Please enter coordinate or matching sequence to search");
             return;
         }
         final String species = (String) speciesChoiceBox.getSelectionModel().getSelectedItem();
         if (species.isEmpty()){
-            //TO DO you must select a species dialog
+            complainAndCancel("You must select a species");
             return;
         }
         if (species.equalsIgnoreCase("Human") && grch37Menu.isSelected()){
@@ -1076,6 +1079,15 @@ public class MutationMapper extends Application implements Initializable{
             e.getSource().getException().printStackTrace();
         });
         new Thread(getSpeciesTask).start();
+    }
+    
+    public void complainAndCancel(String msg){
+        Alert alert = new Alert(AlertType.ERROR);
+        alert.setTitle("Mutation Mapper Error");
+        alert.setHeaderText(msg);
+        alert.setContentText("Please correct this error and try again.");
+        alert.setResizable(true);
+        alert.showAndWait();
     }
     
     private void canRun(boolean can){
