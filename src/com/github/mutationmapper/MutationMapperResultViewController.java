@@ -157,18 +157,18 @@ public class MutationMapperResultViewController implements Initializable {
         menuBar.setUseSystemMenuBar(true);
         
         indexCol.setCellValueFactory(new PropertyValueFactory<>("index"));
-        symbolCol.setCellValueFactory(new PropertyValueFactory<>("geneSymbol"));
-        geneCol.setCellValueFactory(new PropertyValueFactory<>("geneId"));
-        transcriptCol.setCellValueFactory(new PropertyValueFactory<>("transcript"));
+        symbolCol.setCellValueFactory(new PropertyValueFactory<>("geneSymbolLink"));
+        geneCol.setCellValueFactory(new PropertyValueFactory<>("geneIdLink"));
+        transcriptCol.setCellValueFactory(new PropertyValueFactory<>("transcriptLink"));
         cdsCol.setCellValueFactory(new PropertyValueFactory<>("cdsCoordinate"));
-        genomicCol.setCellValueFactory(new PropertyValueFactory<>("genomicCoordinate"));
+        genomicCol.setCellValueFactory(new PropertyValueFactory<>("regionLink"));
         refCol.setCellValueFactory(new PropertyValueFactory<>("refAllele"));
         varCol.setCellValueFactory(new PropertyValueFactory<>("varAllele"));
         proteinConsequenceCol.setCellValueFactory(new PropertyValueFactory<>("proteinConsequence"));
         cdsConsequenceCol.setCellValueFactory(new PropertyValueFactory<>("cdsConsequence"));
         exonIntronCol.setCellValueFactory(new PropertyValueFactory<>("exonIntronNumber"));
         consequenceCol.setCellValueFactory(new PropertyValueFactory<>("consequence"));
-        knownVarCol.setCellValueFactory(new PropertyValueFactory<>("knownIds"));
+        knownVarCol.setCellValueFactory(new PropertyValueFactory<>("snpLink"));
         seqInputCol.setCellValueFactory(new PropertyValueFactory<>("seqInput"));
         polyphenCol.setCellValueFactory(new PropertyValueFactory<>("polyphenResult"));
         siftCol.setCellValueFactory(new PropertyValueFactory<>("siftResult"));
@@ -346,9 +346,9 @@ public class MutationMapperResultViewController implements Initializable {
     private void setTableItems(){
         displayData.clear();
         if (refSeq.getValue() || refSeqOnly.getValue()){
-            transcriptCol.setCellValueFactory(new PropertyValueFactory<>("refSeqIfAvailable"));
+            transcriptCol.setCellValueFactory(new PropertyValueFactory<>("refSeqTransciptLink"));
         }else{
-            transcriptCol.setCellValueFactory(new PropertyValueFactory<>("transcript"));
+            transcriptCol.setCellValueFactory(new PropertyValueFactory<>("transciptLink"));
         }
         for (MutationMapperResult r: data){
             if (canonicalOnly.getValue()){

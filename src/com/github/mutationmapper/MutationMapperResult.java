@@ -5,7 +5,14 @@
  */
 package com.github.mutationmapper;
 
+import java.awt.Desktop;
+import javafx.application.Application;
+import javafx.application.HostServices;
 import java.util.HashMap;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
+import javafx.scene.control.Hyperlink;
+import javafx.scene.paint.Color;
 
 /**
  *
@@ -38,7 +45,10 @@ public class MutationMapperResult {
     private String exonIntronNumber;
     private HashMap<String, String> vepResults;
     private String description;
-    
+    private static HostServices hostServices;
+    private String ensemblSite = "http://www.ensembl.org";
+    private String species;
+
     public void setIndex(String i){
         index = i;
     }
@@ -303,5 +313,146 @@ public class MutationMapperResult {
     
     public String getDescription(){
         return description;
+    }
+    
+    public Hyperlink getGeneSymbolLink(){
+        Hyperlink link = new Hyperlink();
+        link.setText(getGeneSymbol());
+        final String url =  getEnsemblSite() 
+                + "/" + species +  "/Gene/Summary?g=" + getGeneSymbol();
+        link.setOnAction(new EventHandler<ActionEvent>() {
+                @Override
+                public void handle(ActionEvent e) {
+                    hostServices.showDocument(url);
+                    link.setVisited(true);
+                    link.setUnderline(false);
+                }
+        });
+        return link;
+    }
+    
+    public Hyperlink getGeneIdLink(){
+        Hyperlink link = new Hyperlink();
+        link.setText(getGeneId());
+        final String url =  getEnsemblSite() + "/id/" + getGeneId();
+        link.setOnAction(new EventHandler<ActionEvent>() {
+                @Override
+                public void handle(ActionEvent e) {
+                    hostServices.showDocument(url);
+                    link.setVisited(true);
+                    link.setUnderline(false);
+                }
+        });
+        return link;
+    }
+    
+    public Hyperlink getTransciptLink(){
+        Hyperlink link = new Hyperlink();
+        link.setText(getTranscript());
+        final String url =  getEnsemblSite() + "/id/" + getTranscript();
+        link.setOnAction(new EventHandler<ActionEvent>() {
+                @Override
+                public void handle(ActionEvent e) {
+                    hostServices.showDocument(url);
+                    link.setVisited(true);
+                    link.setUnderline(false);
+                }
+        });
+        return link;
+    }
+    
+    public Hyperlink getRefSeqTransciptLink(){
+        Hyperlink link = new Hyperlink();
+        link.setText(getRefSeqIfAvailable());
+        final String url =  getEnsemblSite() + "/id/" + getTranscript();
+        link.setOnAction(new EventHandler<ActionEvent>() {
+                @Override
+                public void handle(ActionEvent e) {
+                    hostServices.showDocument(url);
+                    link.setVisited(true);
+                    link.setUnderline(false);
+                }
+        });
+        return link;
+    }
+    
+     public Hyperlink getRegionLink(){
+        Hyperlink link = new Hyperlink();
+        link.setText(getGenomicCoordinate());
+        StringBuilder urlBuilder = new StringBuilder(getEnsemblSite());
+        if (chromosome == null || coordinate == null){
+            link.setDisable(true);
+            link.setUnderline(false);
+            link.setTextFill(Color.SLATEGRAY);
+        }else{
+            String c;
+            if (matchingSequence != null && !matchingSequence.isEmpty()){
+                int endPos = coordinate + matchingSequence.length() - 1;
+                c = String.format("%d-%d", coordinate, endPos);
+            }else{
+                c = coordinate.toString();
+            }
+            urlBuilder.append("/").append(species)
+                    .append("/Location/View?r=").append(chromosome).append(":").append(c);
+            final String url = urlBuilder.toString();
+            link.setOnAction(new EventHandler<ActionEvent>() {
+                    @Override
+                    public void handle(ActionEvent e) {
+                        hostServices.showDocument(url);
+                        link.setVisited(true);
+                        link.setUnderline(false);
+                    }
+            });
+        }
+        return link;
+    }
+    
+     public Hyperlink getSnpLink(){
+        Hyperlink link = new Hyperlink();
+        String idString = getKnownIds();
+        StringBuilder urlBuilder = new StringBuilder(getEnsemblSite());
+        if (idString != null && ! idString.isEmpty()){
+            link.setText(idString);
+            String[] ids = idString.split("/");
+            String id = ids[0].replaceAll("\\s*\\(.*\\)", "");
+            urlBuilder.append("/").append(species).append("/Variation/Explore?v=").append(id);
+            final String url = urlBuilder.toString();
+            link.setOnAction(new EventHandler<ActionEvent>() {
+                @Override
+                public void handle(ActionEvent e) {
+                    hostServices.showDocument(url);
+                    link.setVisited(true);
+                    link.setUnderline(false);
+                }
+            });
+        }else{
+            link.setDisable(true);
+            link.setUnderline(false);
+            link.setTextFill(Color.SLATEGRAY);
+        }
+        return link;        
+     }
+     
+    public void setHostServices(HostServices h){
+        hostServices = h;
+    }
+    public HostServices getHostServices(){
+        return hostServices;
+    }
+    
+    public void setEnsemblSite(String url){
+        ensemblSite = url;
+    }
+    
+    public String getEnsemblSite(){
+        return ensemblSite;
+    }
+    
+    public void setSpecies(String s){
+        species = s;
+    }
+    
+    public String getSpecies(){
+        return species;
     }
 }
