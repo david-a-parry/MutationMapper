@@ -207,7 +207,11 @@ public class MutationMapper extends Application implements Initializable{
         showResultsMenuItem.setDisable(true);
         showResultsMenuItem.setOnAction((ActionEvent e) -> {
             if (tableStage != null){
-                tableStage.show();
+                if (!tableStage.isShowing()){
+                    tableStage.show();
+                }else{
+                    tableStage.requestFocus();
+                }
             }
         });
         quitMenuItem.setOnAction((ActionEvent e) -> {
