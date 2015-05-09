@@ -48,6 +48,10 @@ public class EnsemblRest {
         SERVER = GRCh37Server;
     }
     
+    public String getServer(){
+        return SERVER;
+    }
+    
     public List<String> getAvailableSpecies()throws ParseException, MalformedURLException, IOException, InterruptedException {
         ArrayList<String> species = new ArrayList<>();
         String endpoint = "/info/species?content-type=application/json";
@@ -514,8 +518,34 @@ public class EnsemblRest {
                   + " for %s (%s).\nRetrieval from URL %s%s returned nothing.", 
                   symbol, species, SERVER, endpoint));
         }
-        JSONObject gene = (JSONObject)genes.get(0);
-        return (String)gene.get("id");
+        ArrayList<String> mismatches = new ArrayList<>();
+        //sometimes a synonym might be similar enough to get you the wrong gene - e.g. PRF1 vs PRF-1
+        for (Object o : genes){
+            JSONObject gene = (JSONObject) o;
+            String sym = getGeneSymbol( (String) gene.get("id"));
+            if (sym.equalsIgnoreCase(symbol)){
+                return (String)gene.get("id");
+            }else if (!sym.isEmpty()){
+                mismatches.add(sym);
+            }
+        }
+        if (!mismatches.isEmpty()){
+        throw new RuntimeException(String.format("Could not find an exact match"
+                  + " for gene symbol %s. Found %s.", symbol, String.join(", ", mismatches)));
+        }else{
+            throw new RuntimeException(String.format("Could not find an exact match"
+                  + " for gene symbol %s.", symbol)); 
+        }
+    }
+    
+    public String getGeneSymbol(String id)
+             throws ParseException, MalformedURLException, IOException, InterruptedException {
+        String endpoint = "/lookup/id/"+id+"?object_type=gene";
+        JSONObject gene = (JSONObject) getJSON(endpoint);
+        if (gene.containsKey("display_name")){
+            return (String) gene.get("display_name");
+        }
+        return "";
     }
 
     public Object getJSON(String endpoint) throws ParseException, MalformedURLException, IOException, InterruptedException {
