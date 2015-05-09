@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.input.*?>
 <?import java.lang.*?>
 <?import java.util.*?>
 <?import javafx.scene.*?>
@@ -12,22 +13,57 @@
         <menus>
           <Menu mnemonicParsing="false" text="File">
             <items>
-                  <MenuItem fx:id="saveMenuItem" mnemonicParsing="false" text="Save Results To File" />
-                  <MenuItem fx:id="clearPreviousMenuItem" mnemonicParsing="false" text="Clear Previous Results" />
-                  <MenuItem fx:id="clearMenuItem" mnemonicParsing="false" text="Clear Table" />
-              <MenuItem fx:id="clearAndCloseMenuItem" mnemonicParsing="false" text="Clear Table and Close" />
-                  <MenuItem fx:id="closeMenuItem" mnemonicParsing="false" text="Close" />
+                  <MenuItem fx:id="saveMenuItem" mnemonicParsing="false" text="Save Results To File">
+                     <accelerator>
+                        <KeyCodeCombination alt="UP" code="S" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                     </accelerator></MenuItem>
+                  <MenuItem fx:id="clearPreviousMenuItem" mnemonicParsing="false" text="Clear Previous Results">
+                     <accelerator>
+                        <KeyCodeCombination alt="UP" code="X" control="UP" meta="UP" shift="DOWN" shortcut="DOWN" />
+                     </accelerator></MenuItem>
+                  <MenuItem fx:id="clearMenuItem" mnemonicParsing="false" text="Clear Table">
+                     <accelerator>
+                        <KeyCodeCombination alt="UP" code="DIGIT0" control="UP" meta="UP" shift="DOWN" shortcut="DOWN" />
+                     </accelerator></MenuItem>
+              <MenuItem fx:id="clearAndCloseMenuItem" mnemonicParsing="false" text="Clear Table and Close">
+                     <accelerator>
+                        <KeyCodeCombination alt="UP" code="Z" control="UP" meta="UP" shift="DOWN" shortcut="DOWN" />
+                     </accelerator></MenuItem>
+                  <MenuItem fx:id="closeMenuItem" mnemonicParsing="false" text="Close">
+                     <accelerator>
+                        <KeyCodeCombination alt="UP" code="W" control="UP" meta="UP" shift="DOWN" shortcut="DOWN" />
+                     </accelerator></MenuItem>
+                  <MenuItem fx:id="quitMenuItem" mnemonicParsing="false" text="Quit">
+                     <accelerator>
+                        <KeyCodeCombination alt="UP" code="Q" control="UP" meta="UP" shift="DOWN" shortcut="DOWN" />
+                     </accelerator>
+                  </MenuItem>
             </items>
           </Menu>
             <Menu mnemonicParsing="false" text="Options">
                <items>
-                  <CheckMenuItem fx:id="canonicalOnlyMenu" mnemonicParsing="false" text="Only Report Canonical Transcripts" />
-                  <CheckMenuItem fx:id="codingOnlyMenu" mnemonicParsing="false" text="Only Report Coding Transcripts" />
+                  <CheckMenuItem fx:id="canonicalOnlyMenu" mnemonicParsing="false" text="Only Report Canonical Transcripts">
+                     <accelerator>
+                        <KeyCodeCombination alt="UP" code="NUMPAD1" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                     </accelerator></CheckMenuItem>
+                  <CheckMenuItem fx:id="codingOnlyMenu" mnemonicParsing="false" text="Only Report Coding Transcripts">
+                     <accelerator>
+                        <KeyCodeCombination alt="UP" code="NUMPAD2" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                     </accelerator></CheckMenuItem>
                   <Menu mnemonicParsing="false" text="RefSeq">
                      <items>
-                        <RadioMenuItem fx:id="refSeqMenu" mnemonicParsing="false" text="Use RefSeq IDs where available" />
-                        <RadioMenuItem fx:id="refSeqOnlyMenu" mnemonicParsing="false" text="Only Report RefSeq Transcripts" />
-                        <RadioMenuItem fx:id="noRefSeqMenu" mnemonicParsing="false" selected="true" text="Do Not Use RefSeq IDs" />
+                        <RadioMenuItem fx:id="refSeqMenu" mnemonicParsing="false" text="Use RefSeq IDs where available">
+                           <accelerator>
+                              <KeyCodeCombination alt="UP" code="NUMPAD3" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                           </accelerator></RadioMenuItem>
+                        <RadioMenuItem fx:id="refSeqOnlyMenu" mnemonicParsing="false" text="Only Report RefSeq Transcripts">
+                           <accelerator>
+                              <KeyCodeCombination alt="UP" code="NUMPAD4" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                           </accelerator></RadioMenuItem>
+                        <RadioMenuItem fx:id="noRefSeqMenu" mnemonicParsing="false" selected="true" text="Do Not Use RefSeq IDs">
+                           <accelerator>
+                              <KeyCodeCombination alt="UP" code="NUMPAD5" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                           </accelerator></RadioMenuItem>
                      </items>
                   </Menu>
                </items>
