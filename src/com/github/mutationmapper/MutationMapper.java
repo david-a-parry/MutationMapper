@@ -604,6 +604,11 @@ public class MutationMapper extends Application implements Initializable{
         for (TranscriptDetails t: transcripts){
             StringBuilder description = new StringBuilder();
             MutationMapperResult result = putBasicTranscriptInfo(t);
+            result.setHostServices(getHostServices());
+            result.setSpecies(species);
+            if (species.equalsIgnoreCase("Human") && grch37Menu.isSelected()){
+                result.setEnsemblSite("http://grch37.ensembl.org/");
+            }
             if (cons.containsKey("Consequence")){
                 result.setMostSevereConsequence(
                         cons.get("Consequence").get("most_severe_consequence"));
@@ -693,6 +698,11 @@ public class MutationMapper extends Application implements Initializable{
             HashMap<String, String> g = rest.codingToGenomicTranscript(
                     species, t.getTranscriptId(), cdsCoord);
             MutationMapperResult result = putBasicTranscriptInfo(t);
+            result.setHostServices(getHostServices());
+            result.setSpecies(species);
+            if (species.equalsIgnoreCase("Human") && grch37Menu.isSelected()){
+                result.setEnsemblSite("http://grch37.ensembl.org/");
+            }
             if (g != null){
                 result.setCdsCoordinate(cdsCoordinate);
                 result.setChromosome(g.get("chromosome"));
@@ -810,7 +820,9 @@ public class MutationMapper extends Application implements Initializable{
                         snpIds.append(cons.get(k).get("id"));
                         if (cons.get(k).containsKey("clin_sig")){
                             if (!cons.get(k).get("clin_sig").isEmpty()){
-                                snpIds.append(" (clin_sig=").append(cons.get(k).get("clin_sig")).append(")");
+                                snpIds.append(" (clin_sig=").append(cons.get(k)
+                                        .get("clin_sig").replaceAll("[\\[\\]\"]", "")
+                                ).append(")");
                             }
                         }
                     }else if (k.equals("Consequence")){
@@ -952,6 +964,7 @@ public class MutationMapper extends Application implements Initializable{
     private MutationMapperResult putBasicTranscriptInfo(TranscriptDetails t)
             throws ParseException, MalformedURLException, IOException, InterruptedException{
         MutationMapperResult result = new MutationMapperResult();
+        
         result.setGeneSymbol(t.getSymbol());
         result.setGeneId(t.getId());
         result.setTranscript(t.getTranscriptId());
