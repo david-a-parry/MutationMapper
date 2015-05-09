@@ -96,6 +96,8 @@ public class MutationMapper extends Application implements Initializable{
     @FXML
     MenuItem saveMenuItem;
     @FXML
+    MenuItem showResultsMenuItem;
+    @FXML
     MenuItem quitMenuItem;
     @FXML
     CheckMenuItem canonicalOnlyMenu;
@@ -201,7 +203,13 @@ public class MutationMapper extends Application implements Initializable{
                 cdsTextField.setDisable(!newValue.isEmpty());
             });
         });
-        saveMenuItem.setDisable(false);
+        saveMenuItem.setDisable(true);
+        showResultsMenuItem.setDisable(true);
+        showResultsMenuItem.setOnAction((ActionEvent e) -> {
+            if (tableStage != null){
+                tableStage.show();
+            }
+        });
         quitMenuItem.setOnAction((ActionEvent e) -> {
             Platform.exit();
         });
@@ -385,6 +393,7 @@ public class MutationMapper extends Application implements Initializable{
                     saveMenuItem.setOnAction((ActionEvent actionEvent) -> {
                         resultView.saveMenuItem.fire();
                     });
+                    showResultsMenuItem.setDisable(false);
                 }
                 if (tableScene == null){
                     tableScene = new Scene(tablePane);
