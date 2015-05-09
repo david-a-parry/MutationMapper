@@ -383,7 +383,7 @@ public class MutationMapperResult {
         if (chromosome == null || coordinate == null){
             link.setDisable(true);
             link.setUnderline(false);
-            link.setTextFill(Color.SLATEGRAY);
+            link.setTextFill(Color.BLACK);
         }else{
             String c;
             if (matchingSequence != null && !matchingSequence.isEmpty()){
@@ -428,7 +428,7 @@ public class MutationMapperResult {
         }else{
             link.setDisable(true);
             link.setUnderline(false);
-            link.setTextFill(Color.SLATEGRAY);
+            link.setTextFill(Color.BLACK);
         }
         return link;        
      }
