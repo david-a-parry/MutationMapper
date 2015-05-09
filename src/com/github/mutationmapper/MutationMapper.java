@@ -7,14 +7,16 @@
 /*
 TO DO
 Make about dialog
-Add some missing error dialogs
-Handle no internet connection
 Write manual
 
 */ 
 package com.github.mutationmapper;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.MalformedURLException;
@@ -34,6 +36,7 @@ import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Task;
 import javafx.concurrent.WorkerStateEvent;
 import javafx.event.ActionEvent;
+import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -54,7 +57,6 @@ import javafx.scene.control.RadioMenuItem;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleGroup;
-import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
@@ -107,6 +109,10 @@ public class MutationMapper extends Application implements Initializable{
     @FXML
     MenuItem quitMenuItem;
     @FXML
+    MenuItem aboutMenuItem;
+    @FXML
+    MenuItem helpMenuItem;
+    @FXML
     CheckMenuItem canonicalOnlyMenu;
     @FXML
     CheckMenuItem codingOnlyMenu;
@@ -127,6 +133,7 @@ public class MutationMapper extends Application implements Initializable{
     MutationMapperResultViewController resultView;
     
     final static EnsemblRest rest = new EnsemblRest();
+    final static String VERSION = "1.0";
     
     @Override
     public void start(final Stage primaryStage) {
@@ -224,7 +231,18 @@ public class MutationMapper extends Application implements Initializable{
         quitMenuItem.setOnAction((ActionEvent e) -> {
             Platform.exit();
         });
-        
+        helpMenuItem.setOnAction(new EventHandler(){
+            @Override
+            public void handle (Event ev){
+                showHelp();
+            }
+        });
+        aboutMenuItem.setOnAction(new EventHandler(){
+            @Override
+            public void handle (Event ev){
+                showAbout();
+            }
+        });
         ToggleGroup refseqToggleGroup = new ToggleGroup();
         refSeqMenu.setToggleGroup(refseqToggleGroup);
         refSeqOnlyMenu.setToggleGroup(refseqToggleGroup);
@@ -1182,6 +1200,75 @@ public class MutationMapper extends Application implements Initializable{
             Platform.exit();
         }
     }    
+    
+    public void showHelp(){
+        try{
+            File instructionsPdf = File.createTempFile("autoprimer3_instructions", ".pdf" );
+            instructionsPdf.deleteOnExit();
+            InputStream inputStream = this.getClass().
+                    getResourceAsStream("instructions.pdf");
+            OutputStream outputStream = new FileOutputStream(instructionsPdf);
+            int read = 0;
+            byte[] bytes = new byte[1024];    
+            while ((read = inputStream.read(bytes)) != -1) {
+                    outputStream.write(bytes, 0, read);
+            }
+            inputStream.close();
+            outputStream.close();
+            openFile(instructionsPdf);
+        }catch(IOException ex){
+            Alert alert = new Alert(AlertType.ERROR);
+            alert.setTitle("Mutation Mapper Error");
+            alert.setHeaderText("Could not open instructions PDF");
+            alert.setContentText(ex.getMessage());
+            System.out.println(alert.getContentText());
+            alert.setResizable(true);
+            alert.showAndWait();
+        }
+    }
+    
+    private void openFile(File f) throws IOException{
+        String command;
+        //Desktop.getDesktop().open(f);
+        if (System.getProperty("os.name").equals("Linux")) {
+            command = "xdg-open " + f;
+        }else if (System.getProperty("os.name").equals("Mac OS X")) {
+            command = "open " + f;
+        }else if (System.getProperty("os.name").contains("Windows")){
+            command = "cmd /C start " + f;
+        }else {
+            return;
+        }
+        Runtime.getRuntime().exec(command);
+    }
+    
+    public void showAbout(){
+        try{
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("about.fxml"));
+            Pane page = (Pane) loader.load();
+            Scene scene = new Scene(page);
+            Stage stage = new Stage();
+            stage.setScene(scene);
+            //scene.getStylesheets().add(AutoPrimer3.class
+            //            .getResource("autoprimer3.css").toExternalForm());
+            AboutController controller = loader.getController();
+            controller.setVersion(VERSION);
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.getIcons().add(new Image(this.getClass().
+                    getResourceAsStream("icon.png")));
+            stage.setTitle("About AutoPrimer3");
+            
+            stage.show();
+        }catch(IOException ex){
+            Alert alert = new Alert(AlertType.ERROR);
+            alert.setTitle("Mutation Mapper Error");
+            alert.setHeaderText("Could not display about dialog");
+            alert.setContentText(ex.getMessage());
+            System.out.println(alert.getContentText());
+            alert.setResizable(true);
+            alert.showAndWait();
+        }
+    }
     
     /**
      * @param args the command line arguments
