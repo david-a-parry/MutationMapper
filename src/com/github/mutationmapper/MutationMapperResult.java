@@ -5,8 +5,6 @@
  */
 package com.github.mutationmapper;
 
-import java.awt.Desktop;
-import javafx.application.Application;
 import javafx.application.HostServices;
 import java.util.HashMap;
 import javafx.event.ActionEvent;
