@@ -15,12 +15,15 @@ Write manual
 package com.github.mutationmapper;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -39,6 +42,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
@@ -47,6 +51,7 @@ import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.RadioMenuItem;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.Tooltip;
@@ -56,7 +61,9 @@ import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.Priority;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
@@ -1077,6 +1084,7 @@ public class MutationMapper extends Application implements Initializable{
         getSpeciesTask.setOnFailed((WorkerStateEvent e) -> {
             //TO DO - ERROR DIALOG
             e.getSource().getException().printStackTrace();
+            showNoSpeciesError(e.getSource().getException());
         });
         new Thread(getSpeciesTask).start();
     }
@@ -1131,6 +1139,49 @@ public class MutationMapper extends Application implements Initializable{
             }
         };
     }
+    
+    private void showNoSpeciesError(Throwable ex){
+        // Create expandable Exception.
+        Alert alert = new Alert(AlertType.CONFIRMATION);
+        ButtonType cButton = ButtonType.CANCEL;
+        ButtonType okButton = ButtonType.OK;
+        alert.getButtonTypes().setAll(okButton, cButton);
+        alert.setTitle("Mutation Mapper Error");
+        alert.setHeaderText("Error retrieving species.");
+        alert.setContentText("Exception encountered when attempting "
+                    + "to retrieve available species. Check your internet "
+                + "connection and select OK to try again or Cancel to quit.");
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        ex.printStackTrace(pw);
+        String exceptionText = sw.toString();
+
+        Label label = new Label("The exception stacktrace was:");
+
+        TextArea textArea = new TextArea(exceptionText);
+        textArea.setEditable(false);
+        textArea.setWrapText(true);
+
+        textArea.setMaxWidth(Double.MAX_VALUE);
+        textArea.setMaxHeight(Double.MAX_VALUE);
+        GridPane.setVgrow(textArea, Priority.ALWAYS);
+        GridPane.setHgrow(textArea, Priority.ALWAYS);
+
+        GridPane expContent = new GridPane();
+        expContent.setMaxWidth(Double.MAX_VALUE);
+        expContent.add(label, 0, 0);
+        expContent.add(textArea, 0, 1);
+
+        // Set expandable Exception into the dialog pane.
+        alert.getDialogPane().setExpandableContent(expContent);
+        alert.setResizable(true);
+        Optional<ButtonType> response = alert.showAndWait();
+        if (response.get() == okButton){
+            getAvailableSpecies();
+        }else{
+            Platform.exit();
+        }
+    }    
     
     /**
      * @param args the command line arguments
