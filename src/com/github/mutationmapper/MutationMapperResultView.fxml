@@ -42,21 +42,21 @@
       <TableView fx:id="resultTable" layoutY="28.0" prefHeight="683.0" prefWidth="1541.0" tableMenuButtonVisible="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="28.0">
         <columns>
           <TableColumn fx:id="indexCol" editable="false" prefWidth="36.0" text="#" />
-          <TableColumn fx:id="symbolCol" prefWidth="73.0" style="-fx-wrap-text: true;" text="Symbol" />
-            <TableColumn fx:id="geneCol" prefWidth="84.0" style="-fx-wrap-text: true;" text="Gene" />
-            <TableColumn fx:id="transcriptCol" prefWidth="150.0" style="-fx-wrap-text: true;" text="Transcript" />
-            <TableColumn fx:id="genomicCol" prefWidth="172.0" style="-fx-wrap-text: true;" text="Genomic Coordinate" />
-            <TableColumn fx:id="refCol" prefWidth="54.0" style="-fx-wrap-text: true;" text="Ref" />
+          <TableColumn fx:id="symbolCol" editable="false" prefWidth="73.0" style="-fx-wrap-text: true;" text="Symbol" />
+            <TableColumn fx:id="geneCol" editable="false" prefWidth="84.0" style="-fx-wrap-text: true;" text="Gene" />
+            <TableColumn fx:id="transcriptCol" editable="false" prefWidth="150.0" style="-fx-wrap-text: true;" text="Transcript" />
+            <TableColumn fx:id="genomicCol" editable="false" prefWidth="172.0" style="-fx-wrap-text: true;" text="Genomic Coordinate" />
+            <TableColumn fx:id="refCol" editable="false" prefWidth="54.0" style="-fx-wrap-text: true;" text="Ref" />
             <TableColumn fx:id="varCol" minWidth="5.0" prefWidth="48.0" style="-fx-wrap-text: true;" text="Var" />
-            <TableColumn fx:id="cdsCol" prefWidth="91.0" style="-fx-wrap-text: true;" text="CDS" />
-            <TableColumn fx:id="consequenceCol" prefWidth="147.0" style="-fx-wrap-text: true;" text="Consequence" />
-            <TableColumn fx:id="cdsConsequenceCol" prefWidth="252.0" style="-fx-wrap-text: true;" text="CDS Consequence" />
-            <TableColumn fx:id="proteinConsequenceCol" prefWidth="242.0" style="-fx-wrap-text: true;" text="Protein Consequence" />
-            <TableColumn fx:id="exonIntronCol" prefWidth="104.0" style="-fx-wrap-text: true;" text="Exon/Intron" />
-            <TableColumn fx:id="knownVarCol" prefWidth="219.0" style="-fx-wrap-text: true;" text="Colocated Variation" />
-            <TableColumn fx:id="polyphenCol" minWidth="5.0" prefWidth="142.0" style="-fx-wrap-text: true;" text="Polyphen" />
-            <TableColumn fx:id="siftCol" minWidth="5.0" prefWidth="126.0" style="-fx-wrap-text: true;" text="Sift" />
-            <TableColumn fx:id="seqInputCol" minWidth="5.0" prefWidth="159.0" style="-fx-wrap-text: true;" text="Seq Input" />
+            <TableColumn fx:id="cdsCol" editable="false" prefWidth="91.0" style="-fx-wrap-text: true;" text="CDS" />
+            <TableColumn fx:id="consequenceCol" editable="false" prefWidth="147.0" style="-fx-wrap-text: true;" text="Consequence" />
+            <TableColumn fx:id="cdsConsequenceCol" editable="false" prefWidth="252.0" style="-fx-wrap-text: true;" text="CDS Consequence" />
+            <TableColumn fx:id="proteinConsequenceCol" editable="false" prefWidth="242.0" style="-fx-wrap-text: true;" text="Protein Consequence" />
+            <TableColumn fx:id="exonIntronCol" editable="false" prefWidth="104.0" style="-fx-wrap-text: true;" text="Exon/Intron" />
+            <TableColumn fx:id="knownVarCol" editable="false" prefWidth="219.0" style="-fx-wrap-text: true;" text="Colocated Variation" />
+            <TableColumn fx:id="polyphenCol" editable="false" minWidth="5.0" prefWidth="142.0" style="-fx-wrap-text: true;" text="Polyphen" />
+            <TableColumn fx:id="siftCol" editable="false" minWidth="5.0" prefWidth="126.0" style="-fx-wrap-text: true;" text="Sift" />
+            <TableColumn fx:id="seqInputCol" editable="false" minWidth="5.0" prefWidth="159.0" style="-fx-wrap-text: true;" text="Seq Input" />
         </columns>
       </TableView>
    </children>
