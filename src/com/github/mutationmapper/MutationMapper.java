@@ -133,7 +133,7 @@ public class MutationMapper extends Application implements Initializable{
     MutationMapperResultViewController resultView;
     
     final static EnsemblRest rest = new EnsemblRest();
-    final static String VERSION = "1.0";
+    final static String VERSION = "2.0";
     
     @Override
     public void start(final Stage primaryStage) {
@@ -432,6 +432,7 @@ public class MutationMapper extends Application implements Initializable{
                     tableStage = new Stage();
                     tableStage.setScene(tableScene);
                     tableStage.initModality(Modality.NONE);
+                    tableStage.setResizable(true);
                 }
                 Platform.runLater(() -> {
                     resultView.displayData(results);
@@ -1264,7 +1265,7 @@ public class MutationMapper extends Application implements Initializable{
             alert.setTitle("Mutation Mapper Error");
             alert.setHeaderText("Could not display about dialog");
             alert.setContentText(ex.getMessage());
-            System.out.println(alert.getContentText());
+            ex.printStackTrace();
             alert.setResizable(true);
             alert.showAndWait();
         }
