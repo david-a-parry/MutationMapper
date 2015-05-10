@@ -7,7 +7,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<AnchorPane id="AnchorPane" fx:id="resultPane" prefHeight="711.0" prefWidth="1541.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.github.mutationmapper.MutationMapperResultViewController">
+<AnchorPane id="AnchorPane" fx:id="resultPane" prefHeight="711.0" prefWidth="968.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.github.mutationmapper.MutationMapperResultViewController">
    <children>
       <MenuBar fx:id="menuBar" focusTraversable="false" prefHeight="29.0" prefWidth="600.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
         <menus>
@@ -23,7 +23,7 @@
                      </accelerator></MenuItem>
                   <MenuItem fx:id="clearMenuItem" mnemonicParsing="false" text="Clear Table">
                      <accelerator>
-                        <KeyCodeCombination alt="UP" code="DIGIT0" control="UP" meta="UP" shift="DOWN" shortcut="DOWN" />
+                        <KeyCodeCombination alt="UP" code="Y" control="UP" meta="UP" shift="DOWN" shortcut="DOWN" />
                      </accelerator></MenuItem>
               <MenuItem fx:id="clearAndCloseMenuItem" mnemonicParsing="false" text="Clear Table and Close">
                      <accelerator>
@@ -44,25 +44,25 @@
                <items>
                   <CheckMenuItem fx:id="canonicalOnlyMenu" mnemonicParsing="false" text="Only Report Canonical Transcripts">
                      <accelerator>
-                        <KeyCodeCombination alt="UP" code="NUMPAD1" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                        <KeyCodeCombination alt="UP" code="DIGIT1" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
                      </accelerator></CheckMenuItem>
                   <CheckMenuItem fx:id="codingOnlyMenu" mnemonicParsing="false" text="Only Report Coding Transcripts">
                      <accelerator>
-                        <KeyCodeCombination alt="UP" code="NUMPAD2" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                        <KeyCodeCombination alt="UP" code="DIGIT2" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
                      </accelerator></CheckMenuItem>
                   <Menu mnemonicParsing="false" text="RefSeq">
                      <items>
                         <RadioMenuItem fx:id="refSeqMenu" mnemonicParsing="false" text="Use RefSeq IDs where available">
                            <accelerator>
-                              <KeyCodeCombination alt="UP" code="NUMPAD3" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                              <KeyCodeCombination alt="UP" code="DIGIT3" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
                            </accelerator></RadioMenuItem>
                         <RadioMenuItem fx:id="refSeqOnlyMenu" mnemonicParsing="false" text="Only Report RefSeq Transcripts">
                            <accelerator>
-                              <KeyCodeCombination alt="UP" code="NUMPAD4" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                              <KeyCodeCombination alt="UP" code="DIGIT4" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
                            </accelerator></RadioMenuItem>
                         <RadioMenuItem fx:id="noRefSeqMenu" mnemonicParsing="false" selected="true" text="Do Not Use RefSeq IDs">
                            <accelerator>
-                              <KeyCodeCombination alt="UP" code="NUMPAD5" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                              <KeyCodeCombination alt="UP" code="DIGIT5" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
                            </accelerator></RadioMenuItem>
                      </items>
                   </Menu>
@@ -75,7 +75,7 @@
           </Menu>
         </menus>
       </MenuBar>
-      <TableView fx:id="resultTable" layoutY="28.0" prefHeight="683.0" prefWidth="1541.0" tableMenuButtonVisible="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="28.0">
+      <TableView fx:id="resultTable" layoutY="29.0" prefHeight="682.0" prefWidth="968.0" tableMenuButtonVisible="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="29.0">
         <columns>
           <TableColumn fx:id="indexCol" editable="false" prefWidth="36.0" text="#" />
           <TableColumn fx:id="symbolCol" editable="false" prefWidth="73.0" style="-fx-wrap-text: true;" text="Symbol" />
