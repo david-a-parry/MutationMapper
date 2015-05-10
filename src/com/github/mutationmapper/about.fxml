@@ -9,9 +9,9 @@
 <?import javafx.scene.text.*?>
 <?scenebuilder-stylesheet SnpViewerStyleSheet.css?>
 
-<AnchorPane id="AnchorPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="227.0" prefWidth="576.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.github.autoprimer3.AboutController">
+<AnchorPane id="AnchorPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="227.0" prefWidth="576.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.github.mutationmapper.AboutController">
   <children>
-    <ImageView id="icon" fitHeight="172.0" fitWidth="170.0" pickOnBounds="true" AnchorPane.bottomAnchor="14.0" AnchorPane.leftAnchor="14.0" AnchorPane.topAnchor="14.0">
+    <ImageView id="icon" fitHeight="172.0" fitWidth="170.0" layoutX="14.0" layoutY="33.0" pickOnBounds="true" AnchorPane.bottomAnchor="22.0" AnchorPane.leftAnchor="14.0" AnchorPane.topAnchor="33.0">
       <image>
         <Image url="@icon.png" />
       </image>
