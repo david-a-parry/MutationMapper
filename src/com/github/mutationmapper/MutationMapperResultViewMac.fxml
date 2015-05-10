@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.input.*?>
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane id="AnchorPane" fx:id="resultPane" prefHeight="711.0" prefWidth="968.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.github.mutationmapper.MutationMapperResultViewController">
+   <children>
+      <MenuBar fx:id="menuBar" focusTraversable="false" layoutY="-29.0" prefHeight="29.0" prefWidth="600.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="-29.0">
+        <menus>
+          <Menu mnemonicParsing="false" text="File">
+            <items>
+                  <MenuItem fx:id="saveMenuItem" mnemonicParsing="false" text="Save Results To File">
+                     <accelerator>
+                        <KeyCodeCombination alt="UP" code="S" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                     </accelerator></MenuItem>
+                  <MenuItem fx:id="clearPreviousMenuItem" mnemonicParsing="false" text="Clear Previous Results">
+                     <accelerator>
+                        <KeyCodeCombination alt="UP" code="X" control="UP" meta="UP" shift="DOWN" shortcut="DOWN" />
+                     </accelerator></MenuItem>
+                  <MenuItem fx:id="clearMenuItem" mnemonicParsing="false" text="Clear Table">
+                     <accelerator>
+                        <KeyCodeCombination alt="UP" code="Y" control="UP" meta="UP" shift="DOWN" shortcut="DOWN" />
+                     </accelerator></MenuItem>
+              <MenuItem fx:id="clearAndCloseMenuItem" mnemonicParsing="false" text="Clear Table and Close">
+                     <accelerator>
+                        <KeyCodeCombination alt="UP" code="Z" control="UP" meta="UP" shift="DOWN" shortcut="DOWN" />
+                     </accelerator></MenuItem>
+                  <MenuItem fx:id="closeMenuItem" mnemonicParsing="false" text="Close">
+                     <accelerator>
+                        <KeyCodeCombination alt="UP" code="W" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                     </accelerator></MenuItem>
+                  <MenuItem fx:id="quitMenuItem" mnemonicParsing="false" text="Quit">
+                     <accelerator>
+                        <KeyCodeCombination alt="UP" code="Q" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                     </accelerator>
+                  </MenuItem>
+            </items>
+          </Menu>
+            <Menu mnemonicParsing="false" text="Options">
+               <items>
+                  <CheckMenuItem fx:id="canonicalOnlyMenu" mnemonicParsing="false" text="Only Report Canonical Transcripts">
+                     <accelerator>
+                        <KeyCodeCombination alt="UP" code="DIGIT1" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                     </accelerator></CheckMenuItem>
+                  <CheckMenuItem fx:id="codingOnlyMenu" mnemonicParsing="false" text="Only Report Coding Transcripts">
+                     <accelerator>
+                        <KeyCodeCombination alt="UP" code="DIGIT2" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                     </accelerator></CheckMenuItem>
+                  <Menu mnemonicParsing="false" text="RefSeq">
+                     <items>
+                        <RadioMenuItem fx:id="refSeqMenu" mnemonicParsing="false" text="Use RefSeq IDs where available">
+                           <accelerator>
+                              <KeyCodeCombination alt="UP" code="DIGIT3" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                           </accelerator></RadioMenuItem>
+                        <RadioMenuItem fx:id="refSeqOnlyMenu" mnemonicParsing="false" text="Only Report RefSeq Transcripts">
+                           <accelerator>
+                              <KeyCodeCombination alt="UP" code="DIGIT4" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                           </accelerator></RadioMenuItem>
+                        <RadioMenuItem fx:id="noRefSeqMenu" mnemonicParsing="false" selected="true" text="Do Not Use RefSeq IDs">
+                           <accelerator>
+                              <KeyCodeCombination alt="UP" code="DIGIT5" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                           </accelerator></RadioMenuItem>
+                     </items>
+                  </Menu>
+               </items>
+            </Menu>
+          <Menu mnemonicParsing="false" text="Help">
+            <items>
+              <MenuItem mnemonicParsing="false" text="About" />
+            </items>
+          </Menu>
+        </menus>
+      </MenuBar>
+      <TableView fx:id="resultTable" prefHeight="711.0" prefWidth="968.0" tableMenuButtonVisible="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+        <columns>
+          <TableColumn fx:id="indexCol" editable="false" prefWidth="36.0" text="#" />
+          <TableColumn fx:id="symbolCol" editable="false" prefWidth="73.0" style="-fx-wrap-text: true;" text="Symbol" />
+            <TableColumn fx:id="geneCol" editable="false" prefWidth="84.0" style="-fx-wrap-text: true;" text="Gene" />
+            <TableColumn fx:id="transcriptCol" editable="false" prefWidth="150.0" style="-fx-wrap-text: true;" text="Transcript" />
+            <TableColumn fx:id="genomicCol" editable="false" prefWidth="172.0" style="-fx-wrap-text: true;" text="Genomic Coordinate" />
+            <TableColumn fx:id="refCol" editable="false" prefWidth="54.0" style="-fx-wrap-text: true;" text="Ref" />
+            <TableColumn fx:id="varCol" minWidth="5.0" prefWidth="48.0" style="-fx-wrap-text: true;" text="Var" />
+            <TableColumn fx:id="cdsCol" editable="false" prefWidth="91.0" style="-fx-wrap-text: true;" text="CDS" />
+            <TableColumn fx:id="consequenceCol" editable="false" prefWidth="147.0" style="-fx-wrap-text: true;" text="Consequence" />
+            <TableColumn fx:id="cdsConsequenceCol" editable="false" prefWidth="252.0" style="-fx-wrap-text: true;" text="CDS Consequence" />
+            <TableColumn fx:id="proteinConsequenceCol" editable="false" prefWidth="242.0" style="-fx-wrap-text: true;" text="Protein Consequence" />
+            <TableColumn fx:id="exonIntronCol" editable="false" prefWidth="104.0" style="-fx-wrap-text: true;" text="Exon/Intron" />
+            <TableColumn fx:id="knownVarCol" editable="false" prefWidth="219.0" style="-fx-wrap-text: true;" text="Colocated Variation" />
+            <TableColumn fx:id="polyphenCol" editable="false" minWidth="5.0" prefWidth="142.0" style="-fx-wrap-text: true;" text="Polyphen" />
+            <TableColumn fx:id="siftCol" editable="false" minWidth="5.0" prefWidth="126.0" style="-fx-wrap-text: true;" text="Sift" />
+            <TableColumn fx:id="seqInputCol" editable="false" minWidth="5.0" prefWidth="159.0" style="-fx-wrap-text: true;" text="Seq Input" />
+        </columns>
+      </TableView>
+   </children>
+</AnchorPane>
