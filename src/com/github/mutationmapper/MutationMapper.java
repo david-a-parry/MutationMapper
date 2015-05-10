@@ -142,7 +142,7 @@ public class MutationMapper extends Application implements Initializable{
             if (System.getProperty("os.name").equals("Mac OS X")){
                 page = (AnchorPane) FXMLLoader.load(
                         com.github.mutationmapper.MutationMapper.class.
-                                getResource("MutationMapper.fxml"));  
+                                getResource("MutationMapperMac.fxml"));  
             }else{
                 page = (AnchorPane) FXMLLoader.load(
                         com.github.mutationmapper.MutationMapper.class.
@@ -181,8 +181,13 @@ public class MutationMapper extends Application implements Initializable{
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         menuBar.setUseSystemMenuBar(true);
-        tableLoader = new FXMLLoader(getClass().
+        if (System.getProperty("os.name").equals("Mac OS X")){
+            tableLoader = new FXMLLoader(getClass().
+                                       getResource("MutationMapperResultViewMac.fxml"));
+        }else{
+            tableLoader = new FXMLLoader(getClass().
                                        getResource("MutationMapperResultView.fxml"));
+        }
         Platform.runLater(() -> {
             geneTextField.requestFocus();
         });
