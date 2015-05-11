@@ -52,6 +52,8 @@ public class ResultSummaryController implements Initializable {
                 stage.close();
             });
         });
+        okButton.setDefaultButton(true);
+        okButton.setCancelButton(true);
     } 
     public void setMessage(String msg){
         messageLabel.setText(msg);
