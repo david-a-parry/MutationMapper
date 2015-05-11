@@ -1208,7 +1208,7 @@ public class MutationMapper extends Application implements Initializable{
     
     public void showHelp(){
         try{
-            File instructionsPdf = File.createTempFile("autoprimer3_instructions", ".pdf" );
+            File instructionsPdf = File.createTempFile("MutationMapper_Instructions", ".pdf" );
             instructionsPdf.deleteOnExit();
             InputStream inputStream = this.getClass().
                     getResourceAsStream("instructions.pdf");
