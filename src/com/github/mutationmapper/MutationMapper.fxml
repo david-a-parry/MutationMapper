@@ -112,7 +112,7 @@
                <children>
                   <ProgressIndicator fx:id="progressIndicator" prefHeight="44.0" prefWidth="46.0" progress="0.0" style="-fx-fill: null;" />
                   <Label fx:id="progressLabel" layoutX="14.0" layoutY="188.0" prefHeight="16.0" prefWidth="376.0" text="Mutation Mapper" />
-                  <Button fx:id="runButton" layoutX="429.0" layoutY="182.0" mnemonicParsing="false" prefHeight="26.0" prefWidth="73.0" text="Run" />
+                  <Button fx:id="runButton" layoutX="429.0" layoutY="182.0" mnemonicParsing="false" prefHeight="26.0" prefWidth="92.0" text="Run" />
                </children>
             </HBox>
          </children>
