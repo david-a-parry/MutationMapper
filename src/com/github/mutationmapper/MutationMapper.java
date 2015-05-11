@@ -6,7 +6,6 @@
 
 /*
 TO DO
-Make about dialog
 Write manual
 
 */ 
