@@ -327,6 +327,8 @@ public class MutationMapperResult {
     public Hyperlink getGeneSymbolLink(){
         Hyperlink link = new Hyperlink();
         link.setText(getGeneSymbol());
+        link.setWrapText(true);
+        link.setTextFill(Color.BLUE);
         final String url =  getEnsemblSite() 
                 + "/" + species +  "/Gene/Summary?g=" + getGeneSymbol();
         link.setOnAction(new EventHandler<ActionEvent>() {
@@ -343,6 +345,8 @@ public class MutationMapperResult {
     public Hyperlink getGeneIdLink(){
         Hyperlink link = new Hyperlink();
         link.setText(getGeneId());
+        link.setWrapText(true);
+        link.setTextFill(Color.BLUE);
         final String url =  getEnsemblSite() + "/id/" + getGeneId();
         link.setOnAction(new EventHandler<ActionEvent>() {
                 @Override
@@ -358,6 +362,8 @@ public class MutationMapperResult {
     public Hyperlink getTransciptLink(){
         Hyperlink link = new Hyperlink();
         link.setText(getTranscript());
+        link.setWrapText(true);
+        link.setTextFill(Color.BLUE);
         final String url =  getEnsemblSite() + "/id/" + getTranscript();
         link.setOnAction(new EventHandler<ActionEvent>() {
                 @Override
@@ -373,6 +379,8 @@ public class MutationMapperResult {
     public Hyperlink getRefSeqTransciptLink(){
         Hyperlink link = new Hyperlink();
         link.setText(getRefSeqIfAvailable());
+        link.setWrapText(true);
+        link.setTextFill(Color.BLUE);
         final String url =  getEnsemblSite() + "/id/" + getTranscript();
         link.setOnAction(new EventHandler<ActionEvent>() {
                 @Override
@@ -388,6 +396,8 @@ public class MutationMapperResult {
      public Hyperlink getRegionLink(){
         Hyperlink link = new Hyperlink();
         link.setText(getGenomicCoordinate());
+        link.setWrapText(true);
+        link.setTextFill(Color.BLUE);
         StringBuilder urlBuilder = new StringBuilder(getEnsemblSite());
         if (chromosome == null || coordinate == null){
             link.setDisable(true);
@@ -418,6 +428,7 @@ public class MutationMapperResult {
     
      public Hyperlink getSnpLink(){
         Hyperlink link = new Hyperlink();
+        link.setTextFill(Color.BLUE);
         String idString = getKnownIds();
         StringBuilder urlBuilder = new StringBuilder(getEnsemblSite());
         if (idString != null && ! idString.isEmpty()){
@@ -439,6 +450,7 @@ public class MutationMapperResult {
             link.setUnderline(false);
             link.setTextFill(Color.BLACK);
         }
+        link.setWrapText(true);
         return link;        
      }
      
