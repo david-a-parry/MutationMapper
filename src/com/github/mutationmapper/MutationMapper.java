@@ -524,7 +524,8 @@ public class MutationMapper extends Application implements Initializable{
              });
         });
         progressIndicator.progressProperty().bind(mapperTask.progressProperty());
-        progressLabel.textProperty().bind(mapperTask.messageProperty());
+        progressLabel.setText("Running");
+        //progressLabel.textProperty().bind(mapperTask.messageProperty());
         runButton.setOnAction((ActionEvent actionEvent) -> {
             mapperTask.cancel();
         });
@@ -613,11 +614,11 @@ public class MutationMapper extends Application implements Initializable{
         }
         if (indices.size() > 1){
             if (seqSwapped){
-                throw new RuntimeException("ERROR: Seq matches 0 times, mutated "
+                throw new RuntimeException("ERROR: Sequence matches 0 times, mutated "
                         + "sequence matches multiple (" + indices.size() + ") times.");        
             }else{
-                throw new RuntimeException("ERROR: Seq matches multiple (" + 
-                        indices.size() + ") times.");
+                throw new RuntimeException("ERROR: Sequence matches multiple (" + 
+                        indices.size() + ") times. Please try a longer sequence.");
             }
         }
         if (seqSwapped){
