@@ -560,7 +560,7 @@ public class MutationMapper extends Application implements Initializable{
         Integer start = null;
         Integer end = null; 
         //updateMessage("Searching Genes");
-        if (isTranscriptId(gene)){
+        if (isTranscriptId(gene, species)){
             TranscriptDetails t = rest.getTranscriptDetails(gene);
             chrom = t.getChromosome();
             start = t.getTxStart();
@@ -577,7 +577,7 @@ public class MutationMapper extends Application implements Initializable{
             }
         }else{
             GeneDetails g;
-            if (isGeneId(gene)){
+            if (isGeneId(gene, species)){
                 g = rest.getGeneDetails(gene);
             }else{
                 String id = rest.getGeneID(species, gene);
@@ -1035,7 +1035,7 @@ public class MutationMapper extends Application implements Initializable{
             throws ParseException, MalformedURLException, IOException, InterruptedException{
         List<TranscriptDetails> transcripts = new ArrayList<>();
         String id;
-        if(isTranscriptId(gene)){
+        if(isTranscriptId(gene, species)){
             transcripts.add(rest.getTranscriptDetails(gene));
         }else if (isRefSeqId(gene)){
             HashMap<String, String> ids = rest.getEnsemblFromRefSeqId(gene);
@@ -1043,7 +1043,7 @@ public class MutationMapper extends Application implements Initializable{
                 transcripts.add(rest.getTranscriptDetails(ids.get("transcript")));
             }
         }else{
-            if (isGeneId(gene)){//is gene id
+            if (isGeneId(gene, species)){//is gene id
                 id = gene;
             }else{
                 id = rest.getGeneID(species, gene);
@@ -1084,11 +1084,23 @@ public class MutationMapper extends Application implements Initializable{
         return seq.matches("(?i)[ACTG]+");
     }
     
-    private boolean isTranscriptId(String id){
-        return id.matches("ENS\\w*T\\d{11}.*\\d*"); 
+    private boolean isTranscriptId(String id, String species){
+        if (id.matches("ENS\\w*T\\d{11}.*\\d*")){
+            return true;
+        }
+        if (species.equalsIgnoreCase("Fruitfly") && id.matches("FBtr\\d+")){
+            return true;
+        }
+        return false;
     }
-    private boolean isGeneId(String id){
-        return id.matches("ENS\\w*G\\d{11}.*\\d*");
+    private boolean isGeneId(String id, String species){
+        if (id.matches("ENS\\w*G\\d{11}.*\\d*")){
+            return true;
+        }
+        if (species.equalsIgnoreCase("Fruitfly") && id.matches("FBgn\\d+")){
+            return true;
+        }
+        return false;
     }
     private boolean isRefSeqId(String id){//tests for both protein or RNA IDs
         return id.matches("[NX][MRP]_\\d+(.\\d+)*");
