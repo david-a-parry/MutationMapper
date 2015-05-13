@@ -286,6 +286,9 @@ public class MutationMapper extends Application implements Initializable{
         }
         String speciesSelection = (String) speciesChoiceBox.getSelectionModel().getSelectedItem();
         speciesSelection = speciesSelection.trim();
+        if (speciesSelection.equalsIgnoreCase("Zebra Finch")){
+            speciesSelection = "Taeniopygia_guttata";
+        }
         final String species = speciesSelection.replaceAll("\\s+", "_");       
         if (species.isEmpty()){
             complainAndCancel("You must select a species");
@@ -1089,6 +1092,9 @@ public class MutationMapper extends Application implements Initializable{
             return true;
         }
         if (species.equalsIgnoreCase("Fruitfly") && id.matches("FBtr\\d+")){
+            return true;
+        }
+        if (species.equalsIgnoreCase("Saccharomyces_cerevisiae") && id.matches("Y\\w{2}\\d{3}\\w")){
             return true;
         }
         return false;
