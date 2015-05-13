@@ -15,6 +15,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+//to do - fix for non-standard transcript names (e.g. flybase transcripts, c.elegans)
+
 package com.github.mutationmapper;
 
 import java.io.File;
@@ -282,7 +284,9 @@ public class MutationMapper extends Application implements Initializable{
             complainAndCancel("Please enter coordinate or matching sequence to search");
             return;
         }
-        final String species = (String) speciesChoiceBox.getSelectionModel().getSelectedItem();
+        String speciesSelection = (String) speciesChoiceBox.getSelectionModel().getSelectedItem();
+        speciesSelection = speciesSelection.trim();
+        final String species = speciesSelection.replaceAll("\\s+", "_");       
         if (species.isEmpty()){
             complainAndCancel("You must select a species");
             return;
