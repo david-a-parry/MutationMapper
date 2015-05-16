@@ -1099,11 +1099,15 @@ public class MutationMapper extends Application implements Initializable{
         }
         return false;
     }
+    
     private boolean isGeneId(String id, String species){
         if (id.matches("ENS\\w*G\\d{11}.*\\d*")){
             return true;
         }
         if (species.equalsIgnoreCase("Fruitfly") && id.matches("FBgn\\d+")){
+            return true;
+        }
+        if (species.equalsIgnoreCase("Caenorhabditis_elegans") && id.matches("WBGene\\d+")){
             return true;
         }
         return false;
