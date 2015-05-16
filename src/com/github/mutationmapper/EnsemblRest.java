@@ -542,10 +542,15 @@ public class EnsemblRest {
             }
         }
         if (!mismatches.isEmpty()){
-        throw new RuntimeException(String.format("Could not find an exact match"
-                  + " for gene symbol %s. Found %s.", symbol, String.join(", ", mismatches)));
+            String msg = String.format("Could not find an exact match"
+                  + " for gene symbol %s. Found %s.", symbol, String.join(", ", mismatches));
+            if (species.equalsIgnoreCase("Caenorhabditis_elegans") && 
+                    symbol.matches("\\w+(.\\d){1,2}")){
+                msg = msg + ". Please note that C. elegans transcript IDs are not supported.";
+            }
+            throw new RuntimeException(msg);
         }else{
-            throw new RuntimeException(String.format("Could not find an exact match"
+            throw new RuntimeException(String.format("Could not find a match"
                   + " for gene symbol %s.", symbol)); 
         }
     }
