@@ -16,12 +16,15 @@
  */
 package com.github.mutationmapper;
 
+import static com.github.mutationmapper.MutationMapper.VERSION;
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import static java.lang.System.getProperty;
@@ -41,9 +44,12 @@ import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 import javafx.concurrent.WorkerStateEvent;
 import javafx.event.ActionEvent;
+import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
@@ -62,6 +68,7 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.Image;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.KeyCode;
@@ -69,8 +76,10 @@ import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.stage.FileChooser;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
@@ -149,6 +158,10 @@ public class MutationMapperResultViewController implements Initializable {
    RadioMenuItem refSeqMenu;
    @FXML
    RadioMenuItem refSeqOnlyMenu;
+   @FXML
+   MenuItem aboutMenuItem;
+   @FXML
+   MenuItem helpMenuItem;
    
    private final ObservableList<MutationMapperResult> data = FXCollections.observableArrayList();
    private final ObservableList<MutationMapperResult> displayData = FXCollections.observableArrayList();
@@ -341,7 +354,18 @@ public class MutationMapperResultViewController implements Initializable {
         refSeqOnly.bind(refSeqOnlyMenu.selectedProperty());
         canonicalOnly.bind(canonicalOnlyMenu.selectedProperty());
         codingOnly.bind(codingOnlyMenu.selectedProperty());
-        
+        aboutMenuItem.setOnAction(new EventHandler(){
+            @Override
+            public void handle (Event ev){
+                showAbout();
+            }
+        });
+        helpMenuItem.setOnAction(new EventHandler(){
+            @Override
+            public void handle (Event ev){
+                showHelp();
+            }
+        });
     } 
     
     
@@ -721,5 +745,58 @@ public class MutationMapperResultViewController implements Initializable {
         alert.getDialogPane().setExpandableContent(expContent);
         alert.setResizable(true);
         return alert;
+    }
+    
+    public void showAbout(){
+        try{
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("about.fxml"));
+            Pane page = (Pane) loader.load();
+            Scene scene = new Scene(page);
+            Stage stage = new Stage();
+            stage.setScene(scene);
+            //scene.getStylesheets().add(AutoPrimer3.class
+            //            .getResource("autoprimer3.css").toExternalForm());
+            AboutController controller = loader.getController();
+            controller.setVersion(VERSION);
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.getIcons().add(new Image(this.getClass().
+                    getResourceAsStream("icon.png")));
+            stage.setTitle("About AutoPrimer3");
+            
+            stage.show();
+        }catch(IOException ex){
+            Alert alert = new Alert(AlertType.ERROR);
+            alert.setTitle("Mutation Mapper Error");
+            alert.setHeaderText("Could not display about dialog");
+            alert.setContentText(ex.getMessage());
+            ex.printStackTrace();
+            alert.setResizable(true);
+            alert.showAndWait();
+        }
+    }
+    public void showHelp(){
+        try{
+            File instructionsPdf = File.createTempFile("MutationMapper_Instructions", ".pdf" );
+            instructionsPdf.deleteOnExit();
+            InputStream inputStream = this.getClass().
+                    getResourceAsStream("instructions.pdf");
+            OutputStream outputStream = new FileOutputStream(instructionsPdf);
+            int read = 0;
+            byte[] bytes = new byte[1024];    
+            while ((read = inputStream.read(bytes)) != -1) {
+                    outputStream.write(bytes, 0, read);
+            }
+            inputStream.close();
+            outputStream.close();
+            openFile(instructionsPdf);
+        }catch(IOException ex){
+            Alert alert = new Alert(AlertType.ERROR);
+            alert.setTitle("Mutation Mapper Error");
+            alert.setHeaderText("Could not open instructions PDF");
+            alert.setContentText(ex.getMessage());
+            System.out.println(alert.getContentText());
+            alert.setResizable(true);
+            alert.showAndWait();
+        }
     }
 }
