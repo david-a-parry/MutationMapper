@@ -30,10 +30,13 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.application.Application;
@@ -139,6 +142,7 @@ public class MutationMapper extends Application implements Initializable{
     Stage tableStage;
     MutationMapperResultViewController resultView;
     
+    static HashMap<String, String> speciesTable;
     final static EnsemblRest rest = new EnsemblRest();
     final static String VERSION = "2.0";
     
@@ -264,7 +268,6 @@ public class MutationMapper extends Application implements Initializable{
         runButton.setOnAction((ActionEvent actionEvent) -> {
             mapMutation();
         });
-        
         getAvailableSpecies();
         
     }
@@ -286,15 +289,16 @@ public class MutationMapper extends Application implements Initializable{
         }
         String speciesSelection = (String) speciesChoiceBox.getSelectionModel().getSelectedItem();
         speciesSelection = speciesSelection.trim();
-        if (speciesSelection.equalsIgnoreCase("Zebra Finch")){
-            speciesSelection = "Taeniopygia_guttata";
+        //Some species common names do not work so get scientific name
+        if (speciesTable.containsKey(speciesSelection)){
+            speciesSelection = speciesTable.get(speciesSelection);
         }
         final String species = speciesSelection.replaceAll("\\s+", "_");       
         if (species.isEmpty()){
             complainAndCancel("You must select a species");
             return;
         }
-        if (species.equalsIgnoreCase("Human") && grch37Menu.isSelected()){
+        if (species.equalsIgnoreCase("Homo_sapiens") && grch37Menu.isSelected()){
             rest.setGRCh37Server();
         }else{
             rest.setDefaultServer();
@@ -303,6 +307,19 @@ public class MutationMapper extends Application implements Initializable{
         final String cdsCoordinate = cdsTextField.getText().trim();
         final String sequence = sequenceTextField.getText().trim();
         if (!cdsCoordinate.isEmpty()){
+            if (species.equalsIgnoreCase("Saccharomyces_cerevisiae")){
+                Alert alert = new Alert(AlertType.ERROR);
+                alert.setTitle("Mutation Mapper Error");
+                alert.setHeaderText("Species Not Supported");
+                alert.setContentText("CDS mapping not supported for this species." 
+                        +" Please try using matching sequences instead");
+                alert.setResizable(true);
+                alert.showAndWait();
+                Platform.runLater(() -> {
+                    runButton.getScene().getWindow().requestFocus();
+                });
+                return;
+            }
             if (!cdsTextField.getText().matches("\\d+([+-]\\d+)?+")){
                 Alert alert = new Alert(AlertType.ERROR);
                 alert.setTitle("Mutation Mapper Error");
@@ -1118,21 +1135,25 @@ public class MutationMapper extends Application implements Initializable{
     
     
     private void getAvailableSpecies(){
-        final Task<List<String>> getSpeciesTask = new Task<List<String>>(){
+        final Task<HashMap<String, String> > getSpeciesTask = new Task<HashMap<String, String>>(){
             @Override
-            protected List<String> call() 
+            protected HashMap<String, String> call() 
                     throws ParseException, MalformedURLException, IOException, InterruptedException{
                 System.out.println("Getting species.");
-                List<String> species = rest.getAvailableSpecies();
+                HashMap<String, String> species = rest.getAvailableSpecies();
                 return species;
             }
         };
         
         getSpeciesTask.setOnSucceeded((WorkerStateEvent e) -> {
-            List<String> species = (List<String>) e.getSource().getValue();
+            speciesTable = (HashMap<String, String> ) e.getSource().getValue();
+            final ArrayList<String> names = new ArrayList<>();
+            names.addAll(speciesTable.keySet());
+            SpeciesComparator comp = new SpeciesComparator();
+            Collections.sort(names, comp);        
             Platform.runLater(() -> {
                 speciesChoiceBox.getItems().clear();
-                speciesChoiceBox.getItems().addAll(species);
+                speciesChoiceBox.getItems().addAll(names);
                 speciesChoiceBox.getSelectionModel().selectFirst();
             });
         });
@@ -1305,6 +1326,30 @@ public class MutationMapper extends Application implements Initializable{
             ex.printStackTrace();
             alert.setResizable(true);
             alert.showAndWait();
+        }
+    }
+    
+    static class SpeciesComparator<T extends String> implements Comparator<T> {
+        
+        private static final List<String> SPECIES_ORDER = Arrays.asList(
+                "Human", "Mouse", "Rat", "Zebrafish", "Fruitfly");
+
+        public int compare(T s1, T s2) {
+            if (s1 == null){
+                return 1;
+            }
+            if (s2 == null){
+                return -1;
+            }
+            if (SPECIES_ORDER.contains(s1)){
+                if (SPECIES_ORDER.contains(s2)){
+                    return SPECIES_ORDER.indexOf(s1) - SPECIES_ORDER.indexOf(s2);
+                }
+                return -1;
+            }else if (SPECIES_ORDER.contains(s2)){
+                return 1;
+            }
+            return s1.compareTo(s2);
         }
     }
     

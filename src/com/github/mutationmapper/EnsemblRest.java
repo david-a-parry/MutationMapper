@@ -31,7 +31,6 @@ import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import net.minidev.json.JSONArray;
@@ -64,20 +63,24 @@ public class EnsemblRest {
         return SERVER;
     }
     
-    public List<String> getAvailableSpecies()throws ParseException, MalformedURLException, IOException, InterruptedException {
-        ArrayList<String> species = new ArrayList<>();
+    public HashMap<String, String> getAvailableSpecies()
+            throws ParseException, MalformedURLException, IOException, InterruptedException {
+        HashMap<String, String> species = new HashMap<>();
         String endpoint = "/info/species?content-type=application/json";
         JSONObject result = (JSONObject) getJSON(endpoint);
         JSONArray allSpecies = (JSONArray) result.get("species");
         for (Object j: allSpecies){
             JSONObject s = (JSONObject) j;
-            String name = (String) s.get("display_name");
-            if (name != null){
-                species.add(name);
+            String d_name = (String) s.get("display_name");
+            String s_name = (String) s.get("name");
+            if (d_name != null && s_name != null){
+                species.put(d_name, s_name);
             }
         }
+        /*
         SpeciesComparator comp = new SpeciesComparator();
         Collections.sort(species, comp);
+        */
         return species;
     }
     
@@ -704,28 +707,4 @@ public class EnsemblRest {
         return output;
     }
     
-    
-    static class SpeciesComparator<T extends String> implements Comparator<T> {
-        
-        private static final List<String> SPECIES_ORDER = Arrays.asList(
-                "Human", "Mouse", "Rat", "Zebrafish", "Fruitfly");
-
-        public int compare(T s1, T s2) {
-            if (s1 == null){
-                return 1;
-            }
-            if (s2 == null){
-                return -1;
-            }
-            if (SPECIES_ORDER.contains(s1)){
-                if (SPECIES_ORDER.contains(s2)){
-                    return SPECIES_ORDER.indexOf(s1) - SPECIES_ORDER.indexOf(s2);
-                }
-                return -1;
-            }else if (SPECIES_ORDER.contains(s2)){
-                return 1;
-            }
-            return s1.compareTo(s2);
-        }
-    }
 }
