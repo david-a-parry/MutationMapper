@@ -56,6 +56,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
@@ -242,6 +243,10 @@ public class MutationMapperResultViewController implements Initializable {
                     int r = p.getRow();
                     int c = p.getColumn();
                     Object cell = resultTable.getColumns().get(c).getCellData(r);
+                    if (cell instanceof Hyperlink){
+                        Hyperlink link = (Hyperlink) cell;
+                        cell = link.getText();
+                    }
                     if (cell == null)
                         cell = "";
                     if (old_r == r)
