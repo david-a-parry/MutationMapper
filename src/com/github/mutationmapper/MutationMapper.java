@@ -214,6 +214,30 @@ public class MutationMapper extends Application implements Initializable{
                 }
             })
         );
+        speciesChoiceBox.addEventFilter(KeyEvent.KEY_PRESSED, new EventHandler<KeyEvent>() {
+            @Override
+            public void handle(KeyEvent event) {
+                if (event.getCode() == KeyCode.UP || event.getCode() == KeyCode.DOWN) {
+                    event.consume();
+                }else if (event.getCode().isLetterKey()){
+                    String c = event.getText().toLowerCase();
+                    List items = speciesChoiceBox.getItems();
+                    int s = speciesChoiceBox.getSelectionModel().selectedIndexProperty().get();
+                    for (int i = s + 1; i < items.size(); i++){
+                        if (items.get(i).toString().toLowerCase().startsWith(c)){
+                            speciesChoiceBox.getSelectionModel().select(i);
+                            return;
+                        }
+                    }
+                    for (int i = 0; i < s; i++){//wrap around
+                        if (items.get(i).toString().toLowerCase().startsWith(c)){
+                            speciesChoiceBox.getSelectionModel().select(i);
+                            return;
+                        }
+                    }
+                }
+            }
+        });
         
         cdsTextField.addEventFilter(KeyEvent.KEY_TYPED, checkNumeric());
         
