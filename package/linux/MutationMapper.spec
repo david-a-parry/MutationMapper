@@ -1,6 +1,6 @@
 Summary: MutationMapper
 Name: MutationMapper
-Version: 2.0
+Version: 2.1
 Release: 1
 License: GPLv3
 Vendor: David A. Parry
