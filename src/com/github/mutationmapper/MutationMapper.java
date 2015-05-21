@@ -1350,30 +1350,6 @@ public class MutationMapper extends Application implements Initializable{
         }
     }
     
-    static class SpeciesComparator<T extends String> implements Comparator<T> {
-        
-        private static final List<String> SPECIES_ORDER = Arrays.asList(
-                "Human", "Mouse", "Rat", "Zebrafish", "Fruitfly");
-
-        public int compare(T s1, T s2) {
-            if (s1 == null){
-                return 1;
-            }
-            if (s2 == null){
-                return -1;
-            }
-            if (SPECIES_ORDER.contains(s1)){
-                if (SPECIES_ORDER.contains(s2)){
-                    return SPECIES_ORDER.indexOf(s1) - SPECIES_ORDER.indexOf(s2);
-                }
-                return -1;
-            }else if (SPECIES_ORDER.contains(s2)){
-                return 1;
-            }
-            return s1.compareTo(s2);
-        }
-    }
-    
     /**
      * @param args the command line arguments
      */
