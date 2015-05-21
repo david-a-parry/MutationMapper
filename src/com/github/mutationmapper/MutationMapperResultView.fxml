@@ -21,7 +21,7 @@
             <TableColumn fx:id="cdsCol" editable="false" prefWidth="91.0" style="-fx-wrap-text: true;" text="CDS" />
             <TableColumn fx:id="consequenceCol" editable="false" prefWidth="147.0" style="-fx-wrap-text: true;" text="Consequence" />
             <TableColumn fx:id="cdsConsequenceCol" editable="false" prefWidth="252.0" style="-fx-wrap-text: true;" text="CDS Consequence" />
-            <TableColumn fx:id="proteinConsequenceCol" editable="false" prefWidth="242.0" style="-fx-wrap-text: true;" text="Protein Consequence" />
+            <TableColumn fx:id="proteinConsequenceCol" editable="false" prefWidth="252.0" style="-fx-wrap-text: true;" text="Protein Consequence" />
             <TableColumn fx:id="exonIntronCol" editable="false" prefWidth="104.0" style="-fx-wrap-text: true;" text="Exon/Intron" />
             <TableColumn fx:id="knownVarCol" editable="false" prefWidth="219.0" style="-fx-wrap-text: true;" text="Colocated Variation" />
             <TableColumn fx:id="polyphenCol" editable="false" minWidth="5.0" prefWidth="142.0" style="-fx-wrap-text: true;" text="Polyphen" />
