@@ -15,8 +15,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-//to do - fix for non-standard transcript names (e.g. flybase transcripts, c.elegans)
-
 package com.github.mutationmapper;
 
 import java.io.File;
@@ -36,7 +34,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.application.Application;
@@ -144,7 +141,7 @@ public class MutationMapper extends Application implements Initializable{
     
     static HashMap<String, String> speciesTable;
     final static EnsemblRest rest = new EnsemblRest();
-    final static String VERSION = "2.0";
+    final static String VERSION = "2.1";
     
     @Override
     public void start(final Stage primaryStage) {
@@ -1344,30 +1341,6 @@ public class MutationMapper extends Application implements Initializable{
             ex.printStackTrace();
             alert.setResizable(true);
             alert.showAndWait();
-        }
-    }
-    
-    static class SpeciesComparator<T extends String> implements Comparator<T> {
-        
-        private static final List<String> SPECIES_ORDER = Arrays.asList(
-                "Human", "Mouse", "Rat", "Zebrafish", "Fruitfly");
-
-        public int compare(T s1, T s2) {
-            if (s1 == null){
-                return 1;
-            }
-            if (s2 == null){
-                return -1;
-            }
-            if (SPECIES_ORDER.contains(s1)){
-                if (SPECIES_ORDER.contains(s2)){
-                    return SPECIES_ORDER.indexOf(s1) - SPECIES_ORDER.indexOf(s2);
-                }
-                return -1;
-            }else if (SPECIES_ORDER.contains(s2)){
-                return 1;
-            }
-            return s1.compareTo(s2);
         }
     }
     

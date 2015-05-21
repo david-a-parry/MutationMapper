@@ -3,8 +3,8 @@
 [Setup]
 AppId={{MutationMapper}}
 AppName=MutationMapper
-AppVersion=2.0
-AppVerName=MutationMapper 2.0
+AppVersion=2.1
+AppVerName=MutationMapper 2.1
 AppPublisher=David A. Parry
 AppComments=MutationMapper
 AppCopyright=Copyright (C) 2015
@@ -23,7 +23,7 @@ DefaultGroupName=MutationMapper
 LicenseFile=
 ;WinXP or above
 MinVersion=0,5.1 
-OutputBaseFilename=MutationMapper-2.0
+OutputBaseFilename=MutationMapper-2.1
 Compression=lzma
 SolidCompression=yes
 PrivilegesRequired=lowest
