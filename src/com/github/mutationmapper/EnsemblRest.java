@@ -209,7 +209,7 @@ public class EnsemblRest {
            //sort and number exons
            Collections.sort(trans.getExons());
            for (int i = 0; i < trans.getExons().size(); i++){
-               if (trans.getStrand().equals("-")){
+               if (trans.getStrand() < 0){
                    trans.getExons().get(i).setOrder(
                            trans.getExons().size() - i);
                }else{
@@ -629,8 +629,7 @@ public class EnsemblRest {
             if (reader != null) {
                 try {
                     reader.close(); 
-                } 
-                    catch (IOException logOrIgnore) {
+                }catch (IOException logOrIgnore) {
                     logOrIgnore.printStackTrace();
                 }
             }
