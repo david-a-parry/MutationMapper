@@ -180,18 +180,11 @@ public class EnsemblRest {
         String biotype = (String)j.get("biotype");
         trans.setBiotype(biotype);
         if (j.containsKey("is_canonical")){
-            if (j.get("is_canonical") instanceof String){
-                if (Integer.parseInt((String)j.get("is_canonical")) > 0){
-                    trans.setIsCanonical(true);
-                }else{
-                    trans.setIsCanonical(false);
-                }
+            String isCanon = j.get("is_canonical").toString();
+            if (Integer.parseInt(isCanon) > 0){
+                trans.setIsCanonical(true);
             }else{
-                if ((Long) j.get("is_canonical") > 0){
-                    trans.setIsCanonical(true);
-                }else{
-                    trans.setIsCanonical(false);
-                }
+                trans.setIsCanonical(false);
             }
         }
         if (j.containsKey("strand")){
