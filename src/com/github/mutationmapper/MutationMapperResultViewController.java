@@ -765,7 +765,7 @@ public class MutationMapperResultViewController implements Initializable {
             stage.initModality(Modality.APPLICATION_MODAL);
             stage.getIcons().add(new Image(this.getClass().
                     getResourceAsStream("icon.png")));
-            stage.setTitle("About AutoPrimer3");
+            stage.setTitle("About MutationMapper");
             
             stage.show();
         }catch(IOException ex){
