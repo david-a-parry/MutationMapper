@@ -180,7 +180,8 @@ public class EnsemblRest {
         String biotype = (String)j.get("biotype");
         trans.setBiotype(biotype);
         if (j.containsKey("is_canonical")){
-            if (Integer.parseInt((String)j.get("is_canonical")) > 0){
+            String isCanon = j.get("is_canonical").toString();
+            if (Integer.parseInt(isCanon) > 0){
                 trans.setIsCanonical(true);
             }else{
                 trans.setIsCanonical(false);
@@ -208,7 +209,7 @@ public class EnsemblRest {
            //sort and number exons
            Collections.sort(trans.getExons());
            for (int i = 0; i < trans.getExons().size(); i++){
-               if (trans.getStrand().equals("-")){
+               if (trans.getStrand() < 0){
                    trans.getExons().get(i).setOrder(
                            trans.getExons().size() - i);
                }else{
@@ -628,8 +629,7 @@ public class EnsemblRest {
             if (reader != null) {
                 try {
                     reader.close(); 
-                } 
-                    catch (IOException logOrIgnore) {
+                }catch (IOException logOrIgnore) {
                     logOrIgnore.printStackTrace();
                 }
             }
