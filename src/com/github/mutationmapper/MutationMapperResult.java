@@ -57,6 +57,7 @@ public class MutationMapperResult {
     private static HostServices hostServices;
     private String ensemblSite = "http://www.ensembl.org";
     private String species;
+    private boolean reportSpan = false;
 
     public void setIndex(String i){
         index = i;
@@ -283,7 +284,7 @@ public class MutationMapperResult {
             return chromosome  + " (" + genome + ")";
         }
         String c;
-        if (matchingSequence != null && !matchingSequence.isEmpty()){
+        if (reportSpan && matchingSequence != null && !matchingSequence.isEmpty()){
             int endPos = coordinate + matchingSequence.length() - 1;
             c = String.format("%d-%d", coordinate, endPos);
         }else{
@@ -476,4 +477,13 @@ public class MutationMapperResult {
     public String getSpecies(){
         return species;
     }
+    
+    public void setReportSpan(boolean s){
+        reportSpan = s;
+    }
+    
+    public boolean setReportSpan(){
+        return reportSpan;
+    }
+    
 }
