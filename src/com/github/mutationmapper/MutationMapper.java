@@ -680,9 +680,19 @@ public class MutationMapper extends Application implements Initializable{
         //Calculate start and end coordinates of input sequence
         int matchPos;
         int matchEnd;
-        int shiftedPos;//if using mutant seq report the pos of the trimmed REF allele
-        boolean reportSpan = false;
+        /*  
+            if using mutant seq report the pos of the trimmed REF allele, not 
+            the position of the matching sequence. Store appropriate pos in 
+            shiftedPos.
 
+            we shouldn't report the span from the length of input sequence if 
+            we've shifted our position genomic coordinate from the start of the 
+            matching sequence, so use reportSpan boolean to specify appropriate
+            behaviour for results.
+        */
+        int shiftedPos;
+        boolean reportSpan = false;
+        
         matchPos = indices.get(0) + start;
         matchEnd = matchPos + seq.length() - 1;
         
@@ -702,7 +712,7 @@ public class MutationMapper extends Application implements Initializable{
             cons = getVepConsequences(chrom, shiftedPos, species, 
                     trim.get("ref"), trim.get("alt"));
         }else{
-            shiftedPos = matchPos;//no mutant seq - report matching positions of seq
+            shiftedPos = matchPos;//no mutant seq and no shift - report matching positions of seq
             reportSpan = true;
         }
         //updateMessage("Formatting results.");
