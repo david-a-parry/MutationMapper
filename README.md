@@ -5,13 +5,13 @@ MutationMapper is built to help simplify determining the functional consequences
 
 MutationMapper uses Ensembl’s REST API to search genes, sequences and determine functional consequences of mutations. It therefore only works when an internet connection is available.
 
-Download the latest version fpr your platform on the [releases page](https://github.com/gantzgraf/MutationMapper/releases).
+Download the latest version for your platform on the [releases page](https://github.com/gantzgraf/MutationMapper/releases).
 
 __CREDIT__
 
 MutationMapper was written by David A. Parry (d.a.parry@leeds.ac.uk)
 
-If you use this program to generate primers used in a publication, please cite the URL 'https://github.com/gantzgraf/MutationMapper'.
+If you use this program for a publication, please cite the URL 'https://github.com/gantzgraf/MutationMapper'.
 
 __LICENSE__
 
