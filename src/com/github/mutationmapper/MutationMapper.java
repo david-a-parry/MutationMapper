@@ -855,6 +855,7 @@ public class MutationMapper extends Application implements Initializable{
                 if (t.getStrand() < 0){
                     genomicCoordinate -= getMutationSpan(mutSeq);
                 }else if (mutSeq.matches("(?i)del,[\\dACTG]+")){
+                    //for deletions we will have retrieved preceding base for the Ref allele
                     genomicCoordinate -= 1;
                 }
                 HashMap<String, String> trim = trimRefAlt(alleles.get(2), alleles.get(3));
@@ -995,6 +996,7 @@ public class MutationMapper extends Application implements Initializable{
             cdsRef = ReverseComplementDNA.reverseComplement(gRef);
         }else{
             if (mut.matches("(?i)del,[\\dACTG]+")){
+                //for deletions get preceding base to allow VCF style Ref/Alt alleles
                 gRef = getDna(t.getChromosome(), genomicPos - 1, genomicPos + span - 1, species, 1);    
             }else{
                 gRef = getDna(t.getChromosome(), genomicPos, genomicPos + span, species, 1);
