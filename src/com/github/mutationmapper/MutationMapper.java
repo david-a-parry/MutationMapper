@@ -141,7 +141,7 @@ public class MutationMapper extends Application implements Initializable{
     
     static HashMap<String, String> speciesTable;
     final static EnsemblRest rest = new EnsemblRest();
-    final static String VERSION = "2.1";
+    final static String VERSION = "2.1.1";
     
     @Override
     public void start(final Stage primaryStage) {
@@ -680,10 +680,12 @@ public class MutationMapper extends Application implements Initializable{
         //Calculate start and end coordinates of input sequence
         int matchPos;
         int matchEnd;
+        int shiftedPos;//if using mutant seq report the pos of the trimmed REF allele
+        boolean reportSpan = false;
 
         matchPos = indices.get(0) + start;
         matchEnd = matchPos + seq.length() - 1;
-
+        
         HashMap<String, HashMap<String, String>> cons = new HashMap<>();
         HashMap<String, String> trim = new HashMap<>();
         if (mutSeq != null && !mutSeq.isEmpty()){//get mutation consequences
@@ -694,14 +696,21 @@ public class MutationMapper extends Application implements Initializable{
             }else{
                 trim = trimRefAlt(seq, mutSeq);
             }
-            cons = getVepConsequences(chrom, matchPos + Integer.parseInt(trim.get("shift")), 
-                    species, trim.get("ref"), trim.get("alt"));
+            shiftedPos = Integer.parseInt(trim.get("shift")) + matchPos;
+            matchEnd = shiftedPos;
+            //for a mutation we report the pos of the REF allele only, like in VCF format
+            cons = getVepConsequences(chrom, shiftedPos, species, 
+                    trim.get("ref"), trim.get("alt"));
+        }else{
+            shiftedPos = matchPos;//no mutant seq - report matching positions of seq
+            reportSpan = true;
         }
         //updateMessage("Formatting results.");
         //ArrayList<String> t_ids = new ArrayList<>();
         for (TranscriptDetails t: transcripts){
             StringBuilder description = new StringBuilder();
             MutationMapperResult result = putBasicTranscriptInfo(t);
+            result.setReportSpan(reportSpan);
             result.setHostServices(getHostServices());
             result.setSpecies(species);
             if (species.equalsIgnoreCase("Human") && grch37Menu.isSelected()){
@@ -736,7 +745,7 @@ public class MutationMapper extends Application implements Initializable{
             }
             
             // calculate CDS position from genomic position for each transcript
-            String cds_pos_match = t.getCdsPosition(chrom, matchPos);
+            String cds_pos_match = t.getCdsPosition(chrom, shiftedPos);
             String cds_pos_end = t.getCdsPosition(chrom, matchEnd);
             if (cds_pos_match.equals(cds_pos_end)){
                 /*
@@ -749,7 +758,7 @@ public class MutationMapper extends Application implements Initializable{
             }
             result.setGenome(t.getGenomeBuild());
             result.setChromosome(chrom);
-            result.setCoordinate(matchPos);
+            result.setCoordinate(shiftedPos);
             result.setMatchingSequence(seq);
             result.setMutation(mutSeq);
             addVepConsequenceToMutationMapperResult(result, t, cons);
@@ -835,6 +844,8 @@ public class MutationMapper extends Application implements Initializable{
                 int genomicCoordinate = result.getCoordinate();
                 if (t.getStrand() < 0){
                     genomicCoordinate -= getMutationSpan(mutSeq);
+                }else if (mutSeq.matches("(?i)del,[\\dACTG]+")){
+                    genomicCoordinate -= 1;
                 }
                 HashMap<String, String> trim = trimRefAlt(alleles.get(2), alleles.get(3));
                 result.setRefAllele(trim.get("ref"));
@@ -973,7 +984,11 @@ public class MutationMapper extends Application implements Initializable{
             gRef = getDna(t.getChromosome(), genomicPos - span, genomicPos, species, 1);
             cdsRef = ReverseComplementDNA.reverseComplement(gRef);
         }else{
-            gRef = getDna(t.getChromosome(), genomicPos, genomicPos + span, species, 1);
+            if (mut.matches("(?i)del,[\\dACTG]+")){
+                gRef = getDna(t.getChromosome(), genomicPos - 1, genomicPos + span - 1, species, 1);    
+            }else{
+                gRef = getDna(t.getChromosome(), genomicPos, genomicPos + span, species, 1);
+            }
             cdsRef = gRef;
         }
         if (mut.matches("(?i)del,[\\dACTG]+")){
@@ -1150,6 +1165,11 @@ public class MutationMapper extends Application implements Initializable{
     
     
     private void getAvailableSpecies(){
+        setRunning(true);
+        progressLabel.textProperty().unbind();
+        progressLabel.setText("Retrieving available species...");
+        progressIndicator.progressProperty().unbind();
+        progressIndicator.progressProperty().set(-1);
         final Task<HashMap<String, String> > getSpeciesTask = new Task<HashMap<String, String>>(){
             @Override
             protected HashMap<String, String> call() 
@@ -1171,12 +1191,33 @@ public class MutationMapper extends Application implements Initializable{
                 speciesChoiceBox.getItems().addAll(names);
                 speciesChoiceBox.getSelectionModel().selectFirst();
             });
+            setRunning(false);
+            progressLabel.textProperty().unbind();
+            progressLabel.setText("");
+            progressIndicator.progressProperty().unbind();
+            progressIndicator.progressProperty().set(0);
         });
-        getSpeciesTask.setOnCancelled(null);
+        getSpeciesTask.setOnCancelled((WorkerStateEvent e) -> {
+            setRunning(false);
+            progressLabel.textProperty().unbind();
+            progressLabel.setText("Cancelled species retrieval");
+            progressIndicator.progressProperty().unbind();
+            progressIndicator.progressProperty().set(0);
+            showNoSpeciesError("User cancelled species retrieval. Mutation Mapper"
+                    + " must connect to Ensembl's REST server to identify "
+                    + "available species for mapping.");
+        });
         getSpeciesTask.setOnFailed((WorkerStateEvent e) -> {
-            //TO DO - ERROR DIALOG
+            setRunning(false);
+            progressLabel.textProperty().unbind();
+            progressLabel.setText("Failed to retrieve species");
+            progressIndicator.progressProperty().unbind();
+            progressIndicator.progressProperty().set(0);
             e.getSource().getException().printStackTrace();
             showNoSpeciesError(e.getSource().getException());
+        });
+        runButton.setOnAction((ActionEvent actionEvent) -> {
+            getSpeciesTask.cancel();
         });
         new Thread(getSpeciesTask).start();
     }
@@ -1205,7 +1246,7 @@ public class MutationMapper extends Application implements Initializable{
             sequenceTextField.setDisable(!cdsTextField.getText().isEmpty());
             cdsTextField.setDisable(!sequenceTextField.getText().isEmpty());
             String species = (String) speciesChoiceBox.getSelectionModel().getSelectedItem();
-            if (species.equalsIgnoreCase("Human")){
+            if (species != null && species.equalsIgnoreCase("Human")){
                 grch37Menu.setDisable(false);
             }
         }
@@ -1231,6 +1272,23 @@ public class MutationMapper extends Application implements Initializable{
             }
         };
     }
+    
+    private void showNoSpeciesError(String msg){
+        Alert alert = new Alert(AlertType.CONFIRMATION);
+        ButtonType cButton = ButtonType.CANCEL;
+        ButtonType okButton = ButtonType.OK;
+        alert.getButtonTypes().setAll(okButton, cButton);
+        alert.setTitle("Mutation Mapper Error");
+        alert.setHeaderText("Error retrieving species.");
+        alert.setContentText(msg + " Click OK to attempt connecting again or "
+                + "Cancel to quit.");
+        Optional<ButtonType> response = alert.showAndWait();
+        if (response.get() == okButton){
+            getAvailableSpecies();
+        }else{
+            Platform.exit();
+        }
+    }    
     
     private void showNoSpeciesError(Throwable ex){
         // Create expandable Exception.
