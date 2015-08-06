@@ -329,6 +329,7 @@ public class MutationMapper extends Application implements Initializable{
         if (!cdsCoordinate.isEmpty()){
             if (species.equalsIgnoreCase("Saccharomyces_cerevisiae")){
                 Alert alert = new Alert(AlertType.ERROR);
+                alert.getDialogPane().setPrefSize(420, 180);
                 alert.setTitle("Mutation Mapper Error");
                 alert.setHeaderText("Species Not Supported");
                 alert.setContentText("CDS mapping not supported for this species." 
@@ -367,10 +368,12 @@ public class MutationMapper extends Application implements Initializable{
                 final String mutSeq = mutationTextField.getText().replaceAll("[\\s]", "").toUpperCase();//remove whitespace chars
                     if (!mutSeq.isEmpty() && !cdsMutationIsOk(mutSeq)){
                         Alert alert = new Alert(AlertType.ERROR);
+                        alert.getDialogPane().setPrefSize(420, 180);
                         alert.setTitle("Mutation Mapper Error");
                         alert.setHeaderText("Mutation Sequence Error");
                         alert.setContentText("Mutation sequence must either be "
                                 + "DNA or be in the format \"ins,<seq>\" or \"del,<seq/number>\".");
+                        alert.setResizable(true);
                         System.out.println(alert.getContentText());
                         alert.showAndWait();
                         Platform.runLater(() -> {
@@ -1287,6 +1290,7 @@ public class MutationMapper extends Application implements Initializable{
     
     private void showNoSpeciesError(String msg){
         Alert alert = new Alert(AlertType.CONFIRMATION);
+        alert.getDialogPane().setPrefSize(420, 200);
         ButtonType cButton = ButtonType.CANCEL;
         ButtonType okButton = ButtonType.OK;
         alert.getButtonTypes().setAll(okButton, cButton);
@@ -1305,6 +1309,7 @@ public class MutationMapper extends Application implements Initializable{
     private void showNoSpeciesError(Throwable ex){
         // Create expandable Exception.
         Alert alert = new Alert(AlertType.CONFIRMATION);
+        alert.getDialogPane().setPrefSize(420, 200);
         ButtonType cButton = ButtonType.CANCEL;
         ButtonType okButton = ButtonType.OK;
         alert.getButtonTypes().setAll(okButton, cButton);
