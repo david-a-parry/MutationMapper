@@ -242,6 +242,11 @@ public class MutationMapper extends Application implements Initializable{
                 (ObservableValue<? extends String> observable, final String oldValue, final String newValue) -> {
             //newValue = newValue.trim();
             Platform.runLater(() -> {
+                if (!newValue.isEmpty()){
+                    sequenceTextField.setPromptText("Disabled: clear CDS position to use");
+                }else{
+                    sequenceTextField.setPromptText("");
+                }
                 sequenceTextField.setDisable(!newValue.isEmpty());
             });
         });
@@ -250,6 +255,11 @@ public class MutationMapper extends Application implements Initializable{
                 (ObservableValue<? extends String> observable, final String oldValue, final String newValue) -> {
             //newValue = newValue.trim();
             Platform.runLater(() -> {
+                if (!newValue.isEmpty()){
+                    cdsTextField.setPromptText("Disabled");
+                }else{
+                    cdsTextField.setPromptText("");
+                }
                 cdsTextField.setDisable(!newValue.isEmpty());
             });
         });
