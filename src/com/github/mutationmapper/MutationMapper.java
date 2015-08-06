@@ -141,7 +141,7 @@ public class MutationMapper extends Application implements Initializable{
     
     static HashMap<String, String> speciesTable;
     final static EnsemblRest rest = new EnsemblRest();
-    final static String VERSION = "2.1.1";
+    final static String VERSION = "2.2";
     
     @Override
     public void start(final Stage primaryStage) {
@@ -203,7 +203,7 @@ public class MutationMapper extends Application implements Initializable{
             (new ChangeListener<String>(){
                 @Override
                 public void changed (ObservableValue ov, String value, final String new_value){ 
-                    if (new_value.equalsIgnoreCase("Human")){
+                    if (    new_value.equalsIgnoreCase("Human")  ){
                         grch37Menu.setDisable(false);
                     }else{
                         grch37Menu.setDisable(true);
@@ -723,7 +723,7 @@ public class MutationMapper extends Application implements Initializable{
             result.setReportSpan(reportSpan);
             result.setHostServices(getHostServices());
             result.setSpecies(species);
-            if (species.equalsIgnoreCase("Human") && grch37Menu.isSelected()){
+            if ( species.equalsIgnoreCase("homo_sapiens") && grch37Menu.isSelected()){
                 result.setEnsemblSite("http://grch37.ensembl.org/");
             }
             if (cons.containsKey("Consequence")){
@@ -817,7 +817,7 @@ public class MutationMapper extends Application implements Initializable{
             MutationMapperResult result = putBasicTranscriptInfo(t);
             result.setHostServices(getHostServices());
             result.setSpecies(species);
-            if (species.equalsIgnoreCase("Human") && grch37Menu.isSelected()){
+            if ( species.equalsIgnoreCase("homo_sapiens") && grch37Menu.isSelected()){
                 result.setEnsemblSite("http://grch37.ensembl.org/");
             }
             if (g != null){
@@ -1153,7 +1153,8 @@ public class MutationMapper extends Application implements Initializable{
     }
     
     private boolean isTranscriptId(String id, String species){
-        if (species.equalsIgnoreCase("Fruitfly") && id.matches("FBtr\\d+")){
+        if (species.equalsIgnoreCase("drosophila_melanogaster") 
+                && id.matches("FBtr\\d+")){
             return true;
         }
         if (species.equalsIgnoreCase("Saccharomyces_cerevisiae") && id.matches("Y\\w{2}\\d{3}\\w")){
@@ -1163,7 +1164,7 @@ public class MutationMapper extends Application implements Initializable{
     }
     
     private boolean isGeneId(String id, String species){
-        if (species.equalsIgnoreCase("Fruitfly") && id.matches("FBgn\\d+")){
+        if (species.equalsIgnoreCase("drosophila_melanogaster") && id.matches("FBgn\\d+")){
             return true;
         }
         if (species.equalsIgnoreCase("Caenorhabditis_elegans") && id.matches("WBGene\\d+")){
@@ -1258,7 +1259,7 @@ public class MutationMapper extends Application implements Initializable{
             sequenceTextField.setDisable(!cdsTextField.getText().isEmpty());
             cdsTextField.setDisable(!sequenceTextField.getText().isEmpty());
             String species = (String) speciesChoiceBox.getSelectionModel().getSelectedItem();
-            if (species != null && species.equalsIgnoreCase("Human")){
+            if (species != null && species.equalsIgnoreCase("Human") ){
                 grch37Menu.setDisable(false);
             }
         }
