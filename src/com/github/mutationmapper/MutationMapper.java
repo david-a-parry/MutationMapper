@@ -573,6 +573,7 @@ public class MutationMapper extends Application implements Initializable{
                 alert.setTitle("Mutation Mapper Error");
                 alert.setHeaderText("Run Failed");
                 alert.setContentText(e.getSource().getException().getMessage());
+                alert.getDialogPane().setPrefSize(420, 180);
                 alert.setResizable(true);
                 System.out.println(alert.getContentText());
                 alert.showAndWait();
@@ -1249,6 +1250,7 @@ public class MutationMapper extends Application implements Initializable{
     
     public void complainAndCancel(String msg){
         Alert alert = new Alert(AlertType.ERROR);
+        alert.getDialogPane().setPrefSize(420, 180);
         alert.setTitle("Mutation Mapper Error");
         alert.setHeaderText(msg);
         alert.setContentText("Please correct this error and try again.");
