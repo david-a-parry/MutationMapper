@@ -241,6 +241,18 @@ public class MutationMapperResultViewController implements Initializable {
                 for (TablePosition p : posList) {
                     int r = p.getRow();
                     int c = p.getColumn();
+                    //System.out.println("Pos " + r + "," + c);
+                    ObservableList<TableColumn<MutationMapperResult, ?>> cols = resultTable.getColumns();
+                    for (int i = 0; i < cols.size(); i++){
+                        if (i > c){
+                            //System.out.println("Column " + i + " gt " + c + " - breaking");
+                            break;
+                        }
+                        if (! cols.get(i).isVisible()){
+                            c++;
+                            //System.out.println("Column " + i + " invisible - c = " + c);
+                        }
+                    }
                     Object cell = resultTable.getColumns().get(c).getCellData(r);
                     if (cell instanceof Hyperlink){
                         Hyperlink link = (Hyperlink) cell;
@@ -252,8 +264,10 @@ public class MutationMapperResultViewController implements Initializable {
                         clipboardString.append('\t');
                     else if (old_r != -1)
                         clipboardString.append('\n');
+                    //System.out.println("Cell: " + cell); 
                     clipboardString.append(cell);
                     old_r = r;
+                    //System.out.println("Clipboard: " + clipboardString);
                     
                 }
                 final ClipboardContent content = new ClipboardContent();
