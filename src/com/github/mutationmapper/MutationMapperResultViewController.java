@@ -235,6 +235,7 @@ public class MutationMapperResultViewController implements Initializable {
         copyItem.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
+                ObservableList<TableColumn<MutationMapperResult, ?>> cols = resultTable.getColumns();
                 ObservableList<TablePosition> posList = resultTable.getSelectionModel().getSelectedCells();
                 int old_r = -1;
                 StringBuilder clipboardString = new StringBuilder();
@@ -242,7 +243,7 @@ public class MutationMapperResultViewController implements Initializable {
                     int r = p.getRow();
                     int c = p.getColumn();
                     //System.out.println("Pos " + r + "," + c);
-                    ObservableList<TableColumn<MutationMapperResult, ?>> cols = resultTable.getColumns();
+                    
                     for (int i = 0; i < cols.size(); i++){
                         if (i > c){
                             //System.out.println("Column " + i + " gt " + c + " - breaking");
