@@ -19,7 +19,7 @@
                   outdir="${basedir}/${dist.dir}" outfile="${application.title}">
           <fx:application name="${application.title}" 
                           mainClass="${javafx.main.class}"
-			  version="2.1"
+			  version="2.2"
 			  id="MutationMapper"/>
           <fx:info category="Science" />
           <fx:resources>
