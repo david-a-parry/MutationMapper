@@ -25,9 +25,9 @@ md5sums=("66d86c60094e8e298fb75e79dadaca26")
 validpgpkeys=()
 
 prepare() {
-    tar -zxvf data.tar.gz
+    tar -xvf data.tar.xz
 }
 
 package() {
-    tar -zxf data.tar.gz -C "${pkgdir}"
+    tar -xf data.tar.xz -C "${pkgdir}"
 }
