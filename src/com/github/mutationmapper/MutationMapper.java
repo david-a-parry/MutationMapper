@@ -123,6 +123,8 @@ public class MutationMapper extends Application implements Initializable{
     @FXML
     CheckMenuItem codingOnlyMenu;
     @FXML
+    CheckMenuItem mostRecentFirstMenu;
+    @FXML
     RadioMenuItem noRefSeqMenu;
     @FXML
     RadioMenuItem refSeqMenu;
@@ -486,6 +488,7 @@ public class MutationMapper extends Application implements Initializable{
                             (MutationMapperResultViewController) tableLoader.getController();
                     resultView.canonicalOnlyMenu.selectedProperty().bindBidirectional(canonicalOnlyMenu.selectedProperty());
                     resultView.codingOnlyMenu.selectedProperty().bindBidirectional(codingOnlyMenu.selectedProperty());
+                    resultView.mostRecentFirstMenu.selectedProperty().bindBidirectional(mostRecentFirstMenu.selectedProperty());
                     resultView.refSeqOnlyMenu.selectedProperty().bindBidirectional(refSeqOnlyMenu.selectedProperty());
                     resultView.refSeqMenu.selectedProperty().bindBidirectional(refSeqMenu.selectedProperty());
                     saveMenuItem.disableProperty().bind(resultView.saveMenuItem.disableProperty());
@@ -1173,7 +1176,7 @@ public class MutationMapper extends Application implements Initializable{
         if (species.equalsIgnoreCase("Saccharomyces_cerevisiae") && id.matches("Y\\w{2}\\d{3}\\w")){
             return true;
         }
-        return id.matches("ENS\\w*T\\d{11}.*\\d*");
+        return id.matches("ENS\\w*T\\d{11}(.\\d+)*");
     }
     
     private boolean isGeneId(String id, String species){
@@ -1183,7 +1186,7 @@ public class MutationMapper extends Application implements Initializable{
         if (species.equalsIgnoreCase("Caenorhabditis_elegans") && id.matches("WBGene\\d+")){
             return true;
         }
-        return id.matches("ENS\\w*G\\d{11}.*\\d*");
+        return id.matches("ENS\\w*G\\d{11}(.\\d+)*");
     }
     private boolean isRefSeqId(String id){//tests for both protein or RNA IDs
         return id.matches("[NX][MRP]_\\d+(.\\d+)*");
