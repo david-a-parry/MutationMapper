@@ -81,6 +81,11 @@
           </Menu>
             <Menu mnemonicParsing="false" text="Options">
               <items>
+                  <CheckMenuItem fx:id="mostRecentFirstMenu" mnemonicParsing="false" selected="true" text="Show Most Recent Result First">
+                     <accelerator>
+                        <KeyCodeCombination alt="UP" code="DIGIT0" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                     </accelerator>
+                  </CheckMenuItem>
                   <CheckMenuItem fx:id="canonicalOnlyMenu" mnemonicParsing="false" text="Only Report Canonical Transcripts">
                      <accelerator>
                         <KeyCodeCombination alt="UP" code="DIGIT1" control="UP" meta="UP" shift="UP" shortcut="DOWN" />

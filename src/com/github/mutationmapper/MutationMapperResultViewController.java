@@ -30,8 +30,13 @@ import java.io.StringWriter;
 import static java.lang.System.getProperty;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Optional;
 import java.util.ResourceBundle;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
@@ -151,6 +156,8 @@ public class MutationMapperResultViewController implements Initializable {
    @FXML
    CheckMenuItem canonicalOnlyMenu;
    @FXML
+   CheckMenuItem mostRecentFirstMenu;
+   @FXML
    CheckMenuItem codingOnlyMenu;
    @FXML
    RadioMenuItem noRefSeqMenu;
@@ -171,6 +178,7 @@ public class MutationMapperResultViewController implements Initializable {
    BooleanProperty refSeqOnly = new SimpleBooleanProperty();
    BooleanProperty codingOnly = new SimpleBooleanProperty();
    BooleanProperty canonicalOnly = new SimpleBooleanProperty();
+   BooleanProperty mostRecentFirst = new SimpleBooleanProperty();
     /**
      * Initializes the controller class.
      * @param url
@@ -369,10 +377,17 @@ public class MutationMapperResultViewController implements Initializable {
                         redisplayData();
                 }
         });
+        mostRecentFirstMenu.selectedProperty().addListener(new ChangeListener<Boolean>() {
+                @Override
+                public void changed(ObservableValue ov,Boolean old_val, Boolean new_val) {
+                        redisplayData();
+                }
+        });
         refSeq.bind(refSeqMenu.selectedProperty());
         refSeqOnly.bind(refSeqOnlyMenu.selectedProperty());
         canonicalOnly.bind(canonicalOnlyMenu.selectedProperty());
         codingOnly.bind(codingOnlyMenu.selectedProperty());
+        mostRecentFirst.bind(mostRecentFirstMenu.selectedProperty());
         aboutMenuItem.setOnAction(new EventHandler(){
             @Override
             public void handle (Event ev){
@@ -429,7 +444,7 @@ public class MutationMapperResultViewController implements Initializable {
             }
             displayData.add(r);
         }
-        
+        Collections.sort(displayData, new ResultComparator());
         resultTable.setItems(displayData);
     }
     
@@ -818,4 +833,41 @@ public class MutationMapperResultViewController implements Initializable {
             alert.showAndWait();
         }
     }
+    
+    public class ResultComparator implements Comparator<MutationMapperResult>{
+        @Override
+        public int compare(MutationMapperResult r1, MutationMapperResult r2){
+            Pattern indexPatt = Pattern.compile("(\\d+)(\\w+)");
+            Matcher m1 = indexPatt.matcher(r1.getIndex());
+            Matcher m2 = indexPatt.matcher(r2.getIndex());
+            if (m1.matches()){
+                if (! m2.matches()){
+                    return -1; 
+                }
+                int runNo1 = Integer.parseInt(m1.group(1));
+                int runNo2 = Integer.parseInt(m2.group(1));
+                if (runNo1 == runNo2){
+                    String sub1 = m1.group(2);
+                    String sub2 = m2.group(2);
+                    return sub1.compareTo(sub2);
+                }else{
+                    if (mostRecentFirst.getValue()){
+                        return runNo2 - runNo1;
+                    }else{
+                        return runNo1 - runNo2;
+                    }
+                }
+            }else{
+                if (m2.matches()){
+                    return 1; 
+                }else{
+                    return r1.getIndex().compareTo(r2.getIndex());
+                }
+            }
+        }
+    }
+    
+    
+    
+    
 }
