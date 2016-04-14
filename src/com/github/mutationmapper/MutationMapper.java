@@ -60,6 +60,8 @@ import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.RadioMenuItem;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleGroup;
@@ -93,7 +95,15 @@ public class MutationMapper extends Application implements Initializable{
     @FXML
     Menu helpMenu;
     @FXML
+    TabPane mainTab;
+    @FXML
+    Tab cdsTab;
+    @FXML
+    Tab coordTab;
+    @FXML
     ChoiceBox speciesChoiceBox;
+    @FXML
+    ChoiceBox speciesChoiceBox1;
     @FXML
     TextField geneTextField;
     @FXML
@@ -103,11 +113,25 @@ public class MutationMapper extends Application implements Initializable{
     @FXML
     TextField mutationTextField;
     @FXML
+    TextField chromTextField;
+    @FXML
+    TextField posTextField;
+    @FXML
+    TextField refTextField;
+    @FXML
+    TextField altTextField;
+    @FXML
     Label progressLabel;
     @FXML
     ProgressIndicator progressIndicator;
     @FXML
     Button runButton;
+    @FXML
+    Label progressLabel1;
+    @FXML
+    ProgressIndicator progressIndicator1;
+    @FXML
+    Button runButton1;
     @FXML
     MenuItem saveMenuItem;
     @FXML
@@ -197,6 +221,19 @@ public class MutationMapper extends Application implements Initializable{
             tableLoader = new FXMLLoader(getClass().
                                        getResource("MutationMapperResultView.fxml"));
         }
+        
+        speciesChoiceBox1.selectionModelProperty().bind(speciesChoiceBox.selectionModelProperty());
+        speciesChoiceBox1.itemsProperty().bind(speciesChoiceBox.itemsProperty());
+        
+        runButton1.disableProperty().bind(runButton.disableProperty());
+        runButton1.onActionProperty().bind(runButton.onActionProperty());
+        runButton1.defaultButtonProperty().bind(runButton.defaultButtonProperty());
+        runButton1.cancelButtonProperty().bind(runButton.cancelButtonProperty());
+        runButton1.textProperty().bind(runButton.textProperty());
+        
+        progressLabel1.textProperty().bind(progressLabel.textProperty());
+        progressIndicator1.progressProperty().bind(progressIndicator.progressProperty());
+        
         Platform.runLater(() -> {
             geneTextField.requestFocus();
         });
@@ -212,6 +249,8 @@ public class MutationMapper extends Application implements Initializable{
                 }
             })
         );
+        
+       
         speciesChoiceBox.addEventFilter(KeyEvent.KEY_PRESSED, new EventHandler<KeyEvent>() {
             @Override
             public void handle(KeyEvent event) {
@@ -305,20 +344,6 @@ public class MutationMapper extends Application implements Initializable{
     }
     
     private void mapMutation() {
-        final Task<List<MutationMapperResult>> mapperTask;
-        final String gene = geneTextField.getText().trim();
-        if (gene.isEmpty()){
-            complainAndCancel("Please enter a gene symbol/id");
-            return;
-        }else if (gene.split("\\s+").length > 1){
-            complainAndCancel("Please only enter one gene symbol/id");
-            return;
-        }
-        if (cdsTextField.getText().trim().isEmpty() && 
-                sequenceTextField.getText().trim().isEmpty()){
-            complainAndCancel("Please enter coordinate or matching sequence to search");
-            return;
-        }
         String speciesSelection = (String) speciesChoiceBox.getSelectionModel().getSelectedItem();
         speciesSelection = speciesSelection.trim();
         //Some species common names do not work so get scientific name
@@ -335,6 +360,222 @@ public class MutationMapper extends Application implements Initializable{
         }else{
             rest.setDefaultServer();
         }
+        if (cdsTab.isSelected()){
+            mapMutationCds(species);
+        }else{
+            mapMutationCoord(species);
+        }
+    }
+    
+    private void mapMutationCoord(final String species) {
+        String chrom = chromTextField.getText().trim();
+        String pos = posTextField.getText().trim();
+        String ref = refTextField.getText().trim();
+        String alt = altTextField.getText().trim();
+        //TODO - complain if value is missing
+        final Task<List<MutationMapperResult>> mapperTask = new Task<List<MutationMapperResult>>(){
+                    @Override
+                    protected List<MutationMapperResult> call()throws ParseException, 
+                            MalformedURLException, IOException, InterruptedException {
+                        updateProgress(-1, -1);
+                        return coordByVep(species, chrom, pos, ref, alt);
+                
+                    }
+                };
+
+        mapperTask.setOnSucceeded((WorkerStateEvent e) -> {
+            Platform.runLater(() -> {
+                setRunning(false);
+                progressLabel.textProperty().unbind();
+                progressLabel.setText("");
+                progressIndicator.progressProperty().unbind();
+                progressIndicator.progressProperty().set(0);
+            });
+            ArrayList<MutationMapperResult> results =
+                    (ArrayList<MutationMapperResult>) e.getSource().getValue();
+            if (results == null){
+                return;
+            } 
+            try{
+                if (tablePane == null){
+                    tablePane = (Pane) tableLoader.load();
+                }
+                if (resultView == null){
+                    resultView =
+                            (MutationMapperResultViewController) tableLoader.getController();
+                    resultView.canonicalOnlyMenu.selectedProperty().bindBidirectional(canonicalOnlyMenu.selectedProperty());
+                    resultView.codingOnlyMenu.selectedProperty().bindBidirectional(codingOnlyMenu.selectedProperty());
+                    resultView.mostRecentFirstMenu.selectedProperty().bindBidirectional(mostRecentFirstMenu.selectedProperty());
+                    resultView.refSeqOnlyMenu.selectedProperty().bindBidirectional(refSeqOnlyMenu.selectedProperty());
+                    resultView.refSeqMenu.selectedProperty().bindBidirectional(refSeqMenu.selectedProperty());
+                    saveMenuItem.disableProperty().bind(resultView.saveMenuItem.disableProperty());
+                    saveMenuItem.setOnAction((ActionEvent actionEvent) -> {
+                        resultView.saveMenuItem.fire();
+                    });
+                    showResultsMenuItem.setDisable(false);
+                }
+                if (tableScene == null){
+                    tableScene = new Scene(tablePane);
+                    tableStage = new Stage();
+                    tableStage.setScene(tableScene);
+                    tableStage.initModality(Modality.NONE);
+                    tableStage.setResizable(true);
+                }
+                Platform.runLater(() -> {
+                    resultView.displayData(results);
+                    tableStage.setTitle("MutationMapper Results");
+                    tableStage.getIcons().add(new Image(this.getClass()
+                            .getResourceAsStream("icon.png")));
+                    if (!tableStage.isShowing()){
+                        tableStage.show();
+                    }else{
+                        tableStage.requestFocus();
+                    }
+                    FXMLLoader rstLoader = new FXMLLoader(this.getClass().
+                                       getResource("ResultSummary.fxml"));
+                    try{
+                        Pane rstPane = (Pane) rstLoader.load();
+                        ResultSummaryController rst = (ResultSummaryController) 
+                                rstLoader.getController();
+                        Scene rstScene = new Scene(rstPane);
+                        Stage rstStage = new Stage();
+                        rstStage.setScene(rstScene);
+                        rstStage.setTitle("MutationMapper Results");
+                        rstStage.getIcons().add(new Image(this.getClass()
+                                .getResourceAsStream("icon.png")));
+                        if (results.get(0).getMostSevereConsequence() == null){
+                            rst.setMessage("Mapper Result");
+                        }else{
+                            rst.setMessage("Most Severe Consequence: " + 
+                                    results.get(0).getMostSevereConsequence());
+                        }
+                        rst.setDetails(results.get(0).getDescription());
+                        rstStage.initModality(Modality.APPLICATION_MODAL);
+                        rstStage.show();
+                    }catch(IOException ex){
+                        Alert alert = new Alert(AlertType.ERROR);
+                        alert.setTitle("Mutation Mapper Error");
+                        alert.setHeaderText("Error Displaying Summary");
+                        alert.setContentText(ex.getMessage());
+                        alert.setResizable(true);
+                        System.out.println(alert.getContentText());
+                        alert.showAndWait();
+                    }
+                });
+            }catch(Exception ex){
+                Alert alert = new Alert(AlertType.ERROR);
+                alert.setTitle("Mutation Mapper Error");
+                alert.setHeaderText("Error Displaying Results");
+                alert.setContentText(ex.getMessage());
+                alert.setResizable(true);
+                System.out.println(alert.getContentText());
+                alert.showAndWait();
+            }
+        });
+        
+        mapperTask.setOnCancelled((WorkerStateEvent e) -> {
+            Platform.runLater(() -> {
+                setRunning(false);
+                progressLabel.textProperty().unbind();
+                progressLabel.setText("Cancelled");
+                progressIndicator.progressProperty().unbind();
+                progressIndicator.progressProperty().set(0);
+                Platform.runLater(() -> {
+                    runButton.getScene().getWindow().requestFocus();
+                });
+            });
+        });
+                 
+         mapperTask.setOnFailed((WorkerStateEvent e) -> {
+             Platform.runLater(() -> {
+                setRunning(false);
+                Alert alert = new Alert(AlertType.ERROR);
+                alert.setTitle("Mutation Mapper Error");
+                alert.setHeaderText("Run Failed");
+                alert.setContentText(e.getSource().getException().getMessage());
+                alert.getDialogPane().setPrefSize(420, 180);
+                alert.setResizable(true);
+                System.out.println(alert.getContentText());
+                alert.showAndWait();
+                
+                progressLabel.textProperty().unbind();
+                progressLabel.setText("Failed!");
+                progressIndicator.progressProperty().unbind();
+                progressIndicator.progressProperty().set(0);
+                Platform.runLater(() -> {
+                    runButton.getScene().getWindow().requestFocus();
+                });
+             });
+        });
+        progressIndicator.progressProperty().bind(mapperTask.progressProperty());
+        progressLabel.setText("Running");
+        //progressLabel.textProperty().bind(mapperTask.messageProperty());
+        runButton.setOnAction((ActionEvent actionEvent) -> {
+            mapperTask.cancel();
+        });
+        new Thread(mapperTask).start();
+        setRunning(true);
+    }
+    
+    private List<MutationMapperResult> coordByVep(final String species, final String chrom, 
+            final String pos, final String ref, final String alt)throws ParseException, 
+            MalformedURLException, IOException, InterruptedException{
+        HashMap<String, HashMap<String, String>> cons = 
+                rest.getVepConsequence(chrom, Integer.parseInt(pos), species, ref, alt);
+        List<MutationMapperResult> results = new ArrayList<>();
+        if (!cons.isEmpty()){
+            for (String transcript: cons.keySet()){
+                if (transcript.equals("Consequence")){
+                    continue;
+                }
+                MutationMapperResult result = new MutationMapperResult();
+                result.setReportSpan(false);
+                result.setHostServices(getHostServices());
+                result.setSpecies(species);
+                result.setChromosome(chrom);
+                result.setCoordinate(Integer.parseInt(pos));
+                result.setRefAllele(ref);
+                result.setVarAllele(alt);
+                result.setMatchingSequence(chrom + ":" + pos + "-" + ref);
+                result.setMutation(alt);
+                result.setTranscript(transcript);
+                result.setGeneSymbol(cons.get(transcript).get("gene_symbol"));
+                result.setGeneId(cons.get(transcript).get("gene_id"));
+                
+                if ( species.equalsIgnoreCase("homo_sapiens") && grch37Menu.isSelected()){
+                    result.setEnsemblSite("http://grch37.ensembl.org/");
+                }
+                if (cons.containsKey("Consequence")){
+                    result.setMostSevereConsequence(
+                            cons.get("Consequence").get("most_severe_consequence"));
+                }
+                result.setDescription(chrom + ":" + pos + "-" + ref + "/" + alt);
+                
+                // calculate CDS position from genomic position for each transcript
+                
+                addVepConsequenceToMutationMapperResult(result, transcript, cons);
+                results.add(result);
+            }
+        }
+        return results;
+    }
+    
+    private void mapMutationCds(final String species) {
+        final Task<List<MutationMapperResult>> mapperTask;
+        final String gene = geneTextField.getText().trim();
+        if (gene.isEmpty()){
+            complainAndCancel("Please enter a gene symbol/id");
+            return;
+        }else if (gene.split("\\s+").length > 1){
+            complainAndCancel("Please only enter one gene symbol/id");
+            return;
+        }
+        if (cdsTextField.getText().trim().isEmpty() && 
+                sequenceTextField.getText().trim().isEmpty()){
+            complainAndCancel("Please enter coordinate or matching sequence to search");
+            return;
+        }
+        
         
         final String cdsCoordinate = cdsTextField.getText().trim();
         final String sequence = sequenceTextField.getText().trim();
@@ -877,6 +1118,8 @@ public class MutationMapper extends Application implements Initializable{
                 HashMap<String, String> trim = trimRefAlt(alleles.get(2), alleles.get(3));
                 result.setRefAllele(trim.get("ref"));
                 result.setVarAllele(trim.get("alt"));
+                result.setMatchingSequence("c." + cdsCoordinate + alleles.get(2));
+                result.setMutation(mutSeq);
                 HashMap<String, HashMap<String, String>> cons = 
                         getVepConsequences(t.getChromosome(), 
                                 Integer.parseInt(trim.get("shift")) + genomicCoordinate, 
@@ -901,49 +1144,52 @@ public class MutationMapper extends Application implements Initializable{
         }
         return results;
     }
-    
     private void addVepConsequenceToMutationMapperResult(MutationMapperResult r,
             TranscriptDetails t, HashMap<String, HashMap<String, String>> cons){
+        addVepConsequenceToMutationMapperResult(r, t.getTranscriptId(), cons);
+    }
+    private void addVepConsequenceToMutationMapperResult(MutationMapperResult r,
+            String t, HashMap<String, HashMap<String, String>> cons){
         if (!cons.isEmpty()){
-            if (cons.containsKey(t.getTranscriptId())){
-                if (cons.get(t.getTranscriptId()).containsKey("hgvsc")){
-                    r.setCdsConsequence(cons.get(t.getTranscriptId()).get("hgvsc"));
+            if (cons.containsKey(t)){
+                if (cons.get(t).containsKey("hgvsc")){
+                    r.setCdsConsequence(cons.get(t).get("hgvsc"));
                 }
-                if (cons.get(t.getTranscriptId()).containsKey("hgvsp")){
-                    String pCons = cons.get(t.getTranscriptId()).get("hgvsp").replaceAll("%3D", "=");
+                if (cons.get(t).containsKey("hgvsp")){
+                    String pCons = cons.get(t).get("hgvsp").replaceAll("%3D", "=");
                     r.setProteinConsequence(pCons);
                 }
-                if(cons.get(t.getTranscriptId()).containsKey("polyphen_prediction")
-                 && cons.get(t.getTranscriptId()).containsKey("polyphen_score")){
+                if(cons.get(t).containsKey("polyphen_prediction")
+                 && cons.get(t).containsKey("polyphen_score")){
                     r.setPolyphenResult(String.format("%s (%s)", 
-                            cons.get(t.getTranscriptId()).get("polyphen_prediction"),
-                            cons.get(t.getTranscriptId()).get("polyphen_score")));
+                            cons.get(t).get("polyphen_prediction"),
+                            cons.get(t).get("polyphen_score")));
                 }
-                if(cons.get(t.getTranscriptId()).containsKey("sift_prediction")
-                 && cons.get(t.getTranscriptId()).containsKey("sift_score")){
+                if(cons.get(t).containsKey("sift_prediction")
+                 && cons.get(t).containsKey("sift_score")){
                     r.setSiftResult(String.format("%s (%s)", 
-                            cons.get(t.getTranscriptId()).get("sift_prediction"),
-                            cons.get(t.getTranscriptId()).get("sift_score")));
+                            cons.get(t).get("sift_prediction"),
+                            cons.get(t).get("sift_score")));
                 }
-                if (cons.get(t.getTranscriptId()).containsKey("consequence_terms")){
-                    r.setConsequence(cons.get(t.getTranscriptId()).get("consequence_terms").
+                if (cons.get(t).containsKey("consequence_terms")){
+                    r.setConsequence(cons.get(t).get("consequence_terms").
                             replaceAll("[\\[\\]\"]", ""));
                 }
-                /*if (cons.get(t.getTranscriptId()).containsKey("refseq_transcript_ids")){
-                    r.setRefSeqIds(cons.get(t.getTranscriptId()).get("refseq_transcript_ids").
+                /*if (cons.get(t).containsKey("refseq_transcript_ids")){
+                    r.setRefSeqIds(cons.get(t).get("refseq_transcript_ids").
                             replaceAll("[\\[\\]\"]", ""));
                 }
-                if (cons.get(t.getTranscriptId()).containsKey("canonical")){
-                    if (Integer.parseInt(cons.get(t.getTranscriptId()).get("canonical")) > 0){
+                if (cons.get(t).containsKey("canonical")){
+                    if (Integer.parseInt(cons.get(t).get("canonical")) > 0){
                         r.setIsCanonical(true);
                     }else{
                         r.setIsCanonical(false);
                     }
                 }*/
-                if (cons.get(t.getTranscriptId()).containsKey("exon")){
-                    r.setExonIntronNumber("exon " + cons.get(t.getTranscriptId()).get("exon"));
-                }else if (cons.get(t.getTranscriptId()).containsKey("intron")){
-                    r.setExonIntronNumber("intron " + cons.get(t.getTranscriptId()).get("intron"));
+                if (cons.get(t).containsKey("exon")){
+                    r.setExonIntronNumber("exon " + cons.get(t).get("exon"));
+                }else if (cons.get(t).containsKey("intron")){
+                    r.setExonIntronNumber("intron " + cons.get(t).get("intron"));
                 }
                 
                 
@@ -951,7 +1197,7 @@ public class MutationMapper extends Application implements Initializable{
                 for (String k: cons.keySet()){
                     if (k.startsWith("snps_")){
                         if(snpIds.length() > 0){
-                            snpIds.append("/");
+                            snpIds.append("|");
                         }
                         snpIds.append(cons.get(k).get("id"));
                         if (cons.get(k).containsKey("clin_sig")){
@@ -961,6 +1207,14 @@ public class MutationMapper extends Application implements Initializable{
                                 ).append(")");
                             }
                         }
+                        if (cons.get(k).containsKey("allele_string")){
+                            snpIds.append(" (").append(cons.get(k).get("allele_string")).append(")");
+                        }
+                        if (cons.get(k).containsKey("exac_maf")){
+                            r.setKnownFreq("ExAC MAF = " + 
+                                    cons.get(k).get("exac_maf") + " (" + 
+                                    cons.get(k).get("id") + ")");
+                        }
                     }else if (k.equals("Consequence")){
                         r.setMostSevereConsequence(cons.get(k).get("most_severe_consequence"));
                     }
@@ -968,8 +1222,8 @@ public class MutationMapper extends Application implements Initializable{
                 if (snpIds.length() > 0){
                     r.setKnownIds(snpIds.toString());
                 }
-                //r.setRefAllele(cons.get(t.getTranscriptId()).get("ref"));
-                //r.setVarAllele(cons.get(t.getTranscriptId()).get("alt"));
+                //r.setRefAllele(cons.get(t).get("ref"));
+                //r.setVarAllele(cons.get(t).get("alt"));
             }
         }
     }
