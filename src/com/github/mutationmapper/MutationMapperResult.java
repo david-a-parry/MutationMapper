@@ -47,7 +47,7 @@ public class MutationMapperResult {
     private String siftResult;
     private String mostSevereConsequence;
     private String knownIds;
-    private Double knownFreq;
+    private String knownFreq;
     private String biotype;
     private String refSeqIds;
     private boolean isCanonical = false;
@@ -135,7 +135,7 @@ public class MutationMapperResult {
         knownIds = id;
     }
     
-    public void setKnownFreq(Double freq){
+    public void setKnownFreq(String freq){
         knownFreq = freq;
     }
     
@@ -249,7 +249,7 @@ public class MutationMapperResult {
         return knownIds;
     }
     
-    public Double getKnownFreq(){
+    public String getKnownFreq(){
         return knownFreq;
     }
     
@@ -434,7 +434,7 @@ public class MutationMapperResult {
         StringBuilder urlBuilder = new StringBuilder(getEnsemblSite());
         if (idString != null && ! idString.isEmpty()){
             link.setText(idString);
-            String[] ids = idString.split("/");
+            String[] ids = idString.split("\\|");
             String id = ids[0].replaceAll("\\s*\\(.*\\)", "");
             urlBuilder.append("/").append(species).append("/Variation/Explore?v=").append(id);
             final String url = urlBuilder.toString();
