@@ -136,6 +136,8 @@ public class MutationMapperResultViewController implements Initializable {
    @FXML
    TableColumn knownVarCol;
    @FXML
+   TableColumn knownFreqCol;
+   @FXML
    TableColumn seqInputCol;
    @FXML 
    Label summaryLabel;
@@ -201,6 +203,7 @@ public class MutationMapperResultViewController implements Initializable {
         exonIntronCol.setCellValueFactory(new PropertyValueFactory<>("exonIntronNumber"));
         consequenceCol.setCellValueFactory(new PropertyValueFactory<>("consequence"));
         knownVarCol.setCellValueFactory(new PropertyValueFactory<>("snpLink"));
+        knownFreqCol.setCellValueFactory(new PropertyValueFactory<>("knownFreq"));
         seqInputCol.setCellValueFactory(new PropertyValueFactory<>("seqInput"));
         polyphenCol.setCellValueFactory(new PropertyValueFactory<>("polyphenResult"));
         siftCol.setCellValueFactory(new PropertyValueFactory<>("siftResult"));

@@ -96,6 +96,7 @@
             <TableColumn fx:id="proteinConsequenceCol" editable="false" prefWidth="252.0" style="-fx-wrap-text: true;" text="Protein Consequence" />
             <TableColumn fx:id="exonIntronCol" editable="false" prefWidth="104.0" style="-fx-wrap-text: true;" text="Exon/Intron" />
             <TableColumn fx:id="knownVarCol" editable="false" prefWidth="219.0" style="-fx-wrap-text: true;" text="Colocated Variation" />
+            <TableColumn fx:id="knownFreqCol" editable="false" prefWidth="219.0" style="-fx-wrap-text: true;" text="MAF" />
             <TableColumn fx:id="polyphenCol" editable="false" minWidth="5.0" prefWidth="142.0" style="-fx-wrap-text: true;" text="Polyphen" />
             <TableColumn fx:id="siftCol" editable="false" minWidth="5.0" prefWidth="126.0" style="-fx-wrap-text: true;" text="Sift" />
             <TableColumn fx:id="seqInputCol" editable="false" minWidth="5.0" prefWidth="159.0" style="-fx-wrap-text: true;" text="Seq Input" />
