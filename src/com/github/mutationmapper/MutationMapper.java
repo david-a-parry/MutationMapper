@@ -552,7 +552,7 @@ public class MutationMapper extends Application implements Initializable{
                 + ref.length() - 1, species);
         if (!refDna.equalsIgnoreCase(ref)){
             throw new RuntimeException("Ref allele '" + ref + "' at position " +
-                    pos + "does not match genome assembly sequence '" + refDna + "'");
+                    pos + " does not match genome assembly sequence '" + refDna + "'");
         }
         HashMap<String, HashMap<String, String>> cons = 
                 rest.getVepConsequence(chrom, Integer.parseInt(pos), species, ref, alt);
@@ -586,7 +586,11 @@ public class MutationMapper extends Application implements Initializable{
                 result.setVarAllele(alt);
                 result.setMatchingSequence(chrom + ":" + pos + "-" + ref);
                 result.setMutation(alt);
-                
+                if (cons.get(transcript).containsKey("cds_start")){
+                    result.setCdsCoordinate("c." + cons.get(transcript).get("cds_start"));
+                }else if (cons.get(transcript).containsKey("cdna_start")){
+                    result.setCdsCoordinate("n." + cons.get(transcript).get("cdna_start"));
+                }
                 
                 if ( species.equalsIgnoreCase("homo_sapiens") && grch37Menu.isSelected()){
                     result.setEnsemblSite("http://grch37.ensembl.org/");
@@ -1058,6 +1062,7 @@ public class MutationMapper extends Application implements Initializable{
             }
             
             // calculate CDS position from genomic position for each transcript
+            //TO DO - calculate cDNA position if transcript is not coding!
             String cds_pos_match = t.getCdsPosition(chrom, shiftedPos);
             String cds_pos_end = t.getCdsPosition(chrom, matchEnd);
             if (cds_pos_match.equals(cds_pos_end)){
@@ -1124,7 +1129,11 @@ public class MutationMapper extends Application implements Initializable{
                 result.setEnsemblSite("http://grch37.ensembl.org/");
             }
             if (g != null){
-                result.setCdsCoordinate(cdsCoordinate);
+                if (t.isCoding()){
+                    result.setCdsCoordinate("c." + cdsCoordinate);
+                }else{
+                    result.setCdsCoordinate("n." + cdsCoordinate);
+                }
                 result.setChromosome(g.get("chromosome"));
                 if (! g.get("coordinate").isEmpty()){
                     int c = Integer.parseInt(g.get("coordinate"));
@@ -1141,8 +1150,7 @@ public class MutationMapper extends Application implements Initializable{
                 }else{
                     description.append(t.getTranscriptId());
                 }
-                description.append(" c.")
-                        .append(cdsCoordinate).append(" => ")
+                description.append(result.getCdsCoordinate()).append(" => ")
                         .append(result.getGenomicCoordinate()).append("\n");
             }
             if (mutSeq != null && result.getCoordinate() != null){
