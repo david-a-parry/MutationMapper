@@ -570,6 +570,9 @@ public class MutationMapper extends Application implements Initializable{
                     result.setMostSevereConsequence(cons.get("Consequence").
                             get("most_severe_consequence"));
                 }else{
+                    if (!cons.get(transcript).containsKey("biotype")){
+                        continue;//not a transcript
+                    }
                     result.setTranscript(transcript);
                     result.setGeneSymbol(cons.get(transcript).get("gene_symbol"));
                     result.setGeneId(cons.get(transcript).get("gene_id"));
