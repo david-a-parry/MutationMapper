@@ -10,7 +10,7 @@
 
 <AnchorPane id="AnchorPane" minHeight="-Infinity" prefHeight="264.0" prefWidth="520.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.github.mutationmapper.MutationMapper">
    <children>
-      <MenuBar fx:id="menuBar" layoutY="-2.0" prefHeight="34.0" prefWidth="520.0" AnchorPane.bottomAnchor="232.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="-2.0">
+      <MenuBar fx:id="menuBar" layoutY="-2.0" prefHeight="34.0" prefWidth="520.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="-2.0">
         <menus>
           <Menu fx:id="fileMenu" mnemonicParsing="false" text="File">
             <items>
@@ -74,7 +74,7 @@
           </Menu>
         </menus>
       </MenuBar>
-      <TabPane layoutX="14.0" layoutY="31.0" prefHeight="233.0" prefWidth="520.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="31.0">
+      <TabPane layoutX="14.0" layoutY="31.0" prefHeight="188.0" prefWidth="520.0" AnchorPane.bottomAnchor="45.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="31.0">
          <tabs>
             <Tab fx:id="cdsTab" closable="false" text="CDS/Mutations">
                <content>
@@ -117,16 +117,6 @@
                                  </children>
                               </VBox>
                            </children>
-                        </HBox>
-                        <HBox alignment="CENTER_LEFT" layoutX="12.0" layoutY="182.0" prefHeight="44.0" prefWidth="473.0" spacing="15.0">
-                           <children>
-                              <ProgressIndicator fx:id="progressIndicator" prefHeight="44.0" prefWidth="46.0" progress="0.0" style="-fx-fill: null;" />
-                              <Label fx:id="progressLabel" layoutX="14.0" layoutY="188.0" prefHeight="16.0" prefWidth="376.0" text="Mutation Mapper" />
-                              <Button fx:id="runButton" layoutX="429.0" layoutY="182.0" mnemonicParsing="false" prefHeight="29.0" prefWidth="77.0" text="Run" />
-                           </children>
-                           <VBox.margin>
-                              <Insets left="10.0" right="10.0" />
-                           </VBox.margin>
                         </HBox>
                      </children>
                      <padding>
@@ -180,11 +170,6 @@
                                  </children>
                               </HBox>
                               <HBox alignment="CENTER_LEFT" layoutX="12.0" layoutY="182.0" prefHeight="44.0" prefWidth="473.0" spacing="15.0">
-                                 <children>
-                                    <ProgressIndicator fx:id="progressIndicator1" prefHeight="44.0" prefWidth="46.0" progress="0.0" style="-fx-fill: null;" />
-                                    <Label fx:id="progressLabel1" layoutX="14.0" layoutY="188.0" prefHeight="16.0" prefWidth="376.0" text="Mutation Mapper" />
-                                    <Button fx:id="runButton1" layoutX="429.0" layoutY="182.0" mnemonicParsing="false" prefHeight="29.0" prefWidth="63.0" text="Run" />
-                                 </children>
                                  <VBox.margin>
                                     <Insets right="10.0" />
                                  </VBox.margin>
@@ -202,5 +187,12 @@
             </Tab>
          </tabs>
       </TabPane>
+      <HBox alignment="CENTER_LEFT" layoutX="24.0" layoutY="212.0" prefHeight="44.0" prefWidth="473.0" spacing="15.0" AnchorPane.bottomAnchor="8.0" AnchorPane.leftAnchor="24.0" AnchorPane.rightAnchor="23.0">
+         <children>
+            <ProgressIndicator fx:id="progressIndicator" prefHeight="44.0" prefWidth="46.0" progress="0.0" style="-fx-fill: null;" />
+            <Label fx:id="progressLabel" layoutX="14.0" layoutY="188.0" prefHeight="16.0" prefWidth="376.0" text="Mutation Mapper" />
+            <Button fx:id="runButton" layoutX="429.0" layoutY="182.0" mnemonicParsing="false" prefHeight="29.0" prefWidth="77.0" text="Run" />
+         </children>
+      </HBox>
    </children>
 </AnchorPane>
