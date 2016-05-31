@@ -163,6 +163,7 @@ public class EnsemblRest {
         need to get gene details first because rest won't return translation 
         details from a transcript ID
         */
+        id = id.replaceFirst("\\.\\d+$", "");
         List<String> idName = getGeneAndSymbolFromTranscript(id);
         GeneDetails gene = getGeneDetails(idName.get(0));
         for (TranscriptDetails t: gene.getTranscripts()){
@@ -235,7 +236,7 @@ public class EnsemblRest {
        
        
        //get translation start and end if coding                   
-       if (biotype.equals("protein_coding") && j.containsKey("Translation")){
+       if (j.containsKey("Translation")){
            JSONObject p = (JSONObject) j.get("Translation");
            trans.setProteinId((String) p.get("id"));
            Long start = (Long) p.get("start");
@@ -293,17 +294,17 @@ public class EnsemblRest {
         String biotype = (String)tr.get("biotype");
         mapping.put("transcript", id);
         String seq;
-        String cdsOrTranscript;
-        if (! biotype.equals("protein_coding")){
-           seq = getTranscriptSequence(id, "cdna");
-           cdsOrTranscript = "transcript";
+        String cdsOrCdna;
+        if (! tr.containsKey("Translation")){
+           cdsOrCdna = "cdna";
         }else{
-            seq = getTranscriptSequence(id, "cds");
-            cdsOrTranscript = "CDS";
+            cdsOrCdna = "cds";
         }
+        seq = getTranscriptSequence(id, cdsOrCdna);
+            
         if (seq != null){
             if (seq.length() >= c ){
-                HashMap<String, String> gCoord = cdsToGenomicCoordinate(id, c);
+                HashMap<String, String> gCoord = transcriptToGenomicCoordinate(id, c, cdsOrCdna);
                 if (gCoord != null){
                     mapping.put("transcript", id);
                     mapping.put("chromosome", gCoord.get("chromosome"));
@@ -314,12 +315,13 @@ public class EnsemblRest {
                 //System.out.println("CDS coordinate " + c + " is greater than "
                 //        + "length of CDS (" + seq.length() + ") for " + id);
                 mapping.put("chromosome", "coordinate greater than length "
-                        + "of " + cdsOrTranscript);
+                        + "of " + cdsOrCdna.toUpperCase());
                 mapping.put("coordinate", "");
                 mapping.put("assembly", String.format("%d", seq.length()));
             }
         }else{
-            mapping.put("chromosome", "No " + cdsOrTranscript + " sequence found(?)");
+            mapping.put("chromosome", "No " + cdsOrCdna.toUpperCase() + 
+                    " sequence found(?)");
             mapping.put("coordinate", "");
             mapping.put("assembly", "");
         }
@@ -379,8 +381,10 @@ public class EnsemblRest {
   
     
     //returns hashmap of chromosome, coordinate and assembly
-    public HashMap<String, String> cdsToGenomicCoordinate(String id, int coord) throws ParseException, MalformedURLException, IOException, InterruptedException {
-        String endpoint = "/map/cds/" + id +"/"+ coord + ".." + coord;
+    public HashMap<String, String> transcriptToGenomicCoordinate(String id, int coord,
+            String type)
+            throws ParseException, MalformedURLException, IOException, InterruptedException {
+        String endpoint = "/map/" + type + "/" + id +"/"+ coord + ".." + coord;
         JSONObject info = (JSONObject) getJSON(endpoint);
         HashMap mapStrings = new HashMap<>();
         if(info.isEmpty()) {
