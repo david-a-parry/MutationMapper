@@ -525,10 +525,21 @@ public class MutationMapper extends Application implements Initializable{
         List<MutationMapperResult> results = new ArrayList<>();
         if (!cons.isEmpty()){
             for (String transcript: cons.keySet()){
-                if (transcript.equals("Consequence")){
-                    continue;
-                }
                 MutationMapperResult result = new MutationMapperResult();
+                if (transcript.equals("Consequence")){
+                    if (cons.keySet().size() > 1){
+                        continue;
+                    }
+                    result.setTranscript("");
+                    result.setGeneSymbol("");
+                    result.setGeneId("");
+                    result.setMostSevereConsequence(cons.get("Consequence").
+                            get("most_severe_consequence"));
+                }else{
+                    result.setTranscript(transcript);
+                    result.setGeneSymbol(cons.get(transcript).get("gene_symbol"));
+                    result.setGeneId(cons.get(transcript).get("gene_id"));
+                }
                 result.setReportSpan(false);
                 result.setHostServices(getHostServices());
                 result.setSpecies(species);
@@ -538,9 +549,7 @@ public class MutationMapper extends Application implements Initializable{
                 result.setVarAllele(alt);
                 result.setMatchingSequence(chrom + ":" + pos + "-" + ref);
                 result.setMutation(alt);
-                result.setTranscript(transcript);
-                result.setGeneSymbol(cons.get(transcript).get("gene_symbol"));
-                result.setGeneId(cons.get(transcript).get("gene_id"));
+                
                 
                 if ( species.equalsIgnoreCase("homo_sapiens") && grch37Menu.isSelected()){
                     result.setEnsemblSite("http://grch37.ensembl.org/");
@@ -1174,6 +1183,8 @@ public class MutationMapper extends Application implements Initializable{
                 if (cons.get(t).containsKey("consequence_terms")){
                     r.setConsequence(cons.get(t).get("consequence_terms").
                             replaceAll("[\\[\\]\"]", ""));
+                }else if (t.equals("Consequence") ){
+                    r.setConsequence(cons.get("Consequence").get("most_severe_consequence"));
                 }
                 /*if (cons.get(t).containsKey("refseq_transcript_ids")){
                     r.setRefSeqIds(cons.get(t).get("refseq_transcript_ids").
