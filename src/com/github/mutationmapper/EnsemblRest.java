@@ -292,34 +292,36 @@ public class EnsemblRest {
         }
         String biotype = (String)tr.get("biotype");
         mapping.put("transcript", id);
+        String seq;
+        String cdsOrTranscript;
         if (! biotype.equals("protein_coding")){
-           mapping.put("chromosome", "non-coding transcript");
-           mapping.put("coordinate", "");
-           mapping.put("assembly", biotype);
+           seq = getTranscriptSequence(id, "cdna");
+           cdsOrTranscript = "transcript";
         }else{
-            String seq = getTranscriptSequence(id, "cds");
-            if (seq != null){
-                if (seq.length() >= c ){
-                    HashMap<String, String> gCoord = cdsToGenomicCoordinate(id, c);
-                    if (gCoord != null){
-                        mapping.put("transcript", id);
-                        mapping.put("chromosome", gCoord.get("chromosome"));
-                        mapping.put("coordinate", gCoord.get("coordinate"));
-                        mapping.put("assembly", gCoord.get("assembly"));
-                    }
-                }else{
-                    //System.out.println("CDS coordinate " + c + " is greater than "
-                    //        + "length of CDS (" + seq.length() + ") for " + id);
-                    mapping.put("chromosome", "coordinate greater than length "
-                            + "of CDS");
-                    mapping.put("coordinate", "");
-                    mapping.put("assembly", String.format("%d", seq.length()));
+            seq = getTranscriptSequence(id, "cds");
+            cdsOrTranscript = "CDS";
+        }
+        if (seq != null){
+            if (seq.length() >= c ){
+                HashMap<String, String> gCoord = cdsToGenomicCoordinate(id, c);
+                if (gCoord != null){
+                    mapping.put("transcript", id);
+                    mapping.put("chromosome", gCoord.get("chromosome"));
+                    mapping.put("coordinate", gCoord.get("coordinate"));
+                    mapping.put("assembly", gCoord.get("assembly"));
                 }
             }else{
-                mapping.put("chromosome", "No CDS sequence found(?)");
+                //System.out.println("CDS coordinate " + c + " is greater than "
+                //        + "length of CDS (" + seq.length() + ") for " + id);
+                mapping.put("chromosome", "coordinate greater than length "
+                        + "of " + cdsOrTranscript);
                 mapping.put("coordinate", "");
-                mapping.put("assembly", "");
+                mapping.put("assembly", String.format("%d", seq.length()));
             }
+        }else{
+            mapping.put("chromosome", "No " + cdsOrTranscript + " sequence found(?)");
+            mapping.put("coordinate", "");
+            mapping.put("assembly", "");
         }
         return mapping;
     }
@@ -342,26 +344,8 @@ public class EnsemblRest {
         }
         System.out.println(symbol + " => " + id + " => " + transcriptList.toString());
         for (String t : tr){
-            String seq = getTranscriptSequence(t, "cds");
-            if (seq != null){
-                if (seq.length() >= c ){
-                    HashMap<String, String> gCoord = cdsToGenomicCoordinate(t, c);
-                    if (gCoord != null){
-                        HashMap<String, String> mapping = new HashMap<>();
-                        mapping.put("gene", id);
-                        mapping.put("transcript", t);
-                        mapping.put("chromosome", gCoord.get("chromosome"));
-                        mapping.put("coordinate", gCoord.get("coordinate"));
-                        mapping.put("assembly", gCoord.get("assembly"));
-                        coordinates.add(mapping);
-                    }
-                }else{
-                    System.out.println("CDS coordinate " + c + " is greater than "
-                            + "length of CDS (" + seq.length() + ") for " + t);
-                }
-            }else{
-                System.out.println("WARNING: No CDS sequence found for " + t);
-            }
+            HashMap<String, String> mapping = codingToGenomicTranscript(species, t, c);
+            coordinates.add(mapping);
         }
         return coordinates;
     }
