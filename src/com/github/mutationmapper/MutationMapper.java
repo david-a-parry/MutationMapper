@@ -406,8 +406,14 @@ public class MutationMapper extends Application implements Initializable{
             int p = Integer.parseInt(pos);
         }catch(Exception ex){
             complainAndCancel("Position '" + pos + "' does not look like a number!");
-               return;
+            return;
         }
+        
+        if (ref.equalsIgnoreCase(alt)){
+            complainAndCancel("Ref and Alt alleles are the same!");
+            return;
+        }
+        
         
         final Task<List<MutationMapperResult>> mapperTask = new Task<List<MutationMapperResult>>(){
                     @Override
