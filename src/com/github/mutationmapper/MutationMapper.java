@@ -372,7 +372,43 @@ public class MutationMapper extends Application implements Initializable{
         String pos = posTextField.getText().trim();
         String ref = refTextField.getText().trim();
         String alt = altTextField.getText().trim();
-        //TODO - complain if value is missing
+        //complain if value is missing
+        if (chrom.isEmpty()){
+            complainAndCancel("Please enter a chromosome");
+            return;
+        }else if (chrom.split("\\s+").length > 1){
+            complainAndCancel("Please only enter one chromosome");
+            return;
+        }
+        if (pos.isEmpty()){
+            complainAndCancel("Please enter a coordinate");
+            return;
+        }else if (pos.split("\\s+").length > 1){
+            complainAndCancel("Please only enter one coordinate");
+            return;
+        }
+        if (ref.isEmpty()){
+            complainAndCancel("Please enter a reference allele");
+            return;
+        }else if (ref.split("\\s+").length > 1){
+            complainAndCancel("Please only enter one reference allele");
+            return;
+        }
+        if (alt.isEmpty()){
+            complainAndCancel("Please enter an alt allele");
+            return;
+        }else if (alt.split("\\s+").length > 1){
+            complainAndCancel("Please only enter one alt allele");
+            return;
+        }
+        //ensure position is an integer
+        try{
+            int p = Integer.parseInt(pos);
+        }catch(Exception ex){
+            complainAndCancel("Position '" + pos + "' does not look like a number!");
+               return;
+        }
+        
         final Task<List<MutationMapperResult>> mapperTask = new Task<List<MutationMapperResult>>(){
                     @Override
                     protected List<MutationMapperResult> call()throws ParseException, 
@@ -520,6 +556,7 @@ public class MutationMapper extends Application implements Initializable{
     private List<MutationMapperResult> coordByVep(final String species, final String chrom, 
             final String pos, final String ref, final String alt)throws ParseException, 
             MalformedURLException, IOException, InterruptedException{
+        
         HashMap<String, HashMap<String, String>> cons = 
                 rest.getVepConsequence(chrom, Integer.parseInt(pos), species, ref, alt);
         List<MutationMapperResult> results = new ArrayList<>();
