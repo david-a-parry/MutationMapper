@@ -166,7 +166,7 @@ public class MutationMapper extends Application implements Initializable{
     
     static HashMap<String, String> speciesTable;
     final static EnsemblRest rest = new EnsemblRest();
-    final static String VERSION = "2.2";
+    final static String VERSION = "2.3";
     
     @Override
     public void start(final Stage primaryStage) {
