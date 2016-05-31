@@ -127,12 +127,6 @@ public class MutationMapper extends Application implements Initializable{
     @FXML
     Button runButton;
     @FXML
-    Label progressLabel1;
-    @FXML
-    ProgressIndicator progressIndicator1;
-    @FXML
-    Button runButton1;
-    @FXML
     MenuItem saveMenuItem;
     @FXML
     MenuItem showResultsMenuItem;
@@ -225,18 +219,10 @@ public class MutationMapper extends Application implements Initializable{
         speciesChoiceBox1.selectionModelProperty().bind(speciesChoiceBox.selectionModelProperty());
         speciesChoiceBox1.itemsProperty().bind(speciesChoiceBox.itemsProperty());
         
-        runButton1.disableProperty().bind(runButton.disableProperty());
-        runButton1.onActionProperty().bind(runButton.onActionProperty());
-        runButton1.defaultButtonProperty().bind(runButton.defaultButtonProperty());
-        runButton1.cancelButtonProperty().bind(runButton.cancelButtonProperty());
-        runButton1.textProperty().bind(runButton.textProperty());
-        
-        progressLabel1.textProperty().bind(progressLabel.textProperty());
-        progressIndicator1.progressProperty().bind(progressIndicator.progressProperty());
-        
         Platform.runLater(() -> {
             geneTextField.requestFocus();
         });
+        
         speciesChoiceBox.getSelectionModel().selectedItemProperty().addListener(
             (new ChangeListener<String>(){
                 @Override
