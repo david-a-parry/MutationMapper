@@ -277,6 +277,7 @@ public class MutationMapper extends Application implements Initializable{
         });
         
         cdsTextField.addEventFilter(KeyEvent.KEY_TYPED, checkNumeric());
+        posTextField.addEventFilter(KeyEvent.KEY_TYPED, checkNumeric());
         
         cdsTextField.textProperty().addListener(
                 (ObservableValue<? extends String> observable, final String oldValue, final String newValue) -> {
