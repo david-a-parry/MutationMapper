@@ -278,7 +278,6 @@ public class MutationMapper extends Application implements Initializable{
         
         cdsTextField.addEventFilter(KeyEvent.KEY_TYPED, checkNumeric());
         
-        
         cdsTextField.textProperty().addListener(
                 (ObservableValue<? extends String> observable, final String oldValue, final String newValue) -> {
             //newValue = newValue.trim();
@@ -556,7 +555,12 @@ public class MutationMapper extends Application implements Initializable{
     private List<MutationMapperResult> coordByVep(final String species, final String chrom, 
             final String pos, final String ref, final String alt)throws ParseException, 
             MalformedURLException, IOException, InterruptedException{
-        
+        String refDna = getDna(chrom, Integer.parseInt(pos), Integer.parseInt(pos)
+                + ref.length() - 1, species);
+        if (!refDna.equalsIgnoreCase(ref)){
+            throw new RuntimeException("Ref allele '" + ref + "' at position " +
+                    pos + "does not match genome assembly sequence '" + refDna + "'");
+        }
         HashMap<String, HashMap<String, String>> cons = 
                 rest.getVepConsequence(chrom, Integer.parseInt(pos), species, ref, alt);
         List<MutationMapperResult> results = new ArrayList<>();
