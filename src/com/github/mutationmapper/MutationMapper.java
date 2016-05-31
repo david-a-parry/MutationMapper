@@ -1223,7 +1223,7 @@ public class MutationMapper extends Application implements Initializable{
                 }else if (t.equals("Consequence") ){
                     r.setConsequence(cons.get("Consequence").get("most_severe_consequence"));
                 }
-                /*if (cons.get(t).containsKey("refseq_transcript_ids")){
+                if (cons.get(t).containsKey("refseq_transcript_ids")){
                     r.setRefSeqIds(cons.get(t).get("refseq_transcript_ids").
                             replaceAll("[\\[\\]\"]", ""));
                 }
@@ -1233,7 +1233,7 @@ public class MutationMapper extends Application implements Initializable{
                     }else{
                         r.setIsCanonical(false);
                     }
-                }*/
+                }
                 if (cons.get(t).containsKey("exon")){
                     r.setExonIntronNumber("exon " + cons.get(t).get("exon"));
                 }else if (cons.get(t).containsKey("intron")){
