@@ -203,12 +203,17 @@ public class TranscriptDetails {
         return isCanonical;
     }
     
-    public Integer getCodingLength(){
+    private Integer getExonsLength(ArrayList<Exon> e){
         int length = 0;
-        for (Exon c: getCodingRegions()){
-            length += c.getLength();
+        for (Exon ex: e){
+            length += ex.getLength();
         }
         return length;
+    }
+    
+    public Integer getCodingLength(){
+        ArrayList<Exon> cds = getCodingRegions();
+        return getExonsLength(cds);
     }
     
     public boolean isCoding(){
@@ -227,51 +232,52 @@ public class TranscriptDetails {
     }
     
     
-    public String getCdsPosition(String chrom, int pos){
-        if (! isCoding()){
-            return "non-coding (" + getBiotype() + ")";
+    public String getCdnaPosition(String chrom, int pos){
+        if (!getChromosome().equals(chrom)){
+            return null;
+            //return "chromosome does not match";
         }
         if (pos < getTxStart() || pos > getTxEnd()){
             return "outside transcribed region";
         }
-        if (pos < getCdsStart() || pos  > getCdsEnd()){
-            return getUtrPosition(chrom, pos);
-        }
-        ArrayList<Exon> cds = getCodingRegions();
+        return getTranscriptPosition(chrom, pos, exons); 
+    }
+    
+    private String getTranscriptPosition(String chrom, int pos, ArrayList<Exon> e){
         if (!getChromosome().equals(chrom)){
-            return "chromosome does not match";
+            return null;
+            //return "chromosome does not match";
         }
-        
-        int cds_pos = 0;
+        int tr_pos = 0;
         int intron_pos = 0;
-        StringBuilder cds_string = new StringBuilder();
+        StringBuilder pos_string = new StringBuilder();
 
         boolean isExonic = false;
         
-        for (int i = 0; i < cds.size(); i++){
-            if ( pos < cds.get(i).getStart()){//pos is before this exons start
+        for (int i = 0; i < e.size(); i++){
+            if ( pos < e.get(i).getStart()){//pos is before this exons start
                 break;
             }
-            if (pos > cds.get(i).getEnd()){//pos is after this exon
-                cds_pos += cds.get(i).getLength();
+            if (pos > e.get(i).getEnd()){//pos is after this exon
+                tr_pos += e.get(i).getLength();
             }else{//pos is within exon
-                cds_pos += pos - cds.get(i).getStart() + 1;
+                tr_pos += pos - e.get(i).getStart() + 1;
                 isExonic = true; 
                 break;
             }
         }
         
         if (!isExonic){
-            for (int i = 0; i < cds.size() -1; i++){
-                if (pos >= cds.get(i).getEnd() && pos < cds.get(i+1).getStart()){
-                    Integer donor_pos = pos - cds.get(i).getEnd();
-                    Integer acceptor_pos = pos - cds.get(i+1).getStart();
+            for (int i = 0; i < e.size() -1; i++){
+                if (pos >= e.get(i).getEnd() && pos < e.get(i+1).getStart()){
+                    Integer donor_pos = pos - e.get(i).getEnd();
+                    Integer acceptor_pos = pos - e.get(i+1).getStart();
                     if (Math.abs(donor_pos) <= Math.abs(acceptor_pos)){
                         intron_pos = donor_pos;
                     }else{
                         intron_pos = acceptor_pos;
-                        if (cds_pos < getCodingLength()){
-                            cds_pos++;
+                        if (tr_pos < getExonsLength(e)){
+                            tr_pos++;
                         }else{
                             /*
                             intronic position is actually after STOP codon
@@ -279,15 +285,15 @@ public class TranscriptDetails {
                             */
                             if (getStrand() < 0){// on - strand so actually 5'UTR
                                 intron_pos *= -1;
-                                cds_string.append("c.-1");
+                                pos_string.append("-1");
                             }else{//if on + strand is 3' UTR
-                                cds_string.append("c.*1");
+                                pos_string.append("*1");
                             }
                             if (intron_pos > 0){
-                                cds_string.append("+");
+                                pos_string.append("+");
                             }
-                            cds_string.append(intron_pos);
-                            return cds_string.toString();
+                            pos_string.append(intron_pos);
+                            return pos_string.toString();
                         }
                     }
                 }
@@ -296,16 +302,40 @@ public class TranscriptDetails {
         
         if (getStrand() < 0){
             intron_pos *= -1;
-            cds_pos = getCodingLength() - cds_pos + 1;
+            tr_pos = getExonsLength(e)- tr_pos + 1;
         }
-        cds_string.append("c.").append(cds_pos);
+        pos_string.append(tr_pos);
         if (intron_pos != 0){
             if (intron_pos > 0){
-                cds_string.append("+");
+                pos_string.append("+");
             }
-            cds_string.append(intron_pos);
+            pos_string.append(intron_pos);
         }
-        return cds_string.toString();
+        return pos_string.toString();
+    }
+    
+    public String getCdsPosition(String chrom, int pos){
+        if (!getChromosome().equals(chrom)){
+            return null;
+            //return "chromosome does not match";
+        }
+        if (! isCoding()){
+            return null;
+            //return "non-coding (" + getBiotype() + ")";
+        }
+        if (pos < getTxStart() || pos > getTxEnd()){
+            return null;
+            //return "outside transcribed region";
+        }
+        if (pos < getCdsStart() || pos  > getCdsEnd()){
+            return getUtrPosition(chrom, pos);
+        }
+        
+        ArrayList<Exon> cds = getCodingRegions();
+        
+        String cds_string = getTranscriptPosition(chrom, pos, cds);
+        return "c." + cds_string;
+
     }
     
     public String getUtrPosition(String chrom, int pos){
