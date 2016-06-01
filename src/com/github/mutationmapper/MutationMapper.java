@@ -1065,11 +1065,24 @@ public class MutationMapper extends Application implements Initializable{
             //TO DO - calculate cDNA position if transcript is not coding!
             String cds_pos_match = t.getCdsPosition(chrom, shiftedPos);
             String cds_pos_end = t.getCdsPosition(chrom, matchEnd);
-            if (cds_pos_match.equals(cds_pos_end)){
+            if (cds_pos_match == null || cds_pos_end == null){
                 /*
                 this should only occur if we haven't got a position but instead
                 transcript is non-coding or seq is outside transcribed sites
                 */
+                String t_pos_match = t.getCdnaPosition(chrom, shiftedPos);
+                if (t_pos_match != null){
+                    cds_pos_match = "n." + t_pos_match;
+                }
+                String t_pos_end = t.getCdnaPosition(chrom, matchEnd);
+                if (t_pos_end != null){
+                    cds_pos_end = "n." + t_pos_end;
+                }
+            }
+            if (cds_pos_match == null || cds_pos_end == null){
+            //outside transcribed sites or error
+                result.setCdsCoordinate("Not determined");
+            }else if (cds_pos_match.equals(cds_pos_end)){
                 result.setCdsCoordinate(cds_pos_match);
             }else{
                 result.setCdsCoordinate(String.format("%s-%s", cds_pos_match, cds_pos_end));
