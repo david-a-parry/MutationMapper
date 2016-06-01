@@ -569,6 +569,7 @@ public class MutationMapper extends Application implements Initializable{
                     result.setGeneId("");
                     result.setMostSevereConsequence(cons.get("Consequence").
                             get("most_severe_consequence"));
+                    result.setBiotype("");
                 }else{
                     if (!cons.get(transcript).containsKey("biotype")){
                         continue;//not a transcript
@@ -576,6 +577,7 @@ public class MutationMapper extends Application implements Initializable{
                     result.setTranscript(transcript);
                     result.setGeneSymbol(cons.get(transcript).get("gene_symbol"));
                     result.setGeneId(cons.get(transcript).get("gene_id"));
+                    result.setBiotype(cons.get(transcript).get("biotype"));
                 }
                 result.setReportSpan(false);
                 result.setHostServices(getHostServices());
@@ -599,7 +601,7 @@ public class MutationMapper extends Application implements Initializable{
                     result.setMostSevereConsequence(
                             cons.get("Consequence").get("most_severe_consequence"));
                 }
-                result.setDescription(chrom + ":" + pos + "-" + ref + "/" + alt);
+                result.setDescription("Variant: " + chrom + ":" + pos + " " + ref + ">" + alt);
                 
                 // calculate CDS position from genomic position for each transcript
                 
