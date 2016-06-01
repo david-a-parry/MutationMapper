@@ -9,7 +9,7 @@
 
 <AnchorPane id="AnchorPane" fx:id="resultPane" prefHeight="711.0" prefWidth="968.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.github.mutationmapper.MutationMapperResultViewController">
    <children>
-      <MenuBar fx:id="menuBar" focusTraversable="false" layoutY="-29.0" prefHeight="29.0" prefWidth="600.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="-29.0">
+      <MenuBar fx:id="menuBar" layoutY="-38.0" prefHeight="29.0" prefWidth="600.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="-38.0">
         <menus>
           <Menu mnemonicParsing="false" text="File">
             <items>
@@ -31,11 +31,11 @@
                      </accelerator></MenuItem>
                   <MenuItem fx:id="closeMenuItem" mnemonicParsing="false" text="Close">
                      <accelerator>
-                        <KeyCodeCombination alt="UP" code="W" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                        <KeyCodeCombination alt="UP" code="W" control="UP" meta="UP" shift="DOWN" shortcut="DOWN" />
                      </accelerator></MenuItem>
                   <MenuItem fx:id="quitMenuItem" mnemonicParsing="false" text="Quit">
                      <accelerator>
-                        <KeyCodeCombination alt="UP" code="Q" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                        <KeyCodeCombination alt="UP" code="Q" control="UP" meta="UP" shift="DOWN" shortcut="DOWN" />
                      </accelerator>
                   </MenuItem>
             </items>
@@ -75,13 +75,13 @@
             </Menu>
           <Menu mnemonicParsing="false" text="Help">
             <items>
-              <MenuItem fx:id="helpMenuItem" mnemonicParsing="false" text="Help" />
-                  <MenuItem fx:id="aboutMenuItem" mnemonicParsing="false" text="About" />
+                  <MenuItem fx:id="helpMenuItem" mnemonicParsing="false" text="Help" />
+              <MenuItem fx:id="aboutMenuItem" mnemonicParsing="false" text="About" />
             </items>
           </Menu>
         </menus>
       </MenuBar>
-      <TableView fx:id="resultTable" prefHeight="711.0" prefWidth="968.0" tableMenuButtonVisible="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+      <TableView fx:id="resultTable" layoutY="29.0" prefHeight="711.0" prefWidth="968.0" tableMenuButtonVisible="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
         <columns>
           <TableColumn fx:id="indexCol" editable="false" prefWidth="36.0" text="#" />
           <TableColumn fx:id="symbolCol" editable="false" prefWidth="73.0" style="-fx-wrap-text: true;" text="Symbol" />
@@ -90,12 +90,13 @@
             <TableColumn fx:id="genomicCol" editable="false" prefWidth="172.0" style="-fx-wrap-text: true;" text="Genomic Coordinate" />
             <TableColumn fx:id="refCol" editable="false" prefWidth="54.0" style="-fx-wrap-text: true;" text="Ref" />
             <TableColumn fx:id="varCol" minWidth="5.0" prefWidth="48.0" style="-fx-wrap-text: true;" text="Var" />
-            <TableColumn fx:id="cdsCol" editable="false" prefWidth="91.0" style="-fx-wrap-text: true;" text="CDS" />
+            <TableColumn fx:id="cdsCol" editable="false" prefWidth="91.0" style="-fx-wrap-text: true;" text="CDS/cDNA" />
             <TableColumn fx:id="consequenceCol" editable="false" prefWidth="147.0" style="-fx-wrap-text: true;" text="Consequence" />
             <TableColumn fx:id="cdsConsequenceCol" editable="false" prefWidth="252.0" style="-fx-wrap-text: true;" text="CDS Consequence" />
             <TableColumn fx:id="proteinConsequenceCol" editable="false" prefWidth="252.0" style="-fx-wrap-text: true;" text="Protein Consequence" />
             <TableColumn fx:id="exonIntronCol" editable="false" prefWidth="104.0" style="-fx-wrap-text: true;" text="Exon/Intron" />
             <TableColumn fx:id="knownVarCol" editable="false" prefWidth="219.0" style="-fx-wrap-text: true;" text="Colocated Variation" />
+            <TableColumn fx:id="knownFreqCol" editable="false" prefWidth="219.0" style="-fx-wrap-text: true;" text="MAF" />
             <TableColumn fx:id="polyphenCol" editable="false" minWidth="5.0" prefWidth="142.0" style="-fx-wrap-text: true;" text="Polyphen" />
             <TableColumn fx:id="siftCol" editable="false" minWidth="5.0" prefWidth="126.0" style="-fx-wrap-text: true;" text="Sift" />
             <TableColumn fx:id="seqInputCol" editable="false" minWidth="5.0" prefWidth="159.0" style="-fx-wrap-text: true;" text="Seq Input" />
