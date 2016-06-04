@@ -1,6 +1,6 @@
 # Maintainer: David Parry <david.parry@igmm.ed.ac.uk>
 pkgname=MutationMapper
-pkgver=2.2
+pkgver=2.3
 pkgrel=1
 epoch=
 pkgdesc="Determine mutation consequences in low-throughput sequencing"
@@ -19,9 +19,9 @@ backup=()
 options=()
 install="${pkgname}.install"
 changelog=
-source=("https://github.com/gantzgraf/MutationMapper/releases/download/v2.2/MutationMapper-Linux64-2.2.deb")
+source=("https://github.com/gantzgraf/MutationMapper/releases/download/v2.3/MutationMapper-Linux_x86_64-v2.3.deb")
 noextract=()
-md5sums=("66d86c60094e8e298fb75e79dadaca26")
+md5sums=("0f6f8d886a1cd125a68188e6cd2222ff")
 validpgpkeys=()
 
 prepare() {

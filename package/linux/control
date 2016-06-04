@@ -1,9 +1,9 @@
 Package: mutationmapper
-Version: 2.2
+Version: 2.3
 Section: Science
-Maintainer: David A. Parry <d.a.parry@leeds.ac.uk>
+Maintainer: David A. Parry <david.parry@ed.ac.uk>
 Priority: optional
 Architecture: amd64
 Provides: MutationMapper
 Description: MutationMapper
-Installed-Size: 179261
+Installed-Size: 202752
