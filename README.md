@@ -1,4 +1,4 @@
-###*To download the latest version go to the [releases page](https://github.com/gantzgraf/MutationMapper/releases).*
+### *To download the latest version go to the [releases page](https://github.com/gantzgraf/MutationMapper/releases).*
 
 # MutationMapper
 
@@ -9,13 +9,13 @@ MutationMapper uses Ensembl’s REST API to search genes, sequences and determin
 
 *Download the latest version for your platform on the [releases page](https://github.com/gantzgraf/MutationMapper/releases).*
 
-###CREDIT
+### CREDIT
 
 MutationMapper was written by David A. Parry, University of Leeds/University of Edinburgh
 
 If you use this program for a publication, please cite the URL 'https://github.com/gantzgraf/MutationMapper'.
 
-###LICENSE
+### LICENSE
 
 MutationMapper is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
